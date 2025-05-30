@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   },
   roundButton: {
     position: "absolute",
-    bottom: scaleHeight(40),
+    bottom: scaleHeight(90),
     right: scaleWidth(20),
     width: scaleWidth(55),
     height: scaleWidth(55),

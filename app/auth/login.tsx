@@ -93,7 +93,7 @@ export default function Login() {
         <Text style={styles.errorText}>{errors.password}</Text>
       ) : null}
 
-      <TouchableOpacity onPress={() => router.push("/auth/forgot-password")}>
+      <TouchableOpacity onPress={() => router.push("/auth/otpverification")}>
         <Text style={styles.forgotText}>Forget password?</Text>
       </TouchableOpacity>
 
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   forgotText: {
     color: "#007aff",
     textAlign: "left",
-    marginTop: 10,
+    marginTop: 20,
     marginBottom: 24,
   },
   loginButton: {
