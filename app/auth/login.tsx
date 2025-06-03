@@ -30,7 +30,7 @@ export default function Login() {
 
     const hasError = Object.values(newErrors).some((msg) => msg !== "");
     if (!hasError) {
-      router.push("/home");
+      router.push("/home/homePage");
     }
   }
 
