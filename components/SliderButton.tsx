@@ -21,7 +21,9 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window"); // Get the screen widt
 const SLIDER_SIZE = ms(50); // Size of the slider button
 const HORIZONTAL_PADDING = s(20); // Horizontal padding for the button
 const BUTTON_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING * 2; // Width of the button
-const THRESHOLD = BUTTON_WIDTH - SLIDER_SIZE - s(2); // Threshold for completion
+// const THRESHOLD = BUTTON_WIDTH - SLIDER_SIZE - s(2); // Threshold for completion
+const TRIGGER_PERCENTAGE = 0.88; // 88%
+const THRESHOLD = (BUTTON_WIDTH - SLIDER_SIZE) * TRIGGER_PERCENTAGE;
 
 interface Props {
   onComplete: () => void;
@@ -68,10 +70,10 @@ export default function SlideToConfirmButton({ onComplete, label }: Props) {
         easing: Easing.linear,
       });
 
-      sliderRotate.value = withTiming((newTranslateX / THRESHOLD) * 360, {
-        duration: 200,
-        easing: Easing.linear,
-      });
+      // sliderRotate.value = withTiming((newTranslateX / THRESHOLD) * 360, {
+      //   duration: 200,
+      //   easing: Easing.linear,
+      // });
 
       backgroundColorValue.value = newTranslateX / THRESHOLD;
     },
@@ -83,16 +85,17 @@ export default function SlideToConfirmButton({ onComplete, label }: Props) {
       translateX.value = withSpring(0, { stiffness: 100, damping: 10 });
       labelOpacity.value = withTiming(1, { duration: 300 });
       labelScale.value = withTiming(1, { duration: 300 });
-      sliderRotate.value = withTiming(0, { duration: 300 });
+      // sliderRotate.value = withTiming(0, { duration: 300 });
       backgroundColorValue.value = withTiming(0, { duration: 300 });
     },
   });
 
   const animatedSliderStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translateX.value },
-      { rotate: `${sliderRotate.value}deg` },
-    ],
+    // transform: [
+    //   { translateX: translateX.value },
+    //   { rotate: `${sliderRotate.value}deg` },
+    // ],
+    transform: [{ translateX: translateX.value }],
   }));
 
   const animatedLabelStyle = useAnimatedStyle(() => ({
