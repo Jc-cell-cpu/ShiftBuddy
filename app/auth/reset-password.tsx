@@ -1,4 +1,3 @@
-// app/auth/reset-password.tsx
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -10,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { ms, mvs, s, vs } from "react-native-size-matters";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 const ResetPassword = () => {
@@ -23,7 +23,6 @@ const ResetPassword = () => {
     confirmPassword: "",
   });
 
-  // Handle Save
   const handleSave = () => {
     const newErrors = { newPassword: "", confirmPassword: "" };
 
@@ -37,8 +36,7 @@ const ResetPassword = () => {
 
     const hasError = Object.values(newErrors).some((msg) => msg !== "");
     if (!hasError) {
-      // In a real app, you'd make an API call to update the password here
-      router.push("/auth/login"); // Navigate back to login screen after success
+      router.push("/auth/login");
     }
   };
 
@@ -49,21 +47,19 @@ const ResetPassword = () => {
         barStyle={Platform.OS === "android" ? "dark-content" : "dark-content"}
       />
 
-      {/* Header Row with Back Button and Title */}
+      {/* Header */}
       <View style={styles.headerContainer}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
           accessibilityLabel="Go back"
         >
-          <Ionicons name="chevron-back" size={20} color="#000" />
+          <Ionicons name="chevron-back" size={s(20)} color="#000" />
         </TouchableOpacity>
         <Text style={styles.title}>Reset Password</Text>
       </View>
 
-      {/* <Text style={styles.subtitle}>Create a new password</Text> */}
-
-      {/* New Password Input */}
+      {/* New Password */}
       <Text style={styles.label}>New Password</Text>
       <View style={styles.inputWrapper}>
         <TextInput
@@ -82,16 +78,16 @@ const ResetPassword = () => {
         >
           <Ionicons
             name={showNewPassword ? "eye-off-outline" : "eye-outline"}
-            size={20}
+            size={s(20)}
             color="#BFBFBF"
           />
         </TouchableOpacity>
       </View>
-      {errors.newPassword ? (
+      {errors.newPassword && (
         <Text style={styles.errorText}>{errors.newPassword}</Text>
-      ) : null}
+      )}
 
-      {/* Confirm Password Input */}
+      {/* Confirm Password */}
       <Text style={styles.label}>Confirm Password</Text>
       <View style={styles.inputWrapper}>
         <TextInput
@@ -110,14 +106,14 @@ const ResetPassword = () => {
         >
           <Ionicons
             name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
-            size={20}
+            size={s(20)}
             color="#BFBFBF"
           />
         </TouchableOpacity>
       </View>
-      {errors.confirmPassword ? (
+      {errors.confirmPassword && (
         <Text style={styles.errorText}>{errors.confirmPassword}</Text>
-      ) : null}
+      )}
 
       {/* Save Button */}
       <TouchableOpacity
@@ -140,46 +136,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingHorizontal: 24,
-    paddingTop: 40,
+    paddingHorizontal: s(24),
+    paddingTop: Platform.OS === "android" ? vs(40) : vs(60),
   },
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 55,
-    marginTop: -20,
+    marginBottom: vs(45),
+    marginTop: vs(-10),
   },
   backButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 30,
+    width: s(44),
+    height: s(44),
+    borderRadius: s(22),
     backgroundColor: "#f0f0f0",
-    borderWidth: 0,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 20,
+    marginRight: s(12),
   },
   title: {
     fontFamily: "InterExtraBold",
-    fontSize: 22,
+    fontSize: ms(20),
     fontWeight: "700",
     color: "#69417E",
     flex: 1,
     textAlign: "center",
-    marginRight: 50,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: "#555",
-    textAlign: "center",
-    marginBottom: 30,
+    marginRight: s(44),
   },
   label: {
     fontFamily: "InterVariable",
-    fontSize: 14,
+    fontSize: ms(14),
     fontWeight: "700",
-    marginTop: 12,
-    marginBottom: 6,
+    marginTop: vs(8),
+    marginBottom: vs(4),
   },
   inputWrapper: {
     position: "relative",
@@ -188,34 +177,34 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 18,
-    fontSize: 14,
-    paddingRight: 38,
+    borderRadius: s(8),
+    paddingHorizontal: s(12),
+    paddingVertical: vs(14),
+    fontSize: ms(14),
+    paddingRight: s(38),
   },
   inputError: {
     borderColor: "#ff4d4d",
   },
   errorText: {
     color: "#ff4d4d",
-    fontSize: 12,
-    marginTop: 4,
-    marginBottom: 4,
+    fontSize: ms(12),
+    marginTop: vs(4),
+    marginBottom: vs(6),
   },
   icon: {
     position: "absolute",
-    right: 12,
+    right: s(12),
     top: "50%",
-    transform: [{ translateY: -10 }],
+    transform: [{ translateY: -s(10) }],
   },
   saveButton: {
     backgroundColor: "#6F3F89",
-    borderRadius: 25,
-    paddingVertical: 15,
+    borderRadius: s(25),
+    paddingVertical: vs(14),
     alignItems: "center",
-    marginTop: 100,
-    marginBottom: 20,
+    marginTop: mvs(80),
+    marginBottom: mvs(20),
   },
   saveButtonDisabled: {
     backgroundColor: "#ccc",
@@ -223,7 +212,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontFamily: "InterVariable",
     color: "#fff",
-    fontSize: 16,
+    fontSize: ms(16),
     fontWeight: "700",
   },
 });

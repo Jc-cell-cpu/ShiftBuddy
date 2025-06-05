@@ -1,4 +1,5 @@
 // components/CalendarComponent.tsx
+import { ms, s, vs } from "@/utils/scale"; // Adjust path accordingly
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
@@ -16,17 +17,15 @@ interface Booking {
 
 interface CalendarComponentProps {
   isExpanded: boolean;
-  onToggle: () => void;
   bookings?: Booking[];
 }
 
 const CalendarComponent: React.FC<CalendarComponentProps> = ({
   isExpanded,
-  onToggle,
   bookings = [],
 }) => {
-  const currentDate = new Date(); // June 3, 2025, Tuesday
-  const currentDateString = currentDate.toISOString().split("T")[0]; // "2025-06-03"
+  const currentDate = new Date();
+  const currentDateString = currentDate.toISOString().split("T")[0];
 
   const markedDates = bookings.reduce((acc, booking) => {
     acc[booking.date] = {
@@ -62,11 +61,7 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   return (
-    <TouchableOpacity
-      onPress={onToggle}
-      activeOpacity={0.9}
-      style={styles.calendarContainer}
-    >
+    <TouchableOpacity activeOpacity={0.9} style={styles.calendarContainer}>
       {isExpanded ? (
         <Calendar
           current={currentDateString}
@@ -84,15 +79,15 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
             textDayFontFamily: "InterMedium",
             textMonthFontFamily: "InterSemiBold",
             textDayHeaderFontFamily: "InterRegular",
-            textDayFontSize: 14,
-            textMonthFontSize: 16,
-            textDayHeaderFontSize: 12,
+            textDayFontSize: ms(14),
+            textMonthFontSize: ms(16),
+            textDayHeaderFontSize: ms(12),
           }}
           style={styles.fullCalendar}
           renderArrow={(direction) => (
             <Ionicons
               name={direction === "left" ? "chevron-back" : "chevron-forward"}
-              size={20}
+              size={ms(20)}
               color="#69417E"
             />
           )}
@@ -150,13 +145,13 @@ export default CalendarComponent;
 const styles = StyleSheet.create({
   calendarContainer: {
     backgroundColor: "#FFF",
-    borderRadius: 16,
-    padding: -9,
-    marginBottom: 16,
-    marginHorizontal: 15,
+    borderRadius: ms(16),
+    padding: 0,
+    marginBottom: vs(16),
+    marginHorizontal: s(15),
   },
   fullCalendar: {
-    borderRadius: 8,
+    borderRadius: ms(8),
   },
   weekContainer: {
     flexDirection: "row",
@@ -167,32 +162,32 @@ const styles = StyleSheet.create({
   },
   dateDayWrapper: {
     alignItems: "center",
-    paddingVertical: 6,
-    paddingHorizontal: 8,
+    paddingVertical: vs(6),
+    paddingHorizontal: s(8),
   },
   currentDateDayWrapper: {
     backgroundColor: "#F1E6FF",
-    borderRadius: 20, // Circular shape (adjusted based on content size)
+    borderRadius: ms(20), // Circular shape (adjust based on size)
   },
   weekDayText: {
     fontFamily: "InterRegular",
-    fontSize: 12,
+    fontSize: ms(12),
     color: "#6B7280",
   },
   weekDateText: {
     fontFamily: "InterMedium",
-    fontSize: 16,
+    fontSize: ms(16),
     color: "#000",
-    marginTop: 2, // Reduced margin to bring day and date closer
+    marginTop: vs(2), // Brings day and date closer
   },
   currentWeekText: {
     color: "#69417E",
   },
   bookingDot: {
-    width: 6,
-    height: 6,
+    width: ms(6),
+    height: ms(6),
     backgroundColor: "#F5D2BD",
-    borderRadius: 3,
-    marginTop: 4, // Adjusted to position below the circle
+    borderRadius: ms(3),
+    marginTop: vs(4),
   },
 });

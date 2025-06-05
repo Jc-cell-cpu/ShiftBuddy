@@ -1,5 +1,6 @@
 import LogoC from "@/assets/LogoC.svg";
 import SlideToConfirmButton from "@/components/SliderButton";
+import { ms, s, vs } from "@/utils/scale";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -11,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 export default function Login() {
@@ -84,7 +86,7 @@ export default function Login() {
         >
           <Ionicons
             name={showPassword ? "eye-off-outline" : "eye-outline"}
-            size={20}
+            size={ms(20)}
             color="#BFBFBF"
           />
         </TouchableOpacity>
@@ -107,45 +109,46 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 80,
+    paddingHorizontal: s(24),
+    paddingTop: vs(80),
     backgroundColor: "#fff",
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: -50,
-    marginBottom: 100,
+    marginTop: vs(-50),
+    marginBottom: vs(100),
   },
   title: {
     fontFamily: "InterVariable",
-    fontSize: 20,
+    fontSize: ms(20),
     fontWeight: "700",
     textAlign: "center",
-    marginBottom: 6,
+    marginBottom: vs(6),
   },
   subtitle: {
     fontFamily: "InterVariable",
-    fontSize: 14,
+    fontSize: ms(14),
     fontWeight: "500",
     color: "#555",
     textAlign: "center",
-    marginBottom: 24,
+    marginBottom: vs(24),
   },
   label: {
     fontFamily: "InterVariable",
-    fontSize: 14,
+    fontSize: ms(14),
     fontWeight: "700",
-    marginTop: 12,
-    marginBottom: 6,
+    marginTop: vs(12),
+    marginBottom: vs(6),
   },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 18,
-    fontSize: 14,
-    paddingRight: 38,
+    borderRadius: ms(8),
+    paddingHorizontal: s(12),
+    paddingVertical: vs(18),
+    fontSize: ms(14),
+    paddingRight: s(38),
+    color: "#000",
   },
   inputWrapper: {
     position: "relative",
@@ -156,23 +159,24 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: "#ff4d4d",
-    fontSize: 12,
-    marginTop: 4,
-    marginBottom: 4,
+    fontSize: ms(12),
+    marginTop: vs(4),
+    marginBottom: vs(4),
   },
   forgotText: {
     color: "#007aff",
     textAlign: "left",
-    marginTop: 20,
-    marginBottom: 24,
+    marginTop: vs(20),
+    marginBottom: vs(24),
+    fontSize: ms(13),
   },
   loginButton: {
-    marginTop: 90,
+    marginTop: vs(80),
   },
   icon: {
     position: "absolute",
-    right: 12,
+    right: s(12),
     top: "50%",
-    transform: [{ translateY: -10 }],
+    transform: [{ translateY: -ms(10) }],
   },
 });

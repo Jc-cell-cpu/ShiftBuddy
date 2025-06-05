@@ -1,3 +1,4 @@
+import { s, vs } from "@/utils/scale"; // Adjust import path to your setup
 import { Dimensions } from "react-native";
 import {
   Defs,
@@ -7,7 +8,9 @@ import {
   LinearGradient as SvgLinearGradient,
 } from "react-native-svg";
 
-// Default to screen dimensions if props are not provided
+// Default dimensions (design reference: 375x812)
+const DESIGN_WIDTH = 375;
+const DESIGN_HEIGHT = 812;
 const { width: defaultWidth, height: defaultHeight } = Dimensions.get("window");
 
 type BackgroundSVGProps = {
@@ -23,17 +26,21 @@ export default function BackgroundSVG({
     <Svg
       width={width}
       height={height}
-      viewBox="0 0 375 812"
+      viewBox={`0 0 ${s(DESIGN_WIDTH)} ${vs(DESIGN_HEIGHT)}`}
       preserveAspectRatio="xMidYMid slice"
     >
-      <Rect width="375" height="812" fill="url(#paint0_linear_95_3555)" />
+      <Rect
+        width={s(DESIGN_WIDTH)}
+        height={vs(DESIGN_HEIGHT)}
+        fill="url(#paint0_linear_95_3555)"
+      />
       <Defs>
         <SvgLinearGradient
           id="paint0_linear_95_3555"
-          x1="6.66509e-07"
-          y1="115.5"
-          x2="344.5"
-          y2="251.5"
+          x1={s(0)}
+          y1={vs(115.5)}
+          x2={s(344.5)}
+          y2={vs(251.5)}
           gradientUnits="userSpaceOnUse"
         >
           <Stop stopColor="#620787" />

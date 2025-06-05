@@ -1,4 +1,5 @@
 import Arrowii from "@/assets/arrowii.svg";
+import { ms, s, vs } from "@/utils/scale";
 import React from "react";
 import { Dimensions, StyleSheet } from "react-native";
 import {
@@ -15,15 +16,17 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const BUTTON_WIDTH = SCREEN_WIDTH - 40;
-const SLIDER_SIZE = 50;
-const THRESHOLD = BUTTON_WIDTH - SLIDER_SIZE - 2;
+const { width: SCREEN_WIDTH } = Dimensions.get("window"); // Get the screen width
+
+const SLIDER_SIZE = ms(50); // Size of the slider button
+const HORIZONTAL_PADDING = s(20); // Horizontal padding for the button
+const BUTTON_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING * 2; // Width of the button
+const THRESHOLD = BUTTON_WIDTH - SLIDER_SIZE - s(2); // Threshold for completion
 
 interface Props {
   onComplete: () => void;
   label: string;
-}
+} // Define the props for the component
 
 export default function SlideToConfirmButton({ onComplete, label }: Props) {
   const translateX = useSharedValue(0);
@@ -75,18 +78,13 @@ export default function SlideToConfirmButton({ onComplete, label }: Props) {
     onEnd: () => {
       if (translateX.value >= THRESHOLD) {
         runOnJS(onComplete)();
-        translateX.value = withSpring(0, { stiffness: 100, damping: 10 });
-        labelOpacity.value = withTiming(1, { duration: 300 });
-        labelScale.value = withTiming(1, { duration: 300 });
-        sliderRotate.value = withTiming(0, { duration: 300 });
-        backgroundColorValue.value = withTiming(0, { duration: 300 });
-      } else {
-        translateX.value = withSpring(0, { stiffness: 100, damping: 10 });
-        labelOpacity.value = withTiming(1, { duration: 300 });
-        labelScale.value = withTiming(1, { duration: 300 });
-        sliderRotate.value = withTiming(0, { duration: 300 });
-        backgroundColorValue.value = withTiming(0, { duration: 300 });
       }
+
+      translateX.value = withSpring(0, { stiffness: 100, damping: 10 });
+      labelOpacity.value = withTiming(1, { duration: 300 });
+      labelScale.value = withTiming(1, { duration: 300 });
+      sliderRotate.value = withTiming(0, { duration: 300 });
+      backgroundColorValue.value = withTiming(0, { duration: 300 });
     },
   });
 
@@ -119,7 +117,7 @@ export default function SlideToConfirmButton({ onComplete, label }: Props) {
       </Animated.Text>
       <PanGestureHandler onGestureEvent={gestureHandler}>
         <Animated.View style={[styles.slider, animatedSliderStyle]}>
-          <Arrowii width={24} height={24} />
+          <Arrowii width={ms(24)} height={ms(24)} />
         </Animated.View>
       </PanGestureHandler>
     </Animated.View>
@@ -128,20 +126,20 @@ export default function SlideToConfirmButton({ onComplete, label }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    height: SLIDER_SIZE + 12,
+    height: SLIDER_SIZE + vs(12),
     width: BUTTON_WIDTH,
     borderRadius: SLIDER_SIZE,
     justifyContent: "center",
-    paddingHorizontal: 6,
+    paddingHorizontal: s(6),
     overflow: "hidden",
-    marginTop: 20,
+    marginTop: vs(20),
   },
   label: {
     position: "absolute",
     alignSelf: "center",
     color: "#fff",
     fontWeight: "600",
-    fontSize: 16,
+    fontSize: ms(16),
   },
   slider: {
     width: SLIDER_SIZE,

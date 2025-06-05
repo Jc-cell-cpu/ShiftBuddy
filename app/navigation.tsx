@@ -1,3 +1,4 @@
+import { ms, s, vs } from "@/utils/scale"; // adjust path as needed
 import { Ionicons } from "@expo/vector-icons";
 import {
   BottomTabBarProps,
@@ -129,46 +130,42 @@ const styles = StyleSheet.create({
   },
   tabBarContainer: {
     position: "absolute",
-    marginTop: 665,
-    // marginBottom: 40,
-    left: 16,
-    right: 16,
-    borderRadius: 30,
+    bottom: vs(50),
+    left: s(16),
+    right: s(16),
+    borderRadius: s(30),
     overflow: "hidden",
     elevation: 8,
-    padding: 0.8,
-    // shadowColor: "#000",
-    // shadowOpacity: 0.08,
-    // shadowRadius: 10,
-    // shadowOffset: { width: 0, height: 4 },
+    padding: s(1),
   },
   blurWrapper: {
     flexDirection: "row",
     backgroundColor: "rgba(255,255,255,0.8)",
-    padding: 10,
+    paddingVertical: vs(10),
+    paddingHorizontal: s(10),
     justifyContent: "space-between",
     alignItems: "center",
   },
   tabItem: {
     flex: 1,
     alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderRadius: 24,
+    paddingVertical: vs(10),
+    paddingHorizontal: s(10),
+    borderRadius: s(24),
     flexDirection: "row",
     justifyContent: "center",
   },
   activeTab: {
     backgroundColor: "#F1CBB8",
-    paddingHorizontal: 15,
+    paddingHorizontal: s(15),
   },
   label: {
-    marginLeft: 6,
+    marginLeft: s(6),
     fontFamily: "InterVariable",
-    fontSize: 9,
+    fontSize: ms(9),
     fontWeight: "700",
   },
   activeLabel: {
-    color: "#69417E", // Color for active label
+    color: "#69417E",
   },
 });

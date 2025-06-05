@@ -1,7 +1,10 @@
 // app/auth/otp-verification.tsx
+import { ms, s, vs } from "@/utils/scale"; // or your defined path
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Dimensions,
+  PixelRatio,
   Platform,
   StatusBar,
   StyleSheet,
@@ -12,15 +15,19 @@ import {
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
+const { width, height } = Dimensions.get("window");
+
+const scale = (size: number) =>
+  PixelRatio.roundToNearestPixel((width / 375) * size);
+
 const OtpVerification = () => {
   const router = useRouter();
   const [otp, setOtp] = useState<string[]>(["", "", "", ""]);
-  const [timer, setTimer] = useState(27); // Start timer at 27 seconds
+  const [timer, setTimer] = useState(27);
   const [canResend, setCanResend] = useState(false);
-  const [focused, setFocused] = useState(false); // New state to track focus
+  const [focused, setFocused] = useState(false);
   const textInputRef = useRef<TextInput>(null);
 
-  // Timer countdown effect
   useEffect(() => {
     if (timer > 0) {
       const interval = setInterval(() => {
@@ -32,35 +39,29 @@ const OtpVerification = () => {
     }
   }, [timer]);
 
-  // Focus the TextInput when the component mounts
   useEffect(() => {
     textInputRef.current?.focus();
   }, []);
 
-  // Handle OTP input change
   const handleOtpChange = (text: string) => {
-    const newOtp = text.split("").slice(0, 4); // Limit to 4 digits
-    const paddedOtp = [...newOtp, ...Array(4 - newOtp.length).fill("")]; // Pad with empty strings
+    const newOtp = text.split("").slice(0, 4);
+    const paddedOtp = [...newOtp, ...Array(4 - newOtp.length).fill("")];
     setOtp(paddedOtp);
   };
 
-  // Handle Resend OTP
   const handleResend = () => {
     if (canResend) {
       setTimer(27);
       setCanResend(false);
-      setOtp(["", "", "", ""]); // Reset OTP input
-      textInputRef.current?.focus(); // Refocus the TextInput after resend
-      // In a real app, you'd trigger an API call to resend the OTP here
+      setOtp(["", "", "", ""]);
+      textInputRef.current?.focus();
     }
   };
 
-  // Handle Continue
   const handleContinue = () => {
     const otpValue = otp.join("");
     if (otpValue.length === 4) {
-      // In a real app, you'd verify the OTP with an API call here
-      router.push("/auth/reset-password"); // Navigate to the reset password page
+      router.push("/auth/reset-password");
     }
   };
 
@@ -70,22 +71,18 @@ const OtpVerification = () => {
         backgroundColor="#fff"
         barStyle={Platform.OS === "android" ? "dark-content" : "dark-content"}
       />
-
-      {/* Header Row with Back Button and Title */}
       <View style={styles.headerContainer}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
-          accessibilityLabel="Go back"
         >
-          <Ionicons name="chevron-back" size={20} color="#000" />
+          <Ionicons name="chevron-back" size={scale(20)} color="#000" />
         </TouchableOpacity>
         <Text style={styles.title}>Verify</Text>
       </View>
 
       <Text style={styles.subtitle}>Enter OTP</Text>
 
-      {/* OTP Input Boxes with Overlay TextInput */}
       <View style={styles.otpContainer}>
         {otp.map((digit, index) => (
           <View
@@ -93,13 +90,12 @@ const OtpVerification = () => {
             style={[
               styles.otpBox,
               digit && styles.otpBoxFilled,
-              focused && index === 0 && styles.otpBoxFocused, // Highlight the first box when focused
+              focused && index === 0 && styles.otpBoxFocused,
             ]}
           >
             <Text style={styles.otpText}>{digit}</Text>
           </View>
         ))}
-        {/* Overlay TextInput to capture input */}
         <TextInput
           ref={textInputRef}
           style={styles.overlayInput}
@@ -109,10 +105,10 @@ const OtpVerification = () => {
           maxLength={4}
           autoFocus={true}
           caretHidden={true}
-          onFocus={() => setFocused(true)} // Set focused state to true
+          onFocus={() => setFocused(true)}
           onBlur={() => {
-            setFocused(false); // Set focused state to false
-            textInputRef.current?.focus(); // Refocus if the keyboard is dismissed
+            setFocused(false);
+            textInputRef.current?.focus();
           }}
         />
       </View>
@@ -150,66 +146,65 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingHorizontal: 24,
-    paddingTop: 40,
+    paddingHorizontal: s(24),
+    paddingTop: vs(40),
   },
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 55,
-    marginTop: -20,
+    marginBottom: vs(55),
+    marginTop: vs(-10),
   },
   backButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 30,
+    width: s(44),
+    height: s(44),
+    borderRadius: s(22),
     backgroundColor: "#f0f0f0",
-    borderWidth: 0,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 20,
+    marginRight: s(12),
   },
   title: {
     fontFamily: "InterExtraBold",
-    fontSize: 22,
+    fontSize: ms(22),
     fontWeight: "700",
     color: "#69417E",
     flex: 1,
     textAlign: "center",
-    marginRight: 50,
+    marginRight: s(50),
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: ms(18),
     color: "#555",
     textAlign: "center",
-    marginBottom: 30,
+    marginBottom: vs(30),
   },
   otpContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: 20,
+    marginBottom: vs(20),
     position: "relative",
   },
   otpBox: {
-    width: 70,
-    height: 70,
+    width: s(60),
+    height: s(60),
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 8,
+    borderRadius: s(8),
     justifyContent: "center",
     alignItems: "center",
-    marginHorizontal: 5,
+    marginHorizontal: s(5),
   },
   otpBoxFilled: {
     borderColor: "#6F3F89",
     borderWidth: 2,
   },
   otpBoxFocused: {
-    borderColor: "#6F3F89", // Highlight color for the first box when focused
+    borderColor: "#6F3F89",
     borderWidth: 2,
   },
   otpText: {
-    fontSize: 20,
+    fontSize: ms(20),
     fontWeight: "600",
   },
   overlayInput: {
@@ -220,15 +215,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     opacity: 0,
     textAlign: "center",
-    fontSize: 20,
+    fontSize: ms(20),
   },
   resendContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 40,
+    marginBottom: vs(40),
   },
   resendText: {
-    fontSize: 14,
+    fontSize: ms(14),
     color: "#999",
   },
   resendTextActive: {
@@ -238,16 +233,16 @@ const styles = StyleSheet.create({
   timerText: {
     fontFamily: "InterMedium",
     fontWeight: "500",
-    fontSize: 14,
+    fontSize: ms(14),
     color: "#999",
   },
   continueButton: {
     backgroundColor: "#6F3F89",
-    borderRadius: 25,
-    paddingVertical: 15,
+    borderRadius: s(25),
+    paddingVertical: vs(15),
     alignItems: "center",
-    marginTop: 100,
-    marginBottom: 20,
+    marginTop: vs(100),
+    marginBottom: vs(20),
   },
   continueButtonDisabled: {
     backgroundColor: "#ccc",
@@ -255,7 +250,7 @@ const styles = StyleSheet.create({
   continueButtonText: {
     fontFamily: "InterVariable",
     color: "#fff",
-    fontSize: 16,
+    fontSize: ms(16),
     fontWeight: "700",
   },
 });

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ShiftBuddy",
-    "slug": "Shift Buddy",
+    "slug": "ShiftBuddy",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/BuddyL.png",
@@ -9,14 +9,23 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "permissions": {
+      "camera": {
+        "description": "Allow $(PRODUCT_NAME) to access your camera to take photos."
+      }
+    }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/BuddyL.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.jc_69.ShiftBuddy",
+      "permissions": [
+        "CAMERA"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -34,10 +43,17 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-camera"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "98d0dfbd-f17b-4fc4-947d-9694eae62c9b"
+      }
     }
   }
 }
