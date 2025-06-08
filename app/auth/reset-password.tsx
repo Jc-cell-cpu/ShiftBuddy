@@ -1,6 +1,6 @@
 import BackgroundSVGWhite from "@/components/BackgroundSVGWhite";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Keyboard,
@@ -30,25 +30,37 @@ const ResetPassword = () => {
     newPassword: "",
     confirmPassword: "",
   });
-  const [buttonOffset] = useState(new Animated.Value(0)); // For button animation
+  const [buttonOffset] = useState(new Animated.Value(0));
+  const animationInProgress = useRef(false); // Prevent multiple animations
 
-  // Keyboard listeners
+  // Keyboard listeners with debouncing
   useEffect(() => {
-    const showSubscription = Keyboard.addListener("keyboardDidShow", (e) => {
-      // Animate button up when keyboard appears
+    const showSubscription = Keyboard.addListener("keyboardDidShow", (_e) => {
+      if (animationInProgress.current) return; // Skip if animation is in progress
+      animationInProgress.current = true;
+
+      // Move button up by a fixed amount or a fraction of keyboard height
       Animated.timing(buttonOffset, {
-        toValue: -e.endCoordinates.height, // Move up by keyboard height
+        toValue: Platform.OS === "ios" ? -vs(80) : -vs(60), // Adjust based on your layout
         duration: 300,
         useNativeDriver: true,
-      }).start();
+      }).start(() => {
+        animationInProgress.current = false; // Reset animation flag
+      });
     });
+
     const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
-      // Animate button back to original position
+      if (animationInProgress.current) return; // Skip if animation is in progress
+      animationInProgress.current = true;
+
+      // Move button back to original position
       Animated.timing(buttonOffset, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
-      }).start();
+      }).start(() => {
+        animationInProgress.current = false; // Reset animation flag
+      });
     });
 
     return () => {
@@ -88,8 +100,8 @@ const ResetPassword = () => {
 
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : undefined} // Use undefined for Android
-        keyboardVerticalOffset={Platform.OS === "ios" ? vs(60) : vs(20)} // Adjusted offset
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? vs(40) : 0} // Reduced offset
       >
         <View style={styles.innerContent}>
           {/* Header */}
@@ -210,7 +222,7 @@ const styles = StyleSheet.create({
   },
   buttonWrapper: {
     paddingHorizontal: s(24),
-    marginBottom: mvs(80), // Base margin
+    marginBottom: mvs(55),
   },
   headerContainer: {
     flexDirection: "row",

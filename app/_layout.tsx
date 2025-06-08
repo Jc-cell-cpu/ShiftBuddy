@@ -16,6 +16,8 @@ export default function RootLayout() {
     InterExtraBold: require("@/assets/fonts/Inter_18pt-ExtraBold.ttf"),
     InterBold: require("@/assets/fonts/Inter_18pt-Bold.ttf"),
     Inter24Regular: require("@/assets/fonts/Inter_18pt-Regular.ttf"),
+    Inter18Regular: require("@/assets/fonts/Inter_24pt-Regular.ttf"),
+    Inter18SemiBold: require("@/assets/fonts/Inter_18pt-SemiBold.ttf"),
   });
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {

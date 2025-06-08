@@ -1,4 +1,5 @@
 import AComplete from "@/assets/AComplete.svg";
+import SOS from "@/assets/SOS.svg";
 import Selfi from "@/assets/Selfi.svg";
 import Star from "@/assets/Star.svg";
 import CalendarComponent from "@/components/CalendarComponent";
@@ -28,13 +29,13 @@ const Home = () => {
   const navigation = useNavigation();
   const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true); // Track unread notifications
 
   // Update capturedImage when params.capturedImage changes
   useFocusEffect(
     useCallback(() => {
       if (params?.capturedImage && typeof params.capturedImage === "string") {
         setCapturedImage(params.capturedImage);
-        // Clear the parameter to prevent reprocessing
         router.setParams({ capturedImage: undefined });
       }
     }, [params, router])
@@ -45,10 +46,15 @@ const Home = () => {
   };
 
   const handleUploadSelfie = () => {
-    router.push("/camera");
+    router.push("/rawPages/camera");
   };
 
-  // Dummy booking data (simulating data from backend)
+  const handleNotificationPress = () => {
+    setHasUnreadNotifications(false); // Hide dot on click
+    router.push("/rawPages/notifications"); // Navigate to notification page
+  };
+
+  // Dummy booking data
   const bookings: any[] = [
     {
       date: "2025-07-28",
@@ -96,22 +102,23 @@ const Home = () => {
               <Text style={styles.welcome}>Welcome to ShiftBuddy! 👋</Text>
             </View>
             <View style={styles.headerIcons}>
-              <TouchableOpacity>
+              <TouchableOpacity
+                style={styles.profileCircle}
+                onPress={handleNotificationPress}
+              >
+                {hasUnreadNotifications && (
+                  <View style={styles.notificationDot} />
+                )}
                 <Ionicons name="notifications-outline" size={24} color="#000" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.profileCircle}>
-                <Ionicons name="person-outline" size={20} color="#69417E" />
+                <SOS width={28} height={28} />
               </TouchableOpacity>
             </View>
           </View>
         </LinearGradient>
 
         <View style={styles.attendanceCard}>
-          {/* <Text style={styles.attendanceTitle}>
-            {capturedImage
-              ? "Completed, Daily Attendance!"
-              : "Daily Attendance"}
-          </Text> */}
           {!capturedImage && (
             <Text style={styles.attendanceTitle}>Daily Attendance</Text>
           )}
@@ -263,6 +270,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: ms(12),
   },
+  notificationDot: {
+    position: "absolute",
+    right: 9, // Position on the left side of the icon
+    top: "40%",
+    width: 9,
+    height: 9,
+    backgroundColor: "#69417E", // Red dot for visibility
+    borderRadius: 4.5, // Make it circular
+    zIndex: 1, // Ensure it appears above the icon
+    transform: [{ translateY: -5 }], // Center vertically
+  },
+  profileCircle: {
+    backgroundColor: "#fff",
+    padding: ms(8),
+    borderRadius: ms(20),
+    position: "relative", // Allow positioning of the notification dot
+  },
+  greeting: {
+    fontFamily: "InterBold",
+    fontSize: ms(20),
+    color: "#000",
+  },
+  welcome: {
+    fontFamily: "InterRegular",
+    fontSize: ms(14),
+    color: "#6B7280",
+    marginTop: vs(2),
+  },
   attendanceCard: {
     backgroundColor: "#FFF",
     borderRadius: ms(30),
@@ -286,8 +321,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     lineHeight: ms(19),
     marginBottom: vs(2),
-    width: "100%", // Ensure title takes full width
-    flexShrink: 1, // Allow shrinking if needed
+    width: "100%",
+    flexShrink: 1,
   },
   attendanceCompleteTitle: {
     fontFamily: "InterVariable",
@@ -295,8 +330,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     lineHeight: ms(19),
     marginBottom: vs(-15),
-    width: "100%", // Ensure title takes full width
-    flexShrink: 1, // Allow shrinking if needed
+    width: "100%",
+    flexShrink: 1,
   },
   attendanceDescription: {
     fontFamily: "InterVariable",
@@ -332,22 +367,6 @@ const styles = StyleSheet.create({
   foregroundSvg: {
     zIndex: 1,
     left: 25,
-  },
-  profileCircle: {
-    backgroundColor: "#F1E6FF",
-    padding: ms(8),
-    borderRadius: ms(20),
-  },
-  greeting: {
-    fontFamily: "InterBold",
-    fontSize: ms(20),
-    color: "#000",
-  },
-  welcome: {
-    fontFamily: "InterRegular",
-    fontSize: ms(14),
-    color: "#6B7280",
-    marginTop: vs(2),
   },
   whiteBackgroundContainer: {
     flex: 1,
