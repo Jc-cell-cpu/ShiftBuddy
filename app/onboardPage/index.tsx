@@ -15,6 +15,8 @@ import {
 // Get screen dimensions
 const { width: deviceWidth, height: deviceHeight } = Dimensions.get("window");
 const router = useRouter();
+// console.log("height :", height);
+const heightC = 1000;
 
 // Reference design dimensions
 const DESIGN_WIDTH = 375;
@@ -30,7 +32,8 @@ export default function OnboardPage() {
   return (
     <View style={styles.container}>
       {/* Background */}
-      <BackgroundSVG width={deviceWidth} height={900} />
+      <BackgroundSVG width={deviceWidth} height={heightC} />
+      {/* <BackgroundSVGWhite /> */}
 
       {/* Logo top-left */}
       <View style={styles.logoContainer}>

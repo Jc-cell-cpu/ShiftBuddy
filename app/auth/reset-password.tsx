@@ -1,7 +1,11 @@
+import BackgroundSVGWhite from "@/components/BackgroundSVGWhite";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Keyboard,
+  KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
@@ -18,10 +22,25 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
   const [errors, setErrors] = useState({
     newPassword: "",
     confirmPassword: "",
   });
+
+  useEffect(() => {
+    const show = Keyboard.addListener("keyboardDidShow", () =>
+      setKeyboardVisible(true)
+    );
+    const hide = Keyboard.addListener("keyboardDidHide", () =>
+      setKeyboardVisible(false)
+    );
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
 
   const handleSave = () => {
     const newErrors = { newPassword: "", confirmPassword: "" };
@@ -41,92 +60,115 @@ const ResetPassword = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <StatusBar
         backgroundColor="#fff"
         barStyle={Platform.OS === "android" ? "dark-content" : "dark-content"}
       />
 
-      {/* Header */}
-      <View style={styles.headerContainer}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="chevron-back" size={s(20)} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Reset Password</Text>
+      {/* Background behind all content */}
+      <View style={StyleSheet.absoluteFill}>
+        <BackgroundSVGWhite />
       </View>
 
-      {/* New Password */}
-      <Text style={styles.label}>New Password</Text>
-      <View style={styles.inputWrapper}>
-        <TextInput
-          style={[styles.input, errors.newPassword && styles.inputError]}
-          value={newPassword}
-          placeholder="••••••"
-          onChangeText={(text) => {
-            setNewPassword(text);
-            setErrors((prev) => ({ ...prev, newPassword: "" }));
-          }}
-          secureTextEntry={!showNewPassword}
-        />
-        <TouchableOpacity
-          style={styles.icon}
-          onPress={() => setShowNewPassword(!showNewPassword)}
-        >
-          <Ionicons
-            name={showNewPassword ? "eye-off-outline" : "eye-outline"}
-            size={s(20)}
-            color="#BFBFBF"
-          />
-        </TouchableOpacity>
-      </View>
-      {errors.newPassword && (
-        <Text style={styles.errorText}>{errors.newPassword}</Text>
-      )}
-
-      {/* Confirm Password */}
-      <Text style={styles.label}>Confirm Password</Text>
-      <View style={styles.inputWrapper}>
-        <TextInput
-          style={[styles.input, errors.confirmPassword && styles.inputError]}
-          value={confirmPassword}
-          placeholder="••••••"
-          onChangeText={(text) => {
-            setConfirmPassword(text);
-            setErrors((prev) => ({ ...prev, confirmPassword: "" }));
-          }}
-          secureTextEntry={!showConfirmPassword}
-        />
-        <TouchableOpacity
-          style={styles.icon}
-          onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-        >
-          <Ionicons
-            name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
-            size={s(20)}
-            color="#BFBFBF"
-          />
-        </TouchableOpacity>
-      </View>
-      {errors.confirmPassword && (
-        <Text style={styles.errorText}>{errors.confirmPassword}</Text>
-      )}
-
-      {/* Save Button */}
-      <TouchableOpacity
-        style={[
-          styles.saveButton,
-          (!newPassword || !confirmPassword) && styles.saveButtonDisabled,
-        ]}
-        onPress={handleSave}
-        disabled={!newPassword || !confirmPassword}
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? vs(60) : vs(20)}
       >
-        <Text style={styles.saveButtonText}>Save</Text>
-      </TouchableOpacity>
-    </View>
+        <View style={styles.innerContent}>
+          {/* Header */}
+          <View style={styles.headerContainer}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+              accessibilityLabel="Go back"
+            >
+              <Ionicons name="chevron-back" size={s(20)} color="#000" />
+            </TouchableOpacity>
+            <Text style={styles.title}>Reset Password</Text>
+          </View>
+
+          {/* New Password */}
+          <Text style={styles.label}>New Password</Text>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={[styles.input, errors.newPassword && styles.inputError]}
+              value={newPassword}
+              placeholder="••••••"
+              onChangeText={(text) => {
+                setNewPassword(text);
+                setErrors((prev) => ({ ...prev, newPassword: "" }));
+              }}
+              secureTextEntry={!showNewPassword}
+            />
+            <TouchableOpacity
+              style={styles.icon}
+              onPress={() => setShowNewPassword(!showNewPassword)}
+            >
+              <Ionicons
+                name={showNewPassword ? "eye-off-outline" : "eye-outline"}
+                size={s(20)}
+                color="#BFBFBF"
+              />
+            </TouchableOpacity>
+          </View>
+          {errors.newPassword && (
+            <Text style={styles.errorText}>{errors.newPassword}</Text>
+          )}
+
+          {/* Confirm Password */}
+          <Text style={styles.label}>Confirm Password</Text>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={[
+                styles.input,
+                errors.confirmPassword && styles.inputError,
+              ]}
+              value={confirmPassword}
+              placeholder="••••••"
+              onChangeText={(text) => {
+                setConfirmPassword(text);
+                setErrors((prev) => ({ ...prev, confirmPassword: "" }));
+              }}
+              secureTextEntry={!showConfirmPassword}
+            />
+            <TouchableOpacity
+              style={styles.icon}
+              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              <Ionicons
+                name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
+                size={s(20)}
+                color="#BFBFBF"
+              />
+            </TouchableOpacity>
+          </View>
+          {errors.confirmPassword && (
+            <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+          )}
+        </View>
+
+        {/* Save Button */}
+        <View
+          style={[
+            styles.buttonWrapper,
+            keyboardVisible && styles.buttonWithKeyboard,
+          ]}
+        >
+          <TouchableOpacity
+            style={[
+              styles.saveButton,
+              (!newPassword || !confirmPassword) && styles.saveButtonDisabled,
+            ]}
+            onPress={handleSave}
+            disabled={!newPassword || !confirmPassword}
+          >
+            <Text style={styles.saveButtonText}>Save</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -135,10 +177,21 @@ export default ResetPassword;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    paddingHorizontal: s(24),
-    paddingTop: Platform.OS === "android" ? vs(40) : vs(60),
   },
+  innerContent: {
+    flex: 1,
+    backgroundColor: "transparent",
+    paddingHorizontal: s(24),
+    paddingTop: Platform.OS === "android" ? vs(55) : vs(60),
+  },
+  buttonWrapper: {
+    paddingHorizontal: s(24),
+    marginBottom: mvs(20),
+  },
+  buttonWithKeyboard: {
+    marginBottom: mvs(10),
+  },
+
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -149,7 +202,9 @@ const styles = StyleSheet.create({
     width: s(44),
     height: s(44),
     borderRadius: s(22),
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#fafcff",
+    borderColor: "#ccc",
+    borderWidth: 0.3,
     justifyContent: "center",
     alignItems: "center",
     marginRight: s(12),
@@ -203,8 +258,6 @@ const styles = StyleSheet.create({
     borderRadius: s(25),
     paddingVertical: vs(14),
     alignItems: "center",
-    marginTop: mvs(80),
-    marginBottom: mvs(20),
   },
   saveButtonDisabled: {
     backgroundColor: "#ccc",

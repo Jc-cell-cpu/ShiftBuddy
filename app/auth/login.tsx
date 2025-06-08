@@ -1,10 +1,11 @@
 import LogoC from "@/assets/LogoC.svg";
+import BackgroundSVGWhite from "@/components/BackgroundSVGWhite";
 import SlideToConfirmButton from "@/components/SliderButton";
 import { ms, s, vs } from "@/utils/scale";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  Platform,
+  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
@@ -12,7 +13,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 export default function Login() {
@@ -24,10 +24,8 @@ export default function Login() {
 
   function handleLogin() {
     const newErrors = { email: "", password: "" };
-
     if (!email.trim()) newErrors.email = "Email is required";
     if (!password.trim()) newErrors.password = "Password is required";
-
     setErrors(newErrors);
 
     const hasError = Object.values(newErrors).some((msg) => msg !== "");
@@ -37,89 +35,101 @@ export default function Login() {
   }
 
   return (
-    <View style={styles.container}>
-      {/* Set the StatusBar properties */}
+    <SafeAreaView style={styles.container}>
       <StatusBar
-        backgroundColor="#fff" // Match the background color of the screen
-        barStyle={Platform.OS === "android" ? "dark-content" : "dark-content"} // Dark icons for better visibility
+        translucent
+        backgroundColor="transparent"
+        barStyle="dark-content"
       />
-      <View style={styles.logoContainer}>
-        <LogoC width={100} height={50} />
+
+      {/* Background */}
+      <View style={StyleSheet.absoluteFill}>
+        <BackgroundSVGWhite />
       </View>
 
-      <Text style={styles.title}>Welcome to ShiftBuddy!</Text>
-      <Text style={styles.subtitle}>
-        Secure login with username and password
-      </Text>
+      {/* Foreground content */}
+      <View style={styles.content}>
+        <View style={styles.logoContainer}>
+          <LogoC width={100} height={50} />
+        </View>
 
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={[styles.input, errors.email && styles.inputError]}
-        value={email}
-        placeholder="melpeters@gmail.com"
-        onChangeText={(text) => {
-          setEmail(text);
-          setErrors((prev) => ({ ...prev, email: "" }));
-        }}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      {errors.email ? (
-        <Text style={styles.errorText}>{errors.email}</Text>
-      ) : null}
+        <Text style={styles.title}>Welcome to ShiftBuddy!</Text>
+        <Text style={styles.subtitle}>
+          Secure login with username and password
+        </Text>
 
-      <Text style={styles.label}>Password</Text>
-      <View style={styles.inputWrapper}>
+        <Text style={styles.label}>Email</Text>
         <TextInput
-          style={[styles.input, errors.password && styles.inputError]}
-          value={password}
-          placeholder="••••••"
+          style={[styles.input, errors.email && styles.inputError]}
+          value={email}
+          placeholder="melpeters@gmail.com"
           onChangeText={(text) => {
-            setPassword(text);
-            setErrors((prev) => ({ ...prev, password: "" }));
+            setEmail(text);
+            setErrors((prev) => ({ ...prev, email: "" }));
           }}
-          secureTextEntry={!showPassword}
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
-        <TouchableOpacity
-          style={styles.icon}
-          onPress={() => setShowPassword(!showPassword)}
-        >
-          <Ionicons
-            name={showPassword ? "eye-off-outline" : "eye-outline"}
-            size={ms(20)}
-            color="#BFBFBF"
+        {errors.email ? (
+          <Text style={styles.errorText}>{errors.email}</Text>
+        ) : null}
+
+        <Text style={styles.label}>Password</Text>
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={[styles.input, errors.password && styles.inputError]}
+            value={password}
+            placeholder="••••••"
+            onChangeText={(text) => {
+              setPassword(text);
+              setErrors((prev) => ({ ...prev, password: "" }));
+            }}
+            secureTextEntry={!showPassword}
           />
+          <TouchableOpacity
+            style={styles.icon}
+            onPress={() => setShowPassword(!showPassword)}
+          >
+            <Ionicons
+              name={showPassword ? "eye-off-outline" : "eye-outline"}
+              size={ms(20)}
+              color="#BFBFBF"
+            />
+          </TouchableOpacity>
+        </View>
+        {errors.password ? (
+          <Text style={styles.errorText}>{errors.password}</Text>
+        ) : null}
+
+        <TouchableOpacity
+          style={styles.forgotWrapper}
+          onPress={() => router.push("/auth/otpverification")}
+        >
+          <Text style={styles.forgotText}>Forget password?</Text>
         </TouchableOpacity>
-      </View>
-      {errors.password ? (
-        <Text style={styles.errorText}>{errors.password}</Text>
-      ) : null}
 
-      <TouchableOpacity
-        style={styles.forgotWrapper}
-        onPress={() => router.push("/auth/otpverification")}
-      >
-        <Text style={styles.forgotText}>Forget password?</Text>
-      </TouchableOpacity>
-
-      <View style={styles.loginButton}>
-        <SlideToConfirmButton label="Login" onComplete={handleLogin} />
+        <View style={styles.loginButton}>
+          <SlideToConfirmButton label="Login" onComplete={handleLogin} />
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "transparent",
+  },
+  content: {
+    flex: 1,
     paddingHorizontal: s(24),
-    paddingTop: vs(80),
-    backgroundColor: "#fff",
+    paddingTop: vs(40), // reduced from 80 to fix push down
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: vs(-50),
-    marginBottom: vs(100),
+    marginTop: vs(-10),
+    marginBottom: vs(80),
   },
   title: {
     fontFamily: "InterVariable",
@@ -152,6 +162,7 @@ const styles = StyleSheet.create({
     fontSize: ms(14),
     paddingRight: s(38),
     color: "#000",
+    backgroundColor: "#fff",
   },
   inputWrapper: {
     position: "relative",
@@ -167,7 +178,7 @@ const styles = StyleSheet.create({
     marginBottom: vs(4),
   },
   forgotWrapper: {
-    alignSelf: "flex-start", // aligns to the right side
+    alignSelf: "flex-start",
   },
   forgotText: {
     color: "#007aff",
@@ -178,7 +189,7 @@ const styles = StyleSheet.create({
     paddingVertical: vs(4),
   },
   loginButton: {
-    marginTop: vs(80),
+    marginTop: vs(60),
   },
   icon: {
     position: "absolute",

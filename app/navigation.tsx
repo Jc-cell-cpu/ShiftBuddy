@@ -10,7 +10,13 @@ import {
 } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Home from "./home/homePage";
 
 const Tab = createBottomTabNavigator();
@@ -135,12 +141,22 @@ const styles = StyleSheet.create({
     right: s(16),
     borderRadius: s(30),
     overflow: "hidden",
-    elevation: 8,
-    padding: s(1),
+    backgroundColor: "rgba(255, 255, 255, 0.8)", // ensures consistent blur + color
+    ...Platform.select({
+      android: {
+        elevation: 8,
+      },
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+      },
+    }),
   },
   blurWrapper: {
     flexDirection: "row",
-    backgroundColor: "rgba(255,255,255,0.8)",
+    backgroundColor: "transparent",
     paddingVertical: vs(10),
     paddingHorizontal: s(10),
     justifyContent: "space-between",

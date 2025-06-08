@@ -1,9 +1,11 @@
-// app/auth/otp-verification.tsx
-import { ms, s, vs } from "@/utils/scale"; // or your defined path
+import BackgroundSVGWhite from "@/components/BackgroundSVGWhite";
+import { ms, s, vs } from "@/utils/scale";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
+  Keyboard,
+  KeyboardAvoidingView,
   PixelRatio,
   Platform,
   StatusBar,
@@ -13,9 +15,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 const scale = (size: number) =>
   PixelRatio.roundToNearestPixel((width / 375) * size);
@@ -26,6 +29,7 @@ const OtpVerification = () => {
   const [timer, setTimer] = useState(27);
   const [canResend, setCanResend] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const textInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
@@ -38,6 +42,20 @@ const OtpVerification = () => {
       setCanResend(true);
     }
   }, [timer]);
+
+  useEffect(() => {
+    const keyboardDidShow = Keyboard.addListener("keyboardDidShow", () => {
+      setKeyboardVisible(true);
+    });
+    const keyboardDidHide = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      keyboardDidShow.remove();
+      keyboardDidHide.remove();
+    };
+  }, []);
 
   useEffect(() => {
     textInputRef.current?.focus();
@@ -66,77 +84,104 @@ const OtpVerification = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top"]}>
       <StatusBar
-        backgroundColor="#fff"
+        backgroundColor=""
         barStyle={Platform.OS === "android" ? "dark-content" : "dark-content"}
       />
-      <View style={styles.headerContainer}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="chevron-back" size={scale(20)} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Verify</Text>
+      {/* Background SVG behind all content */}
+      <View style={StyleSheet.absoluteFill}>
+        <BackgroundSVGWhite />
       </View>
-
-      <Text style={styles.subtitle}>Enter OTP</Text>
-
-      <View style={styles.otpContainer}>
-        {otp.map((digit, index) => (
-          <View
-            key={index}
-            style={[
-              styles.otpBox,
-              digit && styles.otpBoxFilled,
-              focused && index === 0 && styles.otpBoxFocused,
-            ]}
-          >
-            <Text style={styles.otpText}>{digit}</Text>
-          </View>
-        ))}
-        <TextInput
-          ref={textInputRef}
-          style={styles.overlayInput}
-          value={otp.join("")}
-          onChangeText={handleOtpChange}
-          keyboardType="number-pad"
-          maxLength={4}
-          autoFocus={true}
-          caretHidden={true}
-          onFocus={() => setFocused(true)}
-          onBlur={() => {
-            setFocused(false);
-            textInputRef.current?.focus();
-          }}
-        />
-      </View>
-
-      <View style={styles.resendContainer}>
-        <TouchableOpacity onPress={handleResend} disabled={!canResend}>
-          <Text
-            style={[styles.resendText, canResend && styles.resendTextActive]}
-          >
-            Resend OTP
-          </Text>
-        </TouchableOpacity>
-        <Text style={styles.timerText}>
-          {`00:${timer.toString().padStart(2, "0")} secs`}
-        </Text>
-      </View>
-
-      <TouchableOpacity
-        style={[
-          styles.continueButton,
-          otp.join("").length !== 4 && styles.continueButtonDisabled,
-        ]}
-        onPress={handleContinue}
-        disabled={otp.join("").length !== 4}
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? vs(80) : vs(20)}
       >
-        <Text style={styles.continueButtonText}>Continue</Text>
-      </TouchableOpacity>
-    </View>
+        <View style={styles.innerContainer}>
+          {/* Background SVG behind all content */}
+          <View style={StyleSheet.absoluteFill}>
+            <BackgroundSVGWhite />
+          </View>
+          <View style={styles.headerContainer}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="chevron-back" size={scale(20)} color="#000" />
+            </TouchableOpacity>
+            <Text style={styles.title}>Verify</Text>
+          </View>
+
+          <Text style={styles.subtitle}>Enter OTP</Text>
+
+          <View style={styles.otpContainer}>
+            {otp.map((digit, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.otpBox,
+                  digit && styles.otpBoxFilled,
+                  focused && index === 0 && styles.otpBoxFocused,
+                ]}
+              >
+                <Text style={styles.otpText}>{digit}</Text>
+              </View>
+            ))}
+            <TextInput
+              ref={textInputRef}
+              style={styles.overlayInput}
+              value={otp.join("")}
+              onChangeText={handleOtpChange}
+              keyboardType="number-pad"
+              maxLength={4}
+              autoFocus={true}
+              caretHidden={true}
+              onFocus={() => setFocused(true)}
+              onBlur={() => {
+                setFocused(false);
+                textInputRef.current?.focus();
+              }}
+            />
+          </View>
+
+          <View style={styles.resendContainer}>
+            <TouchableOpacity onPress={handleResend} disabled={!canResend}>
+              <Text
+                style={[
+                  styles.resendText,
+                  canResend && styles.resendTextActive,
+                ]}
+              >
+                Resend OTP
+              </Text>
+            </TouchableOpacity>
+            <Text
+              style={[
+                styles.timerText,
+                canResend && styles.timerTextInactive, // add this line
+              ]}
+            >
+              {`00:${timer.toString().padStart(2, "0")} secs`}
+            </Text>
+          </View>
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.continueButton,
+                otp.join("").length !== 4 && styles.continueButtonDisabled,
+                keyboardVisible && styles.continueButtonWithKeyboard,
+              ]}
+              onPress={handleContinue}
+              disabled={otp.join("").length !== 4}
+            >
+              <Text style={styles.continueButtonText}>Continue</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -145,9 +190,12 @@ export default OtpVerification;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+  },
+  innerContainer: {
+    flex: 1,
     paddingHorizontal: s(24),
     paddingTop: vs(40),
+    backgroundColor: "#fff",
   },
   headerContainer: {
     flexDirection: "row",
@@ -159,13 +207,15 @@ const styles = StyleSheet.create({
     width: s(44),
     height: s(44),
     borderRadius: s(22),
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#fafcff",
+    borderColor: "#ccc",
+    borderWidth: 0.3,
     justifyContent: "center",
     alignItems: "center",
     marginRight: s(12),
   },
   title: {
-    fontFamily: "InterExtraBold",
+    fontFamily: "InterVariable",
     fontSize: ms(22),
     fontWeight: "700",
     color: "#69417E",
@@ -234,18 +284,29 @@ const styles = StyleSheet.create({
     fontFamily: "InterMedium",
     fontWeight: "500",
     fontSize: ms(14),
+    // color: "#999",
+    color: "#69417E",
+  },
+  timerTextInactive: {
     color: "#999",
+  },
+  buttonContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
+    marginBottom: vs(20),
   },
   continueButton: {
     backgroundColor: "#6F3F89",
     borderRadius: s(25),
     paddingVertical: vs(15),
     alignItems: "center",
-    marginTop: vs(100),
-    marginBottom: vs(20),
   },
   continueButtonDisabled: {
     backgroundColor: "#ccc",
+  },
+  continueButtonWithKeyboard: {
+    marginTop: vs(20),
+    marginBottom: vs(10),
   },
   continueButtonText: {
     fontFamily: "InterVariable",
