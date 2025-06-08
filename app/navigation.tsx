@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     right: s(16),
     borderRadius: s(30),
     overflow: "hidden",
-    backgroundColor: "rgba(255, 255, 255, 0.8)", // ensures consistent blur + color
+    backgroundColor: "rgba(222, 235, 237, 0.68)", // ensures consistent blur + color
     ...Platform.select({
       android: {
         elevation: 8,

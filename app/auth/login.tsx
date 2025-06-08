@@ -21,6 +21,9 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "" });
+  const [focusedField, setFocusedField] = useState<"email" | "password" | null>(
+    null
+  );
 
   function handleLogin() {
     const newErrors = { email: "", password: "" };
@@ -60,7 +63,11 @@ export default function Login() {
 
         <Text style={styles.label}>Email</Text>
         <TextInput
-          style={[styles.input, errors.email && styles.inputError]}
+          style={[
+            styles.input,
+            errors.email && styles.inputError,
+            focusedField === "email" && styles.inputFocused,
+          ]}
           value={email}
           placeholder="melpeters@gmail.com"
           onChangeText={(text) => {
@@ -69,6 +76,8 @@ export default function Login() {
           }}
           keyboardType="email-address"
           autoCapitalize="none"
+          onFocus={() => setFocusedField("email")}
+          onBlur={() => setFocusedField(null)}
         />
         {errors.email ? (
           <Text style={styles.errorText}>{errors.email}</Text>
@@ -77,7 +86,11 @@ export default function Login() {
         <Text style={styles.label}>Password</Text>
         <View style={styles.inputWrapper}>
           <TextInput
-            style={[styles.input, errors.password && styles.inputError]}
+            style={[
+              styles.input,
+              errors.password && styles.inputError,
+              focusedField === "password" && styles.inputFocused,
+            ]}
             value={password}
             placeholder="••••••"
             onChangeText={(text) => {
@@ -85,6 +98,8 @@ export default function Login() {
               setErrors((prev) => ({ ...prev, password: "" }));
             }}
             secureTextEntry={!showPassword}
+            onFocus={() => setFocusedField("password")}
+            onBlur={() => setFocusedField(null)}
           />
           <TouchableOpacity
             style={styles.icon}
@@ -171,6 +186,11 @@ const styles = StyleSheet.create({
   inputError: {
     borderColor: "#ff4d4d",
   },
+  inputFocused: {
+    borderColor: "#6F3F89", // or any highlight color you want
+    borderWidth: 2,
+  },
+
   errorText: {
     color: "#ff4d4d",
     fontSize: ms(12),

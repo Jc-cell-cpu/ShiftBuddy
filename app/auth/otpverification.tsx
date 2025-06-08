@@ -86,7 +86,6 @@ const OtpVerification = () => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top"]}>
       <StatusBar
-        backgroundColor=""
         barStyle={Platform.OS === "android" ? "dark-content" : "dark-content"}
       />
       {/* Background SVG behind all content */}

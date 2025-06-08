@@ -2,6 +2,7 @@ import BackgroundSVGWhite from "@/components/BackgroundSVGWhite";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  Animated,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -22,25 +23,39 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
-
+  const [focusedField, setFocusedField] = useState<
+    "newPassword" | "confirmPassword" | null
+  >(null);
   const [errors, setErrors] = useState({
     newPassword: "",
     confirmPassword: "",
   });
+  const [buttonOffset] = useState(new Animated.Value(0)); // For button animation
 
+  // Keyboard listeners
   useEffect(() => {
-    const show = Keyboard.addListener("keyboardDidShow", () =>
-      setKeyboardVisible(true)
-    );
-    const hide = Keyboard.addListener("keyboardDidHide", () =>
-      setKeyboardVisible(false)
-    );
+    const showSubscription = Keyboard.addListener("keyboardDidShow", (e) => {
+      // Animate button up when keyboard appears
+      Animated.timing(buttonOffset, {
+        toValue: -e.endCoordinates.height, // Move up by keyboard height
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    });
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      // Animate button back to original position
+      Animated.timing(buttonOffset, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    });
+
     return () => {
-      show.remove();
-      hide.remove();
+      showSubscription.remove();
+      hideSubscription.remove();
     };
-  }, []);
+  }, [buttonOffset]);
 
   const handleSave = () => {
     const newErrors = { newPassword: "", confirmPassword: "" };
@@ -73,8 +88,8 @@ const ResetPassword = () => {
 
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? vs(60) : vs(20)}
+        behavior={Platform.OS === "ios" ? "padding" : undefined} // Use undefined for Android
+        keyboardVerticalOffset={Platform.OS === "ios" ? vs(60) : vs(20)} // Adjusted offset
       >
         <View style={styles.innerContent}>
           {/* Header */}
@@ -93,7 +108,11 @@ const ResetPassword = () => {
           <Text style={styles.label}>New Password</Text>
           <View style={styles.inputWrapper}>
             <TextInput
-              style={[styles.input, errors.newPassword && styles.inputError]}
+              style={[
+                styles.input,
+                errors.newPassword && styles.inputError,
+                focusedField === "newPassword" && styles.inputFocused,
+              ]}
               value={newPassword}
               placeholder="••••••"
               onChangeText={(text) => {
@@ -101,6 +120,8 @@ const ResetPassword = () => {
                 setErrors((prev) => ({ ...prev, newPassword: "" }));
               }}
               secureTextEntry={!showNewPassword}
+              onFocus={() => setFocusedField("newPassword")}
+              onBlur={() => setFocusedField(null)}
             />
             <TouchableOpacity
               style={styles.icon}
@@ -124,6 +145,7 @@ const ResetPassword = () => {
               style={[
                 styles.input,
                 errors.confirmPassword && styles.inputError,
+                focusedField === "confirmPassword" && styles.inputFocused,
               ]}
               value={confirmPassword}
               placeholder="••••••"
@@ -132,6 +154,8 @@ const ResetPassword = () => {
                 setErrors((prev) => ({ ...prev, confirmPassword: "" }));
               }}
               secureTextEntry={!showConfirmPassword}
+              onFocus={() => setFocusedField("confirmPassword")}
+              onBlur={() => setFocusedField(null)}
             />
             <TouchableOpacity
               style={styles.icon}
@@ -150,10 +174,10 @@ const ResetPassword = () => {
         </View>
 
         {/* Save Button */}
-        <View
+        <Animated.View
           style={[
             styles.buttonWrapper,
-            keyboardVisible && styles.buttonWithKeyboard,
+            { transform: [{ translateY: buttonOffset }] },
           ]}
         >
           <TouchableOpacity
@@ -166,7 +190,7 @@ const ResetPassword = () => {
           >
             <Text style={styles.saveButtonText}>Save</Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -186,12 +210,8 @@ const styles = StyleSheet.create({
   },
   buttonWrapper: {
     paddingHorizontal: s(24),
-    marginBottom: mvs(20),
+    marginBottom: mvs(80), // Base margin
   },
-  buttonWithKeyboard: {
-    marginBottom: mvs(10),
-  },
-
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -240,6 +260,10 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: "#ff4d4d",
+  },
+  inputFocused: {
+    borderColor: "#6F3F89",
+    borderWidth: 2,
   },
   errorText: {
     color: "#ff4d4d",
