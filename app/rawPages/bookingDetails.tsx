@@ -2,10 +2,12 @@ import ProfileCard from "@/components/ProfileCard";
 import SlideToConfirmButton from "@/components/SliderButton";
 import { ms, s, vs } from "@/utils/scale";
 import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "@react-native-community/blur";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
   Animated,
+  Modal,
   PanResponder,
   PanResponderGestureState,
   ScrollView,
@@ -14,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Pdf from "react-native-pdf";
 
 const tabs = [
   "Booking",
@@ -27,9 +30,23 @@ const BookingDetails = () => {
   const params = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState("Booking");
   const router = useRouter();
-  const [showButton, setShowButton] = useState(true); // State to control button visibility
-  const lastScrollY = useRef(0); // Track last scroll position
-  const buttonOpacity = useRef(new Animated.Value(1)).current; // Animated value for button opacity
+  const [showButton, setShowButton] = useState(true);
+  const lastScrollY = useRef(0);
+  const buttonOpacity = useRef(new Animated.Value(1)).current;
+  const [pdfViewerVisible, setPdfViewerVisible] = useState(false); // PDF viewer visibility
+  const [selectedDocumentIndex, setSelectedDocumentIndex] = useState(0); // Current document index
+  const documents = [
+    {
+      name: "Prescription.pdf",
+      url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      date: "2025-06-08",
+    },
+    {
+      name: "LabReport.pdf",
+      url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      date: "2025-06-06",
+    },
+  ]; // Document list for navigation
 
   const avatar = Array.isArray(params.avatarUrl)
     ? params.avatarUrl[0]
@@ -45,7 +62,6 @@ const BookingDetails = () => {
   }) => {
     const currentScrollY = event.nativeEvent.contentOffset.y;
     if (currentScrollY > lastScrollY.current && currentScrollY > 4) {
-      // Scrolling down and past a threshold
       if (showButton) {
         setShowButton(false);
         Animated.timing(buttonOpacity, {
@@ -55,7 +71,6 @@ const BookingDetails = () => {
         }).start();
       }
     } else if (currentScrollY < lastScrollY.current) {
-      // Scrolling up
       if (!showButton) {
         setShowButton(true);
         Animated.timing(buttonOpacity, {
@@ -68,16 +83,41 @@ const BookingDetails = () => {
     lastScrollY.current = currentScrollY;
   };
 
+  // Open PDF viewer
+  const openPdfViewer = (index: React.SetStateAction<number>) => {
+    setSelectedDocumentIndex(index);
+    setPdfViewerVisible(true);
+  };
+
+  // Close PDF viewer
+  const closePdfViewer = () => {
+    setPdfViewerVisible(false);
+  };
+
+  // Navigate to previous document
+  const goToPreviousDocument = () => {
+    if (selectedDocumentIndex > 0) {
+      setSelectedDocumentIndex(selectedDocumentIndex - 1);
+    }
+  };
+
+  // Navigate to next document
+  const goToNextDocument = () => {
+    if (selectedDocumentIndex < documents.length - 1) {
+      setSelectedDocumentIndex(selectedDocumentIndex + 1);
+    }
+  };
+
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gestureState) =>
-        Math.abs(gestureState.dx) > 20, // only horizontal swipes
+        Math.abs(gestureState.dx) > 20,
       onPanResponderRelease: (_, gestureState: PanResponderGestureState) => {
         const currentIndex = tabs.indexOf(activeTab);
         if (gestureState.dx < -20 && currentIndex < tabs.length - 1) {
-          setActiveTab(tabs[currentIndex + 1]); // swipe left → next tab
+          setActiveTab(tabs[currentIndex + 1]);
         } else if (gestureState.dx > 20 && currentIndex > 0) {
-          setActiveTab(tabs[currentIndex - 1]); // swipe right → previous tab
+          setActiveTab(tabs[currentIndex - 1]);
         }
       },
     })
@@ -155,11 +195,11 @@ const BookingDetails = () => {
                 flexGrow: 1,
               }}
               contentContainerStyle={{
-                paddingBottom: vs(100), // Extra padding to avoid content being hidden
+                paddingBottom: vs(100),
               }}
               showsVerticalScrollIndicator={false}
               onScroll={handleScroll}
-              scrollEventThrottle={16} // Optimize scroll event frequency
+              scrollEventThrottle={16}
             >
               <Text style={styles.label}>Scheduled Visit Time</Text>
               <Text style={styles.value}>{params.date}</Text>
@@ -220,18 +260,7 @@ const BookingDetails = () => {
               onScroll={handleScroll}
               scrollEventThrottle={16}
             >
-              {[
-                {
-                  name: "Prescription.pdf",
-                  url: "https://example.com/prescription.pdf",
-                  date: "2025-06-08",
-                },
-                {
-                  name: "LabReport.pdf",
-                  url: "https://example.com/labreport.pdf",
-                  date: "2025-06-06",
-                },
-              ].map((doc, index) => (
+              {documents.map((doc, index) => (
                 <View
                   key={index}
                   style={{
@@ -250,7 +279,7 @@ const BookingDetails = () => {
                     }}
                   >
                     <Text style={styles.value}>{doc.name}</Text>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => openPdfViewer(index)}>
                       <Ionicons name="eye" size={s(20)} color="#4D61E2" />
                     </TouchableOpacity>
                   </View>
@@ -328,7 +357,6 @@ const BookingDetails = () => {
                   name: "Mia Davis",
                   note: "Vitals stable. Continued observation advised. Discussed treatment adherence and next steps with patient.",
                 },
-                // Simulate large dataset by repeating entries (for testing)
                 ...Array(10).fill({
                   time: "11:00am",
                   date: "24/06/2024",
@@ -373,6 +401,84 @@ const BookingDetails = () => {
           ) : null}
         </View>
       </View>
+
+      {/* PDF Viewer Modal */}
+      <Modal
+        visible={pdfViewerVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closePdfViewer}
+      >
+        <BlurView
+          style={styles.blurView}
+          blurType="light"
+          blurAmount={10}
+          reducedTransparencyFallbackColor="white"
+        >
+          <View style={styles.pdfContainer}>
+            {/* Close Button */}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={closePdfViewer}
+            >
+              <Ionicons name="close" size={s(24)} color="#fff" />
+            </TouchableOpacity>
+
+            {/* Document Name */}
+            <Text style={styles.pdfTitle}>
+              {documents[selectedDocumentIndex]?.name}
+            </Text>
+
+            {/* PDF Viewer */}
+            <Pdf
+              source={{
+                uri: documents[selectedDocumentIndex]?.url,
+                cache: true,
+              }}
+              style={styles.pdf}
+              onError={(error: any) => console.log("PDF Error:", error)}
+              trustAllCerts={false}
+            />
+
+            {/* Navigation Arrows */}
+            <View style={styles.navigationContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.navButton,
+                  selectedDocumentIndex === 0 && styles.disabledButton,
+                ]}
+                onPress={goToPreviousDocument}
+                disabled={selectedDocumentIndex === 0}
+              >
+                <Ionicons
+                  name="arrow-back"
+                  size={s(24)}
+                  color={selectedDocumentIndex === 0 ? "#ccc" : "#fff"}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.navButton,
+                  selectedDocumentIndex === documents.length - 1 &&
+                    styles.disabledButton,
+                ]}
+                onPress={goToNextDocument}
+                disabled={selectedDocumentIndex === documents.length - 1}
+              >
+                <Ionicons
+                  name="arrow-forward"
+                  size={s(24)}
+                  color={
+                    selectedDocumentIndex === documents.length - 1
+                      ? "#ccc"
+                      : "#fff"
+                  }
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </BlurView>
+      </Modal>
 
       {/* Bottom Button */}
       <Animated.View style={[styles.loginButton, { opacity: buttonOpacity }]}>
@@ -462,19 +568,69 @@ const styles = StyleSheet.create({
     left: s(18),
     right: s(18),
     zIndex: 10,
-    // backgroundColor: "#fff", // Added to ensure button visibility
-    paddingVertical: vs(8), // Added padding for better button appearance
-    borderRadius: s(12), // Rounded corners for button container
-    // elevation: 5, // Shadow for Android
-    // shadowColor: "#000", // Shadow for iOS
-    // shadowOffset: { width: 0, height: 2 },
-    // shadowOpacity: 0.2,
-    // shadowRadius: 4,
+    paddingVertical: vs(8),
+    borderRadius: s(12),
   },
   cardContent: {
     flex: 1,
     backgroundColor: "rgba(241, 230, 255, 0.2)",
     borderRadius: s(16),
     padding: s(1),
+  },
+  // PDF Viewer Styles
+  blurView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent overlay
+  },
+  pdfContainer: {
+    width: "90%",
+    height: "80%",
+    backgroundColor: "#fff",
+    borderRadius: s(16),
+    padding: s(16),
+    position: "relative",
+  },
+  closeButton: {
+    position: "absolute",
+    top: s(10),
+    right: s(10),
+    width: s(40),
+    height: s(40),
+    borderRadius: s(20),
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 20,
+  },
+  pdfTitle: {
+    fontFamily: "InterVariable",
+    fontSize: ms(16),
+    fontWeight: "600",
+    color: "#333",
+    textAlign: "center",
+    marginBottom: vs(10),
+  },
+  pdf: {
+    flex: 1,
+    width: "100%",
+    borderRadius: s(8),
+  },
+  navigationContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: vs(10),
+  },
+  navButton: {
+    width: s(50),
+    height: s(50),
+    borderRadius: s(25),
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  disabledButton: {
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
   },
 });
