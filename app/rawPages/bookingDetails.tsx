@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
+  Animated,
   PanResponder,
   PanResponderGestureState,
   ScrollView,
@@ -26,6 +27,9 @@ const BookingDetails = () => {
   const params = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState("Booking");
   const router = useRouter();
+  const [showButton, setShowButton] = useState(true); // State to control button visibility
+  const lastScrollY = useRef(0); // Track last scroll position
+  const buttonOpacity = useRef(new Animated.Value(1)).current; // Animated value for button opacity
 
   const avatar = Array.isArray(params.avatarUrl)
     ? params.avatarUrl[0]
@@ -34,6 +38,35 @@ const BookingDetails = () => {
   function handleLogin() {
     // Handle login logic here
   }
+
+  // Handle scroll to show/hide button
+  const handleScroll = (event: {
+    nativeEvent: { contentOffset: { y: any } };
+  }) => {
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+    if (currentScrollY > lastScrollY.current && currentScrollY > 4) {
+      // Scrolling down and past a threshold
+      if (showButton) {
+        setShowButton(false);
+        Animated.timing(buttonOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+      }
+    } else if (currentScrollY < lastScrollY.current) {
+      // Scrolling up
+      if (!showButton) {
+        setShowButton(true);
+        Animated.timing(buttonOpacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+      }
+    }
+    lastScrollY.current = currentScrollY;
+  };
 
   const panResponder = useRef(
     PanResponder.create({
@@ -122,9 +155,11 @@ const BookingDetails = () => {
                 flexGrow: 1,
               }}
               contentContainerStyle={{
-                paddingBottom: vs(30),
+                paddingBottom: vs(100), // Extra padding to avoid content being hidden
               }}
               showsVerticalScrollIndicator={false}
+              onScroll={handleScroll}
+              scrollEventThrottle={16} // Optimize scroll event frequency
             >
               <Text style={styles.label}>Scheduled Visit Time</Text>
               <Text style={styles.value}>{params.date}</Text>
@@ -149,9 +184,11 @@ const BookingDetails = () => {
                 flexGrow: 1,
               }}
               contentContainerStyle={{
-                paddingBottom: vs(30),
+                paddingBottom: vs(100),
               }}
               showsVerticalScrollIndicator={false}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
             >
               <Text style={styles.label}>Diagnoses</Text>
               <Text style={styles.value}>Done</Text>
@@ -177,9 +214,11 @@ const BookingDetails = () => {
                 flexGrow: 1,
               }}
               contentContainerStyle={{
-                paddingBottom: vs(30),
+                paddingBottom: vs(100),
               }}
               showsVerticalScrollIndicator={false}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
             >
               {[
                 {
@@ -237,9 +276,11 @@ const BookingDetails = () => {
                 flexGrow: 1,
               }}
               contentContainerStyle={{
-                paddingBottom: vs(30),
+                paddingBottom: vs(100),
               }}
               showsVerticalScrollIndicator={false}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
             >
               <Text style={styles.label}>Family Member/Carer Name</Text>
               <Text style={styles.value}>Father</Text>
@@ -256,9 +297,11 @@ const BookingDetails = () => {
                 flexGrow: 1,
               }}
               contentContainerStyle={{
-                paddingBottom: vs(30),
+                paddingBottom: vs(100),
               }}
               showsVerticalScrollIndicator={false}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
             >
               {[
                 {
@@ -332,9 +375,9 @@ const BookingDetails = () => {
       </View>
 
       {/* Bottom Button */}
-      <View style={styles.loginButton}>
+      <Animated.View style={[styles.loginButton, { opacity: buttonOpacity }]}>
         <SlideToConfirmButton label="Start Journey" onComplete={handleLogin} />
-      </View>
+      </Animated.View>
     </View>
   );
 };
@@ -396,7 +439,7 @@ const styles = StyleSheet.create({
   },
   contentBox: {
     flex: 1,
-    paddingHorizontal: s(3), // Reduced padding for wider content
+    paddingHorizontal: s(3),
     marginTop: vs(4),
   },
   label: {
@@ -414,11 +457,19 @@ const styles = StyleSheet.create({
     lineHeight: ms(22),
   },
   loginButton: {
-    position: "absolute", // Fix button at the bottom
-    bottom: vs(20), // Space from bottom edge
+    position: "absolute",
+    bottom: vs(35),
     left: s(18),
     right: s(18),
-    zIndex: 10, // Ensure button is above content
+    zIndex: 10,
+    // backgroundColor: "#fff", // Added to ensure button visibility
+    paddingVertical: vs(8), // Added padding for better button appearance
+    borderRadius: s(12), // Rounded corners for button container
+    // elevation: 5, // Shadow for Android
+    // shadowColor: "#000", // Shadow for iOS
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.2,
+    // shadowRadius: 4,
   },
   cardContent: {
     flex: 1,
