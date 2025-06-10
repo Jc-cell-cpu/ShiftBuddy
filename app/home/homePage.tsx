@@ -112,7 +112,7 @@ const Home = () => {
                 <Ionicons name="notifications-outline" size={24} color="#000" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.profileCircle}>
-                <SOS width={28} height={28} />
+                <SOS width={24} height={24} />
               </TouchableOpacity>
             </View>
           </View>
@@ -181,7 +181,23 @@ const Home = () => {
 
           {bookings.length > 0 ? (
             bookings.map((booking, index) => (
-              <View key={index} style={styles.bookingCard}>
+              <TouchableOpacity
+                key={index}
+                style={styles.bookingCard}
+                onPress={() =>
+                  router.push({
+                    pathname: "/rawPages/bookingDetails",
+                    params: {
+                      name: booking.details.name,
+                      gender: booking.details.gender,
+                      age: booking.details.age,
+                      time: booking.details.time,
+                      date: booking.date,
+                      avatarUrl: booking.details.avatarUrl,
+                    },
+                  })
+                }
+              >
                 <View style={styles.avatarContainer}>
                   <Image
                     source={{ uri: booking.details.avatarUrl }}
@@ -230,7 +246,7 @@ const Home = () => {
                     </TouchableOpacity>
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))
           ) : (
             <View style={styles.noBookingsContainer}>
