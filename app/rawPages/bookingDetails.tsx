@@ -1,9 +1,11 @@
+import LeftArrow from "@/assets/arrow-circle-left.svg";
+import RightArrow from "@/assets/arrow-circle-right.svg";
 import ProfileCard from "@/components/ProfileCard";
 import SlideToConfirmButton from "@/components/SliderButton";
 import { ms, s, vs } from "@/utils/scale";
 import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "@react-native-community/blur";
 import { Asset } from "expo-asset";
-import { BlurView } from "expo-blur";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -150,14 +152,14 @@ const BookingDetails: React.FC = () => {
       Alert.alert("Error", "Document not loaded yet.");
       return;
     }
-    console.log(
-      "Opening document viewer for index:",
-      index,
-      "Type:",
-      doc.type,
-      "URI:",
-      doc.uri
-    );
+    // console.log(
+    //   "Opening document viewer for index:",
+    //   index,
+    //   "Type:",
+    //   doc.type,
+    //   "URI:",
+    //   doc.uri
+    // );
     setSelectedDocumentIndex(index);
     setCurrentPage(1);
     setTotalPages(0);
@@ -172,48 +174,18 @@ const BookingDetails: React.FC = () => {
   };
 
   const goToNextPage = () => {
-    // console.log(
-    //   "Next page clicked, currentPage:",
-    //   currentPage,
-    //   "totalPages:",
-    //   totalPages
-    // );
     if (pdfRef.current && currentPage < totalPages) {
       const nextPage = currentPage + 1;
-      // console.log(
-      //   "Calling setPage:",
-      //   nextPage,
-      //   "pdfRef valid:",
-      //   !!pdfRef.current
-      // );
       pdfRef.current.setPage(nextPage);
       setCurrentPage(nextPage);
-    } else {
-      // console.log("Cannot go to next page: at last page or pdfRef invalid");
     }
   };
 
   const goToPreviousPage = () => {
-    // console.log(
-    //   "Previous page clicked, currentPage:",
-    //   currentPage,
-    //   "totalPages:",
-    //   totalPages
-    // );
     if (pdfRef.current && currentPage > 1) {
       const prevPage = currentPage - 1;
-      // console.log(
-      //   "Calling setPage:",
-      //   prevPage,
-      //   "pdfRef valid:",
-      //   !!pdfRef.current
-      // );
       pdfRef.current.setPage(prevPage);
       setCurrentPage(prevPage);
-    } else {
-      // console.log(
-      //   "Cannot go to previous page: at first page or pdfRef invalid"
-      // );
     }
   };
 
@@ -451,7 +423,12 @@ const BookingDetails: React.FC = () => {
         animationType="fade"
         onRequestClose={closeDocumentViewer}
       >
-        <BlurView style={styles.fullscreenBlur} intensity={40} tint="dark">
+        <BlurView
+          style={styles.fullscreenBlur}
+          blurType="light" // Options: light, dark, extraLight, regular (iOS), chromeMaterial (Android)
+          blurAmount={4} // 0-100, higher values for more blur
+          reducedTransparencyFallbackColor="black" // Fallback for accessibility
+        >
           <View style={styles.documentModalWrapper}>
             {/* Close Button */}
             <TouchableOpacity
@@ -460,7 +437,7 @@ const BookingDetails: React.FC = () => {
               activeOpacity={0.7}
               hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
             >
-              <Ionicons name="close" size={s(20)} color="#4D61E2" />
+              <Ionicons name="close" size={s(15)} color="#080808" />
             </TouchableOpacity>
 
             {/* PDF Viewer */}
@@ -480,29 +457,13 @@ const BookingDetails: React.FC = () => {
                     filePath,
                     { width, height }
                   ) => {
-                    // console.log(
-                    //   "PDF loaded, total pages:",
-                    //   numberOfPages,
-                    //   "dimensions:",
-                    //   width,
-                    //   height
-                    // );
                     setTotalPages(numberOfPages > 0 ? numberOfPages : 1);
                     setCurrentPage(1);
                     if (pdfRef.current) {
-                      // console.log(
-                      //   "Setting initial page to 1 with scroll reset"
-                      // );
                       pdfRef.current.setPage(1);
                     }
                   }}
                   onPageChanged={(page, numberOfPages) => {
-                    // console.log(
-                    //   "Page changed to:",
-                    //   page,
-                    //   "total pages:",
-                    //   numberOfPages
-                    // );
                     setCurrentPage(
                       page > 0 && page <= numberOfPages ? page : 1
                     );
@@ -515,7 +476,7 @@ const BookingDetails: React.FC = () => {
                     Alert.alert("Error", "Failed to load PDF.");
                   }}
                   enablePaging={true}
-                  horizontal={true} // Disabled for consistent alignment
+                  horizontal={true}
                   trustAllCerts={false}
                   renderActivityIndicator={() => (
                     <ActivityIndicator
@@ -528,14 +489,9 @@ const BookingDetails: React.FC = () => {
               ) : (
                 <Text style={styles.errorText}>No document selected.</Text>
               )}
+              {/* Semi-transparent overlay for readability */}
+              <View style={styles.pdfOverlay} />
             </View>
-
-            {/* Page Indicator */}
-            {/* <View style={styles.pageIndicator}>
-              <Text style={styles.pageText}>
-                Page {currentPage} of {totalPages}
-              </Text>
-            </View> */}
 
             {/* Navigation Buttons */}
             <TouchableOpacity
@@ -548,7 +504,7 @@ const BookingDetails: React.FC = () => {
               activeOpacity={0.7}
               hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
             >
-              <Ionicons name="chevron-back" size={s(24)} color="#4D61E2" />
+              <LeftArrow width={s(24)} height={s(24)} fill="#4D61E2" />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -561,7 +517,7 @@ const BookingDetails: React.FC = () => {
               activeOpacity={0.7}
               hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
             >
-              <Ionicons name="chevron-forward" size={s(24)} color="#4D61E2" />
+              <RightArrow width={s(24)} height={s(24)} fill="#4D61E2" />
             </TouchableOpacity>
           </View>
         </BlurView>
@@ -681,24 +637,31 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.5)",
+    backgroundColor: "rgba(255, 255, 255, 0.23)", // Dark overlay to enhance blur
   },
   documentModalWrapper: {
     position: "relative",
     width: SCREEN_WIDTH * 0.85,
     height: SCREEN_HEIGHT * 0.5,
-    backgroundColor: "#fff",
+    // backgroundColor: "rgba(255, 255, 255, 0.1)", // Glassmorphism effect
     borderRadius: s(20),
     paddingTop: vs(16),
     paddingHorizontal: s(12),
     paddingBottom: vs(2),
     justifyContent: "center",
     alignItems: "center",
+    // borderWidth: 1,
+    // borderColor: "rgba(255, 255, 255, 0.2)",
+    // shadowColor: "#000",
+    // shadowOffset: { width: 0, height: 4 },
+    // shadowOpacity: 0.2,
+    // shadowRadius: 8,
+    // elevation: 5,
   },
   closeButtonTop: {
     position: "absolute",
-    top: vs(12),
-    right: s(12),
+    top: vs(3),
+    right: s(3),
     backgroundColor: "#fff",
     width: s(28),
     height: s(28),
@@ -706,24 +669,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     zIndex: 100,
-    elevation: 4,
+    elevation: 1,
   },
   pdfContainer: {
     flex: 1,
     width: "100%",
-    height: "100%", // Ensure container fills modal
+    height: "100%",
     borderRadius: s(10),
     overflow: "hidden",
-    backgroundColor: "#fff",
+    backgroundColor: "transparent", // Allow blur to show through
+    position: "relative",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 1,
   },
   leftNavButton: {
     position: "absolute",
-    left: -s(15),
+    left: -s(22),
     top: "50%",
-    transform: [{ translateY: -s(18) }],
+    transform: [{ translateY: -s(20) }],
     backgroundColor: "#fff",
-    width: s(36),
-    height: s(36),
+    width: s(23),
+    height: s(23),
     borderRadius: s(18),
     alignItems: "center",
     justifyContent: "center",
@@ -732,12 +701,12 @@ const styles = StyleSheet.create({
   },
   rightNavButton: {
     position: "absolute",
-    right: -s(15),
+    right: -s(22),
     top: "50%",
     transform: [{ translateY: -s(18) }],
     backgroundColor: "#fff",
-    width: s(36),
-    height: s(36),
+    width: s(23),
+    height: s(23),
     borderRadius: s(18),
     alignItems: "center",
     justifyContent: "center",
@@ -746,9 +715,17 @@ const styles = StyleSheet.create({
   },
   pdfViewer: {
     flex: 1,
-    width: SCREEN_WIDTH * 0.85 - s(24), // Match modal width minus padding
-    height: SCREEN_HEIGHT * 0.75 - vs(56), // Match modal height minus padding
-    backgroundColor: "#fff",
+    width: SCREEN_WIDTH * 0.85 - s(24),
+    height: SCREEN_HEIGHT * 0.5 - vs(56),
+    backgroundColor: "transparent", // Allow blur to show through
+  },
+  pdfOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    // backgroundColor: "rgba(255, 255, 255, 0.9)", // Semi-transparent overlay for readability
   },
   loadingIndicator: {
     position: "absolute",
@@ -768,20 +745,6 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: "#f0f0f0",
     opacity: 0.5,
-  },
-  pageIndicator: {
-    position: "absolute",
-    bottom: vs(16),
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    paddingVertical: vs(4),
-    paddingHorizontal: s(12),
-    borderRadius: s(12),
-  },
-  pageText: {
-    fontFamily: "InterVariable",
-    fontSize: ms(12),
-    color: "#fff",
   },
 });
 
