@@ -686,12 +686,12 @@ const styles = StyleSheet.create({
   documentModalWrapper: {
     position: "relative",
     width: SCREEN_WIDTH * 0.85,
-    height: SCREEN_HEIGHT * 0.75,
+    height: SCREEN_HEIGHT * 0.5,
     backgroundColor: "#fff",
     borderRadius: s(20),
     paddingTop: vs(16),
     paddingHorizontal: s(12),
-    paddingBottom: vs(40),
+    paddingBottom: vs(2),
     justifyContent: "center",
     alignItems: "center",
   },
@@ -718,7 +718,7 @@ const styles = StyleSheet.create({
   },
   leftNavButton: {
     position: "absolute",
-    left: s(12),
+    left: -s(15),
     top: "50%",
     transform: [{ translateY: -s(18) }],
     backgroundColor: "#fff",
@@ -732,7 +732,7 @@ const styles = StyleSheet.create({
   },
   rightNavButton: {
     position: "absolute",
-    right: s(12),
+    right: -s(15),
     top: "50%",
     transform: [{ translateY: -s(18) }],
     backgroundColor: "#fff",
