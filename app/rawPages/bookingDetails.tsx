@@ -194,26 +194,26 @@ const BookingDetails: React.FC = () => {
   };
 
   const goToPreviousPage = () => {
-    console.log(
-      "Previous page clicked, currentPage:",
-      currentPage,
-      "totalPages:",
-      totalPages
-    );
+    // console.log(
+    //   "Previous page clicked, currentPage:",
+    //   currentPage,
+    //   "totalPages:",
+    //   totalPages
+    // );
     if (pdfRef.current && currentPage > 1) {
       const prevPage = currentPage - 1;
-      console.log(
-        "Calling setPage:",
-        prevPage,
-        "pdfRef valid:",
-        !!pdfRef.current
-      );
+      // console.log(
+      //   "Calling setPage:",
+      //   prevPage,
+      //   "pdfRef valid:",
+      //   !!pdfRef.current
+      // );
       pdfRef.current.setPage(prevPage);
       setCurrentPage(prevPage);
     } else {
-      console.log(
-        "Cannot go to previous page: at first page or pdfRef invalid"
-      );
+      // console.log(
+      //   "Cannot go to previous page: at first page or pdfRef invalid"
+      // );
     }
   };
 
