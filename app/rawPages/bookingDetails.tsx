@@ -15,8 +15,6 @@ import {
   Dimensions,
   FlatList,
   Modal,
-  PanResponder,
-  PanResponderGestureState,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,6 +22,7 @@ import {
   View,
 } from "react-native";
 import ReactNativeBiometrics, { BiometryTypes } from "react-native-biometrics";
+import { PanGestureHandler, State } from "react-native-gesture-handler";
 import { default as Pdf, default as PDFViewCtrl } from "react-native-pdf";
 
 interface BookingParams {
@@ -150,14 +149,12 @@ const BookingDetails: React.FC = () => {
   const authenticateUser = async (): Promise<boolean> => {
     const rnBiometrics = new ReactNativeBiometrics();
     try {
-      // Check if biometrics or device lock is available
       const { available, biometryType } =
         await rnBiometrics.isSensorAvailable();
 
       if (!available) {
-        // No authentication methods available (biometrics and device lock disabled)
         console.log("No authentication methods available on this device.");
-        return true; // Allow access without authentication
+        return true;
       }
 
       if (
@@ -165,7 +162,6 @@ const BookingDetails: React.FC = () => {
         biometryType === BiometryTypes.FaceID ||
         biometryType === BiometryTypes.Biometrics
       ) {
-        // Biometric authentication (fingerprint or Face ID) is available
         const { success } = await rnBiometrics.simplePrompt({
           promptMessage: "Authenticate to view document",
           fallbackPromptMessage:
@@ -179,7 +175,6 @@ const BookingDetails: React.FC = () => {
           return false;
         }
       } else {
-        // Fallback to device lock (PIN/password) if biometrics are not available but device lock is
         const { success } = await rnBiometrics.simplePrompt({
           promptMessage: "Enter your device PIN or password to view document",
           fallbackPromptMessage:
@@ -207,7 +202,6 @@ const BookingDetails: React.FC = () => {
       return;
     }
 
-    // Authenticate user before opening the document viewer
     const isAuthenticated = await authenticateUser();
     if (!isAuthenticated) {
       Alert.alert(
@@ -254,20 +248,29 @@ const BookingDetails: React.FC = () => {
     }
   };
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) =>
-        Math.abs(gestureState.dx) > 50,
-      onPanResponderRelease: (_, gestureState: PanResponderGestureState) => {
-        const currentIndex = tabs.indexOf(activeTab);
-        if (gestureState.dx > 50 && currentIndex < tabs.length - 1) {
-          setActiveTab(tabs[currentIndex + 1]);
-        } else if (gestureState.dx < -50 && currentIndex > 0) {
-          setActiveTab(tabs[currentIndex - 1]);
-        }
-      },
-    })
-  ).current;
+  const onSwipeGesture = (event: any) => {
+    if (event.nativeEvent.state === State.END) {
+      const dx = event.nativeEvent.translationX;
+      console.log("Swipe detected - dx:", dx, "Current tab:", activeTab);
+      const currentIndex = tabs.indexOf(activeTab);
+      // Swipe left (dx < 0) to go to the next tab
+      if (dx < -30 && currentIndex < tabs.length - 1) {
+        console.log(
+          "Swiping left - Moving to next tab:",
+          tabs[currentIndex + 1]
+        );
+        setActiveTab(tabs[currentIndex + 1]);
+      }
+      // Swipe right (dx > 0) to go to the previous tab
+      else if (dx > 30 && currentIndex > 0) {
+        console.log(
+          "Swiping right - Moving to previous tab:",
+          tabs[currentIndex - 1]
+        );
+        setActiveTab(tabs[currentIndex - 1]);
+      }
+    }
+  };
 
   const progressNotes = [
     {
@@ -339,147 +342,156 @@ const BookingDetails: React.FC = () => {
         </ScrollView>
       </View>
 
-      {/* Tab Content */}
-      <View style={styles.contentBox} {...panResponder.panHandlers}>
-        <View style={styles.cardContent}>
-          {activeTab === "Booking" ? (
-            <ScrollView
-              style={styles.scrollView}
-              contentContainerStyle={{ paddingBottom: vs(100) }}
-              showsVerticalScrollIndicator={false}
-              onScroll={handleScroll}
-              scrollEventThrottle={16}
-            >
-              <Text style={styles.label}>Scheduled Visit Time</Text>
-              <Text style={styles.value}>{date}</Text>
-              <Text style={styles.label}>Duration</Text>
-              <Text style={styles.value}>{time}</Text>
-              <Text style={styles.label}>Type of Care</Text>
-              <Text style={styles.value}>Medication</Text>
-              <Text style={styles.label}>Client Notes</Text>
-              <Text style={styles.value}>
-                Bring a valid ID and your insurance card.
-              </Text>
-            </ScrollView>
-          ) : activeTab === "Medical info" ? (
-            <ScrollView
-              style={styles.scrollView}
-              contentContainerStyle={{ paddingBottom: vs(100) }}
-              showsVerticalScrollIndicator={false}
-              onScroll={handleScroll}
-              scrollEventThrottle={16}
-            >
-              <Text style={styles.label}>Diagnoses</Text>
-              <Text style={styles.value}>Done</Text>
-              <Text style={styles.label}>Allergies</Text>
-              <Text style={styles.value}>None</Text>
-              <Text style={styles.label}>Medications with Dosage & Timing</Text>
-              <Text style={styles.value}>Medication</Text>
-              <Text style={styles.label}>Mobility Notes</Text>
-              <Text style={styles.value}>None</Text>
-              <Text style={styles.label}>Emergency Plan</Text>
-              <Text style={styles.value}>Dose 30</Text>
-            </ScrollView>
-          ) : activeTab === "Documents" ? (
-            <ScrollView
-              style={styles.scrollView}
-              contentContainerStyle={{ paddingBottom: vs(100) }}
-              showsVerticalScrollIndicator={false}
-              onScroll={handleScroll}
-              scrollEventThrottle={16}
-            >
-              {documents.map((doc, index) => (
-                <View
-                  key={index}
-                  style={{
-                    marginBottom: vs(24),
-                    paddingBottom: vs(16),
-                    borderBottomWidth: 0.5,
-                    borderBottomColor: "#E0E0E0",
-                  }}
-                >
+      {/* Tab Content with Swipe Handler */}
+      <PanGestureHandler
+        onHandlerStateChange={onSwipeGesture}
+        activeOffsetX={[-30, 30]} // Require at least 30px movement to trigger
+      >
+        <View style={styles.contentBox}>
+          <View style={styles.cardContent}>
+            {activeTab === "Booking" ? (
+              <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={{ paddingBottom: vs(100) }}
+                showsVerticalScrollIndicator={false}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+              >
+                <Text style={styles.label}>Scheduled Visit Time</Text>
+                <Text style={styles.value}>{date}</Text>
+                <Text style={styles.label}>Duration</Text>
+                <Text style={styles.value}>{time}</Text>
+                <Text style={styles.label}>Type of Care</Text>
+                <Text style={styles.value}>Medication</Text>
+                <Text style={styles.label}>Client Notes</Text>
+                <Text style={styles.value}>
+                  Bring a valid ID and your insurance card.
+                </Text>
+              </ScrollView>
+            ) : activeTab === "Medical info" ? (
+              <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={{ paddingBottom: vs(100) }}
+                showsVerticalScrollIndicator={false}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+              >
+                <Text style={styles.label}>Diagnoses</Text>
+                <Text style={styles.value}>Done</Text>
+                <Text style={styles.label}>Allergies</Text>
+                <Text style={styles.value}>None</Text>
+                <Text style={styles.label}>
+                  Medications with Dosage & Timing
+                </Text>
+                <Text style={styles.value}>Medication</Text>
+                <Text style={styles.label}>Mobility Notes</Text>
+                <Text style={styles.value}>None</Text>
+                <Text style={styles.label}>Emergency Plan</Text>
+                <Text style={styles.value}>Dose 30</Text>
+              </ScrollView>
+            ) : activeTab === "Documents" ? (
+              <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={{ paddingBottom: vs(100) }}
+                showsVerticalScrollIndicator={false}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+              >
+                {documents.map((doc, index) => (
+                  <View
+                    key={index}
+                    style={{
+                      marginBottom: vs(24),
+                      paddingBottom: vs(16),
+                      borderBottomWidth: 0.5,
+                      borderBottomColor: "#E0E0E0",
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text style={styles.value}>{doc.name}</Text>
+                      <TouchableOpacity
+                        onPress={() => openDocumentViewer(index)}
+                      >
+                        <Ionicons name="eye" size={s(20)} color="#4D61E2" />
+                      </TouchableOpacity>
+                    </View>
+                    <Text
+                      style={[
+                        styles.label,
+                        { fontSize: ms(14), color: "#666", marginTop: vs(2) },
+                      ]}
+                    >
+                      {doc.date}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+            ) : activeTab === "Contact" ? (
+              <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={{ paddingBottom: vs(100) }}
+                showsVerticalScrollIndicator={false}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+              >
+                <Text style={styles.label}>Family Member/Carer Name</Text>
+                <Text style={styles.value}>Father</Text>
+                <Text style={styles.label}>Contact Number & Relation</Text>
+                <Text style={styles.value}>890987654</Text>
+              </ScrollView>
+            ) : activeTab === "Progress Note" ? (
+              <FlatList
+                style={styles.scrollView}
+                contentContainerStyle={{ paddingBottom: vs(100) }}
+                showsVerticalScrollIndicator={false}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+                data={progressNotes}
+                keyExtractor={(_, index) => index.toString()}
+                renderItem={({ item }) => (
                   <View
                     style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      alignItems: "center",
+                      marginBottom: vs(24),
+                      paddingBottom: vs(16),
+                      borderBottomWidth: 0.5,
+                      borderBottomColor: "#E0E0E0",
                     }}
                   >
-                    <Text style={styles.value}>{doc.name}</Text>
-                    <TouchableOpacity onPress={() => openDocumentViewer(index)}>
-                      <Ionicons name="eye" size={s(20)} color="#4D61E2" />
-                    </TouchableOpacity>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        marginBottom: vs(8),
+                      }}
+                    >
+                      <Text style={styles.value}>{item.time}</Text>
+                      <Text style={styles.value}>{item.date}</Text>
+                    </View>
+                    <Text
+                      style={{
+                        fontFamily: "InterVariable",
+                        fontSize: ms(14),
+                        fontWeight: "700",
+                        color: "#333",
+                        marginBottom: vs(8),
+                      }}
+                    >
+                      {item.name}
+                    </Text>
+                    <Text style={styles.value}>{item.note}</Text>
                   </View>
-                  <Text
-                    style={[
-                      styles.label,
-                      { fontSize: ms(14), color: "#666", marginTop: vs(2) },
-                    ]}
-                  >
-                    {doc.date}
-                  </Text>
-                </View>
-              ))}
-            </ScrollView>
-          ) : activeTab === "Contact" ? (
-            <ScrollView
-              style={styles.scrollView}
-              contentContainerStyle={{ paddingBottom: vs(100) }}
-              showsVerticalScrollIndicator={false}
-              onScroll={handleScroll}
-              scrollEventThrottle={16}
-            >
-              <Text style={styles.label}>Family Member/Carer Name</Text>
-              <Text style={styles.value}>Father</Text>
-              <Text style={styles.label}>Contact Number & Relation</Text>
-              <Text style={styles.value}>890987654</Text>
-            </ScrollView>
-          ) : activeTab === "Progress Note" ? (
-            <FlatList
-              style={styles.scrollView}
-              contentContainerStyle={{ paddingBottom: vs(100) }}
-              showsVerticalScrollIndicator={false}
-              onScroll={handleScroll}
-              scrollEventThrottle={16}
-              data={progressNotes}
-              keyExtractor={(_, index) => index.toString()}
-              renderItem={({ item }) => (
-                <View
-                  style={{
-                    marginBottom: vs(24),
-                    paddingBottom: vs(16),
-                    borderBottomWidth: 0.5,
-                    borderBottomColor: "#E0E0E0",
-                  }}
-                >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      marginBottom: vs(8),
-                    }}
-                  >
-                    <Text style={styles.value}>{item.time}</Text>
-                    <Text style={styles.value}>{item.date}</Text>
-                  </View>
-                  <Text
-                    style={{
-                      fontFamily: "InterVariable",
-                      fontSize: ms(14),
-                      fontWeight: "700",
-                      color: "#333",
-                      marginBottom: vs(8),
-                    }}
-                  >
-                    {item.name}
-                  </Text>
-                  <Text style={styles.value}>{item.note}</Text>
-                </View>
-              )}
-            />
-          ) : null}
+                )}
+              />
+            ) : null}
+          </View>
         </View>
-      </View>
+      </PanGestureHandler>
 
       {/* Document Viewer Modal */}
       <Modal
@@ -490,12 +502,11 @@ const BookingDetails: React.FC = () => {
       >
         <BlurView
           style={styles.fullscreenBlur}
-          blurType="light" // Options: light, dark, extraLight, regular (iOS), chromeMaterial (Android)
-          blurAmount={4} // 0-100, higher values for more blur
-          reducedTransparencyFallbackColor="black" // Fallback for accessibility
+          blurType="light"
+          blurAmount={4}
+          reducedTransparencyFallbackColor="black"
         >
           <View style={styles.documentModalWrapper}>
-            {/* Close Button */}
             <TouchableOpacity
               style={styles.closeButtonTop}
               onPress={closeDocumentViewer}
@@ -505,7 +516,6 @@ const BookingDetails: React.FC = () => {
               <Ionicons name="close" size={s(15)} color="#080808" />
             </TouchableOpacity>
 
-            {/* PDF Viewer */}
             <View style={styles.pdfContainer}>
               {documents[selectedDocumentIndex]?.uri ? (
                 <Pdf
@@ -516,7 +526,7 @@ const BookingDetails: React.FC = () => {
                   }}
                   page={currentPage}
                   style={styles.pdfViewer}
-                  fitPolicy={2} // Fit both width and height
+                  fitPolicy={2}
                   onLoadComplete={(
                     numberOfPages,
                     filePath,
@@ -554,11 +564,9 @@ const BookingDetails: React.FC = () => {
               ) : (
                 <Text style={styles.errorText}>No document selected.</Text>
               )}
-              {/* Semi-transparent overlay for readability */}
               <View style={styles.pdfOverlay} />
             </View>
 
-            {/* Navigation Buttons */}
             <TouchableOpacity
               style={[
                 styles.leftNavButton,
@@ -588,7 +596,6 @@ const BookingDetails: React.FC = () => {
         </BlurView>
       </Modal>
 
-      {/* Bottom Button */}
       <Animated.View style={[styles.loginButton, { opacity: buttonOpacity }]}>
         <SlideToConfirmButton label="Start Journey" onComplete={handleLogin} />
       </Animated.View>
@@ -702,7 +709,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.23)", // Dark overlay to enhance blur
+    backgroundColor: "rgba(255, 255, 255, 0.23)",
   },
   documentModalWrapper: {
     position: "relative",
@@ -714,11 +721,9 @@ const styles = StyleSheet.create({
     paddingBottom: vs(2),
     justifyContent: "center",
     alignItems: "center",
-    // shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    // elevation: 1,
   },
   closeButtonTop: {
     position: "absolute",
@@ -739,7 +744,7 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: s(10),
     overflow: "hidden",
-    backgroundColor: "transparent", // Allow blur to show through
+    backgroundColor: "transparent",
     position: "relative",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -779,7 +784,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: SCREEN_WIDTH * 0.85 - s(24),
     height: SCREEN_HEIGHT * 0.5 - vs(56),
-    backgroundColor: "transparent", // Allow blur to show through
+    backgroundColor: "transparent",
   },
   pdfOverlay: {
     position: "absolute",
