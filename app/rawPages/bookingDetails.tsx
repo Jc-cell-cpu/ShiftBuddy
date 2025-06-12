@@ -1,11 +1,13 @@
 import LeftArrow from "@/assets/arrow-circle-left.svg";
 import RightArrow from "@/assets/arrow-circle-right.svg";
+import DocumentUploadModal from "@/components/DocumentUploadModal"; // Import the new component
 import ProfileCard from "@/components/ProfileCard";
 import SlideToConfirmButton from "@/components/SliderButton";
 import { ms, s, vs } from "@/utils/scale";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "@react-native-community/blur";
 import { Asset } from "expo-asset";
+import * as DocumentPicker from "expo-document-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -23,7 +25,7 @@ import {
 } from "react-native";
 import ReactNativeBiometrics, { BiometryTypes } from "react-native-biometrics";
 import { PanGestureHandler, State } from "react-native-gesture-handler";
-import { default as Pdf, default as PDFViewCtrl } from "react-native-pdf";
+import { default as Pdf } from "react-native-pdf";
 
 interface BookingParams {
   name?: string;
@@ -36,7 +38,7 @@ interface BookingParams {
 
 interface Document {
   name: string;
-  asset: any;
+  asset?: any;
   date: string;
   type: "pdf";
   uri?: string;
@@ -52,17 +54,18 @@ const tabs = [
 
 const BookingDetails: React.FC = () => {
   const params = useLocalSearchParams();
-  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Booking");
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Booking");
   const [showButton, setShowButton] = useState<boolean>(true);
-  const lastScrollY = useRef<number>(0);
-  const buttonOpacity = useRef<Animated.Value>(new Animated.Value(1)).current;
   const [documentViewerVisible, setDocumentViewerVisible] =
     useState<boolean>(false);
+  const [uploadModalVisible, setUploadModalVisible] = useState<boolean>(false); // New state for upload modal
   const [selectedDocumentIndex, setSelectedDocumentIndex] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(0);
-  const pdfRef = useRef<PDFViewCtrl>(null);
+  const lastScrollY = useRef<number>(0);
+  const buttonOpacity = useRef<Animated.Value>(new Animated.Value(1)).current;
+  const pdfRef = useRef<Pdf>(null);
   const [documents, setDocuments] = useState<Document[]>([
     {
       name: "Prescription sheet",
@@ -83,6 +86,7 @@ const BookingDetails: React.FC = () => {
       try {
         const updatedDocuments = await Promise.all(
           documents.map(async (doc) => {
+            if (!doc.asset) return doc; // Skip if no asset (e.g., uploaded documents)
             const asset = Asset.fromModule(doc.asset);
             await asset.downloadAsync();
             if (!asset.localUri) {
@@ -118,7 +122,43 @@ const BookingDetails: React.FC = () => {
 
   const avatar = Array.isArray(avatarUrl) ? avatarUrl[0] : avatarUrl;
 
-  const handleLogin = () => {};
+  const handleLogin = () => {
+    setUploadModalVisible(true); // Open upload modal on slide complete
+  };
+
+  const handleDocumentUpload = async (
+    result: DocumentPicker.DocumentPickerResult
+  ) => {
+    // Placeholder for API integration
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const file = result.assets[0];
+      const newDocument: Document = {
+        name: file.name,
+        date: new Date().toISOString().split("T")[0], // Current date in YYYY-MM-DD
+        type: "pdf",
+        uri: file.uri,
+      };
+      setDocuments((prev) => [...prev, newDocument]);
+      console.log("Document uploaded:", newDocument);
+
+      // Example API call (uncomment and customize with your API endpoint)
+      /*
+      const formData = new FormData();
+      formData.append("file", {
+        uri: file.uri,
+        name: file.name,
+        type: file.mimeType,
+      });
+      await fetch("YOUR_API_ENDPOINT", {
+        method: "POST",
+        body: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      */
+    }
+  };
 
   const handleScroll = (event: {
     nativeEvent: { contentOffset: { y: number } };
@@ -253,16 +293,13 @@ const BookingDetails: React.FC = () => {
       const dx = event.nativeEvent.translationX;
       console.log("Swipe detected - dx:", dx, "Current tab:", activeTab);
       const currentIndex = tabs.indexOf(activeTab);
-      // Swipe left (dx < 0) to go to the next tab
       if (dx < -30 && currentIndex < tabs.length - 1) {
         console.log(
           "Swiping left - Moving to next tab:",
           tabs[currentIndex + 1]
         );
         setActiveTab(tabs[currentIndex + 1]);
-      }
-      // Swipe right (dx > 0) to go to the previous tab
-      else if (dx > 30 && currentIndex > 0) {
+      } else if (dx > 30 && currentIndex > 0) {
         console.log(
           "Swiping right - Moving to previous tab:",
           tabs[currentIndex - 1]
@@ -345,7 +382,7 @@ const BookingDetails: React.FC = () => {
       {/* Tab Content with Swipe Handler */}
       <PanGestureHandler
         onHandlerStateChange={onSwipeGesture}
-        activeOffsetX={[-30, 30]} // Require at least 30px movement to trigger
+        activeOffsetX={[-30, 30]}
       >
         <View style={styles.contentBox}>
           <View style={styles.cardContent}>
@@ -484,7 +521,7 @@ const BookingDetails: React.FC = () => {
                     >
                       {item.name}
                     </Text>
-                    <Text style={styles.value}>{item.note}</Text>
+                    <Text style={styles.value}>{item.name}</Text>
                   </View>
                 )}
               />
@@ -595,6 +632,16 @@ const BookingDetails: React.FC = () => {
           </View>
         </BlurView>
       </Modal>
+
+      {/* Document Upload Modal */}
+      <DocumentUploadModal
+        visible={uploadModalVisible}
+        onClose={() => setUploadModalVisible(false)}
+        onUpload={handleDocumentUpload}
+        title="Upload New Document"
+        allowedTypes={["application/pdf"]}
+        buttonLabel="Choose PDF"
+      />
 
       <Animated.View style={[styles.loginButton, { opacity: buttonOpacity }]}>
         <SlideToConfirmButton label="Start Journey" onComplete={handleLogin} />
