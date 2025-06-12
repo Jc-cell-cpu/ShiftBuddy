@@ -70,6 +70,7 @@ export default function Login() {
           ]}
           value={email}
           placeholder="melpeters@gmail.com"
+          placeholderTextColor="#BFBFBF" // Set placeholder color
           onChangeText={(text) => {
             setEmail(text);
             setErrors((prev) => ({ ...prev, email: "" }));
@@ -93,6 +94,7 @@ export default function Login() {
             ]}
             value={password}
             placeholder="••••••"
+            placeholderTextColor="#BFBFBF" // Set placeholder color
             onChangeText={(text) => {
               setPassword(text);
               setErrors((prev) => ({ ...prev, password: "" }));
@@ -139,7 +141,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: s(24),
-    paddingTop: vs(40), // reduced from 80 to fix push down
+    paddingTop: vs(40),
   },
   logoContainer: {
     alignItems: "center",
@@ -187,10 +189,9 @@ const styles = StyleSheet.create({
     borderColor: "#ff4d4d",
   },
   inputFocused: {
-    borderColor: "#6F3F89", // or any highlight color you want
+    borderColor: "#6F3F89",
     borderWidth: 2,
   },
-
   errorText: {
     color: "#ff4d4d",
     fontSize: ms(12),

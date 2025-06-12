@@ -127,6 +127,7 @@ const ResetPassword = () => {
               ]}
               value={newPassword}
               placeholder="••••••"
+              placeholderTextColor="#BFBFBF"
               onChangeText={(text) => {
                 setNewPassword(text);
                 setErrors((prev) => ({ ...prev, newPassword: "" }));
@@ -161,6 +162,7 @@ const ResetPassword = () => {
               ]}
               value={confirmPassword}
               placeholder="••••••"
+              placeholderTextColor="#BFBFBF"
               onChangeText={(text) => {
                 setConfirmPassword(text);
                 setErrors((prev) => ({ ...prev, confirmPassword: "" }));
@@ -264,6 +266,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
+    color: "#000",
     borderRadius: s(8),
     paddingHorizontal: s(12),
     paddingVertical: vs(14),

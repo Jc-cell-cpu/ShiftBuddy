@@ -12,10 +12,14 @@
     "ios": {
       "supportsTablet": true,
       "permissions": {
-      "camera": {
-        "description": "Allow $(PRODUCT_NAME) to access your camera to take photos."
+        "camera": {
+          "description": "Allow $(PRODUCT_NAME) to access your camera to take photos."
+        }
+      },
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "We use Face ID to securely authenticate you before accessing sensitive medical documents.",
+        "NSBiometryUsageDescription": "We use biometrics (Face ID or Touch ID) to securely authenticate you before accessing sensitive medical documents."
       }
-    }
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +29,9 @@
       "edgeToEdgeEnabled": true,
       "package": "com.jc_69.ShiftBuddy",
       "permissions": [
-        "CAMERA"
+        "CAMERA",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT"
       ]
     },
     "web": {

@@ -23,6 +23,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import ReactNativeBiometrics, { BiometryTypes } from "react-native-biometrics";
 import { default as Pdf, default as PDFViewCtrl } from "react-native-pdf";
 
 interface BookingParams {
@@ -146,20 +147,84 @@ const BookingDetails: React.FC = () => {
     lastScrollY.current = currentScrollY;
   };
 
-  const openDocumentViewer = (index: number) => {
+  const authenticateUser = async (): Promise<boolean> => {
+    const rnBiometrics = new ReactNativeBiometrics();
+    try {
+      // Check if biometrics or device lock is available
+      const { available, biometryType } =
+        await rnBiometrics.isSensorAvailable();
+
+      if (!available) {
+        // No authentication methods available (biometrics and device lock disabled)
+        console.log("No authentication methods available on this device.");
+        return true; // Allow access without authentication
+      }
+
+      if (
+        biometryType === BiometryTypes.TouchID ||
+        biometryType === BiometryTypes.FaceID ||
+        biometryType === BiometryTypes.Biometrics
+      ) {
+        // Biometric authentication (fingerprint or Face ID) is available
+        const { success } = await rnBiometrics.simplePrompt({
+          promptMessage: "Authenticate to view document",
+          fallbackPromptMessage:
+            "Biometrics failed, please use your device PIN or password",
+        });
+        if (success) {
+          console.log("Biometric authentication successful");
+          return true;
+        } else {
+          console.log("Biometric authentication failed");
+          return false;
+        }
+      } else {
+        // Fallback to device lock (PIN/password) if biometrics are not available but device lock is
+        const { success } = await rnBiometrics.simplePrompt({
+          promptMessage: "Enter your device PIN or password to view document",
+          fallbackPromptMessage:
+            "Please authenticate using your device PIN or password",
+        });
+        if (success) {
+          console.log("Device lock authentication successful");
+          return true;
+        } else {
+          console.log("Device lock authentication failed");
+          return false;
+        }
+      }
+    } catch (error) {
+      console.error("Authentication error:", error);
+      Alert.alert("Error", "Failed to authenticate. Please try again.");
+      return false;
+    }
+  };
+
+  const openDocumentViewer = async (index: number) => {
     const doc = documents[index];
     if (!doc.uri) {
       Alert.alert("Error", "Document not loaded yet.");
       return;
     }
-    // console.log(
-    //   "Opening document viewer for index:",
-    //   index,
-    //   "Type:",
-    //   doc.type,
-    //   "URI:",
-    //   doc.uri
-    // );
+
+    // Authenticate user before opening the document viewer
+    const isAuthenticated = await authenticateUser();
+    if (!isAuthenticated) {
+      Alert.alert(
+        "Authentication Failed",
+        "You need to authenticate to view this document."
+      );
+      return;
+    }
+
+    console.log(
+      "Opening document viewer for index:",
+      index,
+      "Type:",
+      doc.type,
+      "URI:",
+      doc.uri
+    );
     setSelectedDocumentIndex(index);
     setCurrentPage(1);
     setTotalPages(0);
@@ -584,7 +649,7 @@ const styles = StyleSheet.create({
   },
   activeTab: {
     borderColor: "#4D61E2",
-    marginBottom: vs(13),
+    marginBottom: vs(10),
   },
   tabText: {
     fontFamily: "InterVariable",
@@ -643,20 +708,17 @@ const styles = StyleSheet.create({
     position: "relative",
     width: SCREEN_WIDTH * 0.85,
     height: SCREEN_HEIGHT * 0.5,
-    // backgroundColor: "rgba(255, 255, 255, 0.1)", // Glassmorphism effect
     borderRadius: s(20),
     paddingTop: vs(16),
     paddingHorizontal: s(12),
     paddingBottom: vs(2),
     justifyContent: "center",
     alignItems: "center",
-    // borderWidth: 1,
-    // borderColor: "rgba(255, 255, 255, 0.2)",
     // shadowColor: "#000",
-    // shadowOffset: { width: 0, height: 4 },
-    // shadowOpacity: 0.2,
-    // shadowRadius: 8,
-    // elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    // elevation: 1,
   },
   closeButtonTop: {
     position: "absolute",
@@ -725,7 +787,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    // backgroundColor: "rgba(255, 255, 255, 0.9)", // Semi-transparent overlay for readability
   },
   loadingIndicator: {
     position: "absolute",

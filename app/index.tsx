@@ -8,7 +8,8 @@ import { Animated, Dimensions, StyleSheet, View } from "react-native";
 // Get screen dimensions
 const { width, height } = Dimensions.get("window");
 // console.log("height :", height);
-const heightC = 900;
+const heightC = 1000;
+const widthC = 1000;
 
 SplashScreen.preventAutoHideAsync();
 
@@ -49,7 +50,7 @@ export default function Index() {
   return (
     <View style={styles.container}>
       {/* Reusable SVG Background */}
-      <BackgroundSVG width={width} height={heightC} />
+      <BackgroundSVG width={widthC} height={heightC} />
 
       {/* Animated Logo */}
       <Animated.View
