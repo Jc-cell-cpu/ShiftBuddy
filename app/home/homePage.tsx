@@ -186,7 +186,7 @@ const Home = () => {
                 style={styles.bookingCard}
                 onPress={() =>
                   router.push({
-                    pathname: "/rawPages/bookingDetails",
+                    pathname: "/rawPages/bookingdetails",
                     params: {
                       name: booking.details.name,
                       gender: booking.details.gender,

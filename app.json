@@ -8,6 +8,7 @@
     "scheme": "shiftbuddy",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "jsEngine": "hermes",
     "ios": {
       "supportsTablet": true,
       "permissions": {
@@ -33,6 +34,19 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "@config-plugins/react-native-blob-util",
+        {
+          "enableDocumentViewer": true,
+          "enableBackgroundInternet": false
+        }
+      ],
+      [
+        "@config-plugins/react-native-pdf",
+        {
+          "enableDocumentViewer": true
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",
