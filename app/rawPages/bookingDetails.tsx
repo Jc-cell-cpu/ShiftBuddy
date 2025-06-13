@@ -66,6 +66,7 @@ const BookingDetails: React.FC = () => {
   const lastScrollY = useRef<number>(0);
   const buttonOpacity = useRef<Animated.Value>(new Animated.Value(1)).current;
   const pdfRef = useRef<Pdf>(null);
+  const debounceRef = useRef(false);
   const [documents, setDocuments] = useState<Document[]>([
     {
       name: "Prescription sheet",
@@ -272,20 +273,46 @@ const BookingDetails: React.FC = () => {
     setTotalPages(0);
   };
 
+  // const goToNextPage = () => {
+  //   if (pdfRef.current && currentPage < totalPages) {
+  //     const nextPage = currentPage + 1;
+  //     pdfRef.current.setPage(nextPage);
+  //     setCurrentPage(nextPage);
+  //   }
+  // };
+
   const goToNextPage = () => {
-    if (pdfRef.current && currentPage < totalPages) {
-      const nextPage = currentPage + 1;
-      pdfRef.current.setPage(nextPage);
-      setCurrentPage(nextPage);
-    }
+    if (debounceRef.current || currentPage >= totalPages) return;
+    debounceRef.current = true;
+
+    const nextPage = currentPage + 1;
+    pdfRef.current?.setPage(nextPage);
+    setCurrentPage(nextPage);
+
+    setTimeout(() => {
+      debounceRef.current = false;
+    }, 300); // Adjust debounce delay as needed
   };
 
+  // const goToPreviousPage = () => {
+  //   if (pdfRef.current && currentPage > 1) {
+  //     const prevPage = currentPage - 1;
+  //     pdfRef.current.setPage(prevPage);
+  //     setCurrentPage(prevPage);
+  //   }
+  // };
+
   const goToPreviousPage = () => {
-    if (pdfRef.current && currentPage > 1) {
-      const prevPage = currentPage - 1;
-      pdfRef.current.setPage(prevPage);
-      setCurrentPage(prevPage);
-    }
+    if (debounceRef.current || currentPage <= 1) return;
+    debounceRef.current = true;
+
+    const prevPage = currentPage - 1;
+    pdfRef.current?.setPage(prevPage);
+    setCurrentPage(prevPage);
+
+    setTimeout(() => {
+      debounceRef.current = false;
+    }, 300); // Adjust debounce delay as needed
   };
 
   const onSwipeGesture = (event: any) => {
@@ -576,12 +603,17 @@ const BookingDetails: React.FC = () => {
                     }
                   }}
                   onPageChanged={(page, numberOfPages) => {
-                    setCurrentPage(
-                      page > 0 && page <= numberOfPages ? page : 1
-                    );
+                    if (debounceRef.current) return;
+                    debounceRef.current = true;
+                    if (page >= 1 && page <= numberOfPages) {
+                      setCurrentPage(page);
+                    }
                     if (totalPages !== numberOfPages) {
                       setTotalPages(numberOfPages > 0 ? numberOfPages : 1);
                     }
+                    setTimeout(() => {
+                      debounceRef.current = false;
+                    }, 300);
                   }}
                   onError={(error) => {
                     console.error("PDF error:", error);
