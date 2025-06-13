@@ -25,15 +25,34 @@ interface DocumentUploadModalProps {
   buttonLabel?: string;
 }
 
+type UploadStatus = "uploading" | "success" | "failed";
+
+interface UploadItem {
+  name: string;
+  size: string;
+  progress: number;
+  status: UploadStatus;
+  uri: string;
+}
+
+const MAX_FILE_SIZE_MB = 25;
+
+const sanitizeFileName = (name: string) => name.replace(/[^\w.\-]/g, "_");
+
 const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   visible,
   onClose,
   onUpload,
   title = "Upload Document",
-  allowedTypes = ["application/pdf"],
+  allowedTypes = ["image/*"],
   buttonLabel = "Select Document",
 }) => {
   const [uploading, setUploading] = useState<boolean>(false);
+  const [uploads, setUploads] = useState<UploadItem[]>([]);
+
+  const deleteUpload = (name: string) => {
+    setUploads((prev) => prev.filter((u) => u.name !== name));
+  };
 
   const handleDocumentPick = async () => {
     try {
@@ -43,19 +62,51 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+
+        if (file.size && file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+          Alert.alert("File too large", "Maximum allowed size is 25 MB.");
+          return;
+        }
+
+        const cleanName = sanitizeFileName(file.name);
+        const uploadItem: UploadItem = {
+          name: cleanName,
+          size: file.size
+            ? `${(file.size / 1024).toFixed(0)} KB`
+            : "Unknown size",
+          progress: 0,
+          status: "uploading",
+          uri: file.uri,
+        };
+        setUploads((prev) => [...prev, uploadItem]);
         setUploading(true);
+
         try {
+          for (let p = 10; p <= 100; p += 10) {
+            await new Promise((r) => setTimeout(r, 150));
+            setUploads((prev) =>
+              prev.map((u) =>
+                u.name === cleanName ? { ...u, progress: p } : u
+              )
+            );
+          }
+
           await onUpload(result);
-          Alert.alert("Success", "Document uploaded successfully.");
-          onClose();
-        } catch (error) {
-          console.error("Upload error:", error);
-          Alert.alert("Error", "Failed to upload document. Please try again.");
+          setUploads((prev) =>
+            prev.map((u) =>
+              u.name === cleanName ? { ...u, status: "success" } : u
+            )
+          );
+        } catch (err) {
+          setUploads((prev) =>
+            prev.map((u) =>
+              u.name === cleanName ? { ...u, status: "failed" } : u
+            )
+          );
         } finally {
           setUploading(false);
         }
-      } else {
-        console.log("Document selection canceled");
       }
     } catch (error) {
       console.error("Document picker error:", error);
@@ -77,7 +128,6 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
         reducedTransparencyFallbackColor="black"
       >
         <View style={styles.modalContent}>
-          {/* Close button */}
           <TouchableOpacity
             style={styles.closeButton}
             onPress={onClose}
@@ -87,12 +137,9 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
             <Ionicons name="close" size={s(15)} color="#080808" />
           </TouchableOpacity>
 
-          {/* Title */}
           <Text style={styles.modalTitle}>Upload odometer photo (vehicle)</Text>
 
-          {/* Text + SVG side-by-side */}
           <View style={styles.introWrapper}>
-            {/* Left: Text */}
             <View style={styles.textWrapper}>
               <Text style={styles.modalSubtitle}>
                 To begin tracking your trip,{"\n"}please upload a clear photo of{" "}
@@ -101,20 +148,12 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
                 {"\n"}mileage.
               </Text>
             </View>
-
-            {/* Right: SVG */}
             <View style={styles.selfieWrapper}>
-              <Star
-                style={styles.backgroundSvg}
-                width={128}
-                height={128}
-                // fill={"#F9EEFE"}
-              />
+              <Star style={styles.backgroundSvg} width={128} height={128} />
               <Selfi width={92.06} height={102} style={styles.foregroundSvg} />
             </View>
           </View>
 
-          {/* Upload Box */}
           <TouchableOpacity
             style={styles.uploadBox}
             onPress={handleDocumentPick}
@@ -122,17 +161,145 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
             activeOpacity={0.8}
           >
             <Upload width={44} height={44} />
-            <Text style={styles.uploadBoxText}>Click to Upload</Text>
+            <Text style={styles.uploadBoxText}>{buttonLabel}</Text>
             <Text style={styles.fileNote}>(Max. File size: 25 MB)</Text>
           </TouchableOpacity>
 
-          {/* Started Kilometer */}
+          {/* Upload Status List */}
+          {uploads.map((item, index) => (
+            <View
+              key={index}
+              style={{
+                marginBottom: vs(12),
+                width: "100%",
+                backgroundColor: "#F9F9F9",
+                borderWidth: 1,
+                borderColor: "#E0E0E0",
+                borderRadius: s(8),
+                padding: s(10),
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+                <Ionicons
+                  name="document-text-outline"
+                  size={20}
+                  color="#666"
+                  style={{ marginRight: s(8), marginTop: 2 }}
+                />
+                <View style={{ flex: 1 }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: ms(14),
+                        fontWeight: "500",
+                        color: item.status === "failed" ? "#F44336" : "#333",
+                        flex: 1,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {item.status === "failed"
+                        ? "Upload failed, please try again"
+                        : item.name}
+                    </Text>
+
+                    {(item.status === "success" ||
+                      item.status === "failed") && (
+                      <TouchableOpacity onPress={() => deleteUpload(item.name)}>
+                        <Ionicons name="trash" size={18} color="#888" />
+                      </TouchableOpacity>
+                    )}
+
+                    {item.status === "uploading" && (
+                      <Text style={{ fontSize: ms(12), color: "#888" }}>
+                        {item.progress}%
+                      </Text>
+                    )}
+                  </View>
+
+                  {item.status === "failed" && (
+                    <Text
+                      style={{
+                        fontSize: ms(12),
+                        color: "#999",
+                        marginTop: vs(2),
+                      }}
+                    >
+                      {item.name}
+                    </Text>
+                  )}
+
+                  {item.status === "uploading" || item.status === "failed" ? (
+                    <View
+                      style={{
+                        height: 6,
+                        borderRadius: 3,
+                        backgroundColor: "#eee",
+                        marginTop: vs(6),
+                        overflow: "hidden",
+                      }}
+                    >
+                      <View
+                        style={{
+                          height: 6,
+                          width: `${item.progress}%`,
+                          backgroundColor:
+                            item.status === "failed" ? "#F44336" : "#6A1B9A",
+                        }}
+                      />
+                    </View>
+                  ) : (
+                    <Text
+                      style={{
+                        fontSize: ms(12),
+                        color: "#888",
+                        marginTop: vs(6),
+                      }}
+                    >
+                      {item.size}
+                    </Text>
+                  )}
+
+                  {item.status === "failed" && (
+                    <TouchableOpacity onPress={handleDocumentPick}>
+                      <Text
+                        style={{
+                          color: "#F44336",
+                          marginTop: vs(4),
+                        }}
+                      >
+                        Try again
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {item.status === "success" && (
+                    <TouchableOpacity>
+                      <Text
+                        style={{
+                          fontFamily: "InterMedium",
+                          color: "#69417E",
+                          marginTop: vs(4),
+                        }}
+                      >
+                        Click to view
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            </View>
+          ))}
+
           <Text style={styles.label}>Started Kilometer</Text>
           <View style={styles.inputBox}>
             <Text style={styles.inputText}>10km</Text>
           </View>
 
-          {/* Upload Button */}
           <View style={styles.buttonWrapper}>
             <TouchableOpacity
               style={[styles.uploadButton, uploading && styles.disabledButton]}
@@ -163,7 +330,6 @@ const styles = StyleSheet.create({
   modalContent: {
     width: s(320),
     backgroundColor: "#FFF",
-    // backgroundColor: "#F8F7FF",
     borderRadius: s(16),
     padding: s(20),
     alignItems: "center",
@@ -189,7 +355,6 @@ const styles = StyleSheet.create({
     fontFamily: "InterMedium",
     color: "#1A1A1A",
     fontSize: ms(16),
-    // fontWeight: "700",
     lineHeight: ms(19),
     marginBottom: vs(8),
     width: "100%",
@@ -225,13 +390,11 @@ const styles = StyleSheet.create({
     left: 0,
     zIndex: 0,
     color: "#F9EEFE",
-    borderColor: "#F9EEFE",
-    borderWidth: 1,
   },
   foregroundSvg: {
     position: "absolute",
-    top: 10, // Adjust as needed
-    left: 10, // Adjust as needed
+    top: 10,
+    left: 10,
     zIndex: 1,
   },
   uploadBox: {
@@ -288,16 +451,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
   },
   uploadButtonText: {
     fontFamily: "InterMedium",
     fontSize: ms(13),
     color: "#000000",
-    // fontWeight: "600",
   },
   disabledButton: {
     backgroundColor: "#ccc",

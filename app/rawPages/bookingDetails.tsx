@@ -1,31 +1,25 @@
-import LeftArrow from "@/assets/arrow-circle-left.svg";
-import RightArrow from "@/assets/arrow-circle-right.svg";
-import DocumentUploadModal from "@/components/DocumentUploadModal"; // Import the new component
+import BiometricAuth from "@/components/BiometricAuth"; // New component
+import DocumentUploadModal from "@/components/DocumentUploadModal";
+import PDFViewerModal from "@/components/PDFViewerModal"; // New component
 import ProfileCard from "@/components/ProfileCard";
 import SlideToConfirmButton from "@/components/SliderButton";
 import { ms, s, vs } from "@/utils/scale";
 import { Ionicons } from "@expo/vector-icons";
-import { BlurView } from "@react-native-community/blur";
 import { Asset } from "expo-asset";
 import * as DocumentPicker from "expo-document-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Animated,
-  Dimensions,
   FlatList,
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import ReactNativeBiometrics, { BiometryTypes } from "react-native-biometrics";
 import { PanGestureHandler, State } from "react-native-gesture-handler";
-import { default as Pdf } from "react-native-pdf";
 
 interface BookingParams {
   name?: string;
@@ -59,14 +53,11 @@ const BookingDetails: React.FC = () => {
   const [showButton, setShowButton] = useState<boolean>(true);
   const [documentViewerVisible, setDocumentViewerVisible] =
     useState<boolean>(false);
-  const [uploadModalVisible, setUploadModalVisible] = useState<boolean>(false); // New state for upload modal
+  const [uploadModalVisible, setUploadModalVisible] = useState<boolean>(false);
   const [selectedDocumentIndex, setSelectedDocumentIndex] = useState<number>(0);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(0);
+  const [isAuthenticating, setIsAuthenticating] = useState<boolean>(false);
   const lastScrollY = useRef<number>(0);
   const buttonOpacity = useRef<Animated.Value>(new Animated.Value(1)).current;
-  const pdfRef = useRef<Pdf>(null);
-  const debounceRef = useRef(false);
   const [documents, setDocuments] = useState<Document[]>([
     {
       name: "Prescription sheet",
@@ -87,7 +78,7 @@ const BookingDetails: React.FC = () => {
       try {
         const updatedDocuments = await Promise.all(
           documents.map(async (doc) => {
-            if (!doc.asset) return doc; // Skip if no asset (e.g., uploaded documents)
+            if (!doc.asset) return doc;
             const asset = Asset.fromModule(doc.asset);
             await asset.downloadAsync();
             if (!asset.localUri) {
@@ -124,40 +115,22 @@ const BookingDetails: React.FC = () => {
   const avatar = Array.isArray(avatarUrl) ? avatarUrl[0] : avatarUrl;
 
   const handleLogin = () => {
-    setUploadModalVisible(true); // Open upload modal on slide complete
+    setUploadModalVisible(true);
   };
 
   const handleDocumentUpload = async (
     result: DocumentPicker.DocumentPickerResult
   ) => {
-    // Placeholder for API integration
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const file = result.assets[0];
       const newDocument: Document = {
         name: file.name,
-        date: new Date().toISOString().split("T")[0], // Current date in YYYY-MM-DD
+        date: new Date().toISOString().split("T")[0],
         type: "pdf",
         uri: file.uri,
       };
       setDocuments((prev) => [...prev, newDocument]);
       console.log("Document uploaded:", newDocument);
-
-      // Example API call (uncomment and customize with your API endpoint)
-      /*
-      const formData = new FormData();
-      formData.append("file", {
-        uri: file.uri,
-        name: file.name,
-        type: file.mimeType,
-      });
-      await fetch("YOUR_API_ENDPOINT", {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      */
     }
   };
 
@@ -187,73 +160,14 @@ const BookingDetails: React.FC = () => {
     lastScrollY.current = currentScrollY;
   };
 
-  const authenticateUser = async (): Promise<boolean> => {
-    const rnBiometrics = new ReactNativeBiometrics();
-    try {
-      const { available, biometryType } =
-        await rnBiometrics.isSensorAvailable();
-
-      if (!available) {
-        console.log("No authentication methods available on this device.");
-        return true;
-      }
-
-      if (
-        biometryType === BiometryTypes.TouchID ||
-        biometryType === BiometryTypes.FaceID ||
-        biometryType === BiometryTypes.Biometrics
-      ) {
-        const { success } = await rnBiometrics.simplePrompt({
-          promptMessage: "Authenticate to view document",
-          fallbackPromptMessage:
-            "Biometrics failed, please use your device PIN or password",
-        });
-        if (success) {
-          console.log("Biometric authentication successful");
-          return true;
-        } else {
-          console.log("Biometric authentication failed");
-          return false;
-        }
-      } else {
-        const { success } = await rnBiometrics.simplePrompt({
-          promptMessage: "Enter your device PIN or password to view document",
-          fallbackPromptMessage:
-            "Please authenticate using your device PIN or password",
-        });
-        if (success) {
-          console.log("Device lock authentication successful");
-          return true;
-        } else {
-          console.log("Device lock authentication failed");
-          return false;
-        }
-      }
-    } catch (error) {
-      console.error("Authentication error:", error);
-      Alert.alert("Error", "Failed to authenticate. Please try again.");
-      return false;
-    }
-  };
-
-  const openDocumentViewer = async (index: number) => {
+  const openDocumentViewer = (index: number) => {
     const doc = documents[index];
     if (!doc.uri) {
       Alert.alert("Error", "Document not loaded yet.");
       return;
     }
-
-    const isAuthenticated = await authenticateUser();
-    if (!isAuthenticated) {
-      Alert.alert(
-        "Authentication Failed",
-        "You need to authenticate to view this document."
-      );
-      return;
-    }
-
     console.log(
-      "Opening document viewer for index:",
+      "Initiating document view for index:",
       index,
       "Type:",
       doc.type,
@@ -261,58 +175,24 @@ const BookingDetails: React.FC = () => {
       doc.uri
     );
     setSelectedDocumentIndex(index);
-    setCurrentPage(1);
-    setTotalPages(0);
-    setDocumentViewerVisible(true);
+    setIsAuthenticating(true);
+  };
+
+  const handleAuthComplete = (success: boolean) => {
+    setIsAuthenticating(false);
+    if (success) {
+      setDocumentViewerVisible(true);
+    } else {
+      Alert.alert(
+        "Authentication Failed",
+        "You need to authenticate to view this document."
+      );
+    }
   };
 
   const closeDocumentViewer = () => {
     console.log("Closing document viewer");
     setDocumentViewerVisible(false);
-    setCurrentPage(1);
-    setTotalPages(0);
-  };
-
-  // const goToNextPage = () => {
-  //   if (pdfRef.current && currentPage < totalPages) {
-  //     const nextPage = currentPage + 1;
-  //     pdfRef.current.setPage(nextPage);
-  //     setCurrentPage(nextPage);
-  //   }
-  // };
-
-  const goToNextPage = () => {
-    if (debounceRef.current || currentPage >= totalPages) return;
-    debounceRef.current = true;
-
-    const nextPage = currentPage + 1;
-    pdfRef.current?.setPage(nextPage);
-    setCurrentPage(nextPage);
-
-    setTimeout(() => {
-      debounceRef.current = false;
-    }, 300); // Adjust debounce delay as needed
-  };
-
-  // const goToPreviousPage = () => {
-  //   if (pdfRef.current && currentPage > 1) {
-  //     const prevPage = currentPage - 1;
-  //     pdfRef.current.setPage(prevPage);
-  //     setCurrentPage(prevPage);
-  //   }
-  // };
-
-  const goToPreviousPage = () => {
-    if (debounceRef.current || currentPage <= 1) return;
-    debounceRef.current = true;
-
-    const prevPage = currentPage - 1;
-    pdfRef.current?.setPage(prevPage);
-    setCurrentPage(prevPage);
-
-    setTimeout(() => {
-      debounceRef.current = false;
-    }, 300); // Adjust debounce delay as needed
   };
 
   const onSwipeGesture = (event: any) => {
@@ -548,7 +428,7 @@ const BookingDetails: React.FC = () => {
                     >
                       {item.name}
                     </Text>
-                    <Text style={styles.value}>{item.name}</Text>
+                    <Text style={styles.value}>{item.note}</Text>
                   </View>
                 )}
               />
@@ -557,113 +437,18 @@ const BookingDetails: React.FC = () => {
         </View>
       </PanGestureHandler>
 
-      {/* Document Viewer Modal */}
-      <Modal
+      {/* PDF Viewer Modal */}
+      <PDFViewerModal
         visible={documentViewerVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={closeDocumentViewer}
-      >
-        <BlurView
-          style={styles.fullscreenBlur}
-          blurType="light"
-          blurAmount={4}
-          reducedTransparencyFallbackColor="black"
-        >
-          <View style={styles.documentModalWrapper}>
-            <TouchableOpacity
-              style={styles.closeButtonTop}
-              onPress={closeDocumentViewer}
-              activeOpacity={0.7}
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-            >
-              <Ionicons name="close" size={s(15)} color="#080808" />
-            </TouchableOpacity>
+        onClose={closeDocumentViewer}
+        documentUri={documents[selectedDocumentIndex]?.uri}
+        documentName={documents[selectedDocumentIndex]?.name || "Document"}
+      />
 
-            <View style={styles.pdfContainer}>
-              {documents[selectedDocumentIndex]?.uri ? (
-                <Pdf
-                  ref={pdfRef}
-                  source={{
-                    uri: documents[selectedDocumentIndex].uri,
-                    cache: false,
-                  }}
-                  page={currentPage}
-                  style={styles.pdfViewer}
-                  fitPolicy={2}
-                  onLoadComplete={(
-                    numberOfPages,
-                    filePath,
-                    { width, height }
-                  ) => {
-                    setTotalPages(numberOfPages > 0 ? numberOfPages : 1);
-                    setCurrentPage(1);
-                    if (pdfRef.current) {
-                      pdfRef.current.setPage(1);
-                    }
-                  }}
-                  onPageChanged={(page, numberOfPages) => {
-                    if (debounceRef.current) return;
-                    debounceRef.current = true;
-                    if (page >= 1 && page <= numberOfPages) {
-                      setCurrentPage(page);
-                    }
-                    if (totalPages !== numberOfPages) {
-                      setTotalPages(numberOfPages > 0 ? numberOfPages : 1);
-                    }
-                    setTimeout(() => {
-                      debounceRef.current = false;
-                    }, 300);
-                  }}
-                  onError={(error) => {
-                    console.error("PDF error:", error);
-                    Alert.alert("Error", "Failed to load PDF.");
-                  }}
-                  enablePaging={true}
-                  horizontal={true}
-                  trustAllCerts={false}
-                  renderActivityIndicator={() => (
-                    <ActivityIndicator
-                      size="large"
-                      color="#4D61E2"
-                      style={styles.loadingIndicator}
-                    />
-                  )}
-                />
-              ) : (
-                <Text style={styles.errorText}>No document selected.</Text>
-              )}
-              <View style={styles.pdfOverlay} />
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.leftNavButton,
-                currentPage <= 1 && styles.disabledButton,
-              ]}
-              onPress={goToPreviousPage}
-              disabled={currentPage <= 1 || totalPages <= 1}
-              activeOpacity={0.7}
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-            >
-              <LeftArrow width={s(24)} height={s(24)} fill="#4D61E2" />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.rightNavButton,
-                currentPage >= totalPages && styles.disabledButton,
-              ]}
-              onPress={goToNextPage}
-              disabled={currentPage >= totalPages || totalPages <= 1}
-              activeOpacity={0.7}
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-            >
-              <RightArrow width={s(24)} height={s(24)} fill="#4D61E2" />
-            </TouchableOpacity>
-          </View>
-        </BlurView>
-      </Modal>
+      {/* Biometric Authentication */}
+      {isAuthenticating && (
+        <BiometricAuth onAuthComplete={handleAuthComplete} />
+      )}
 
       {/* Document Upload Modal */}
       <DocumentUploadModal
@@ -671,8 +456,8 @@ const BookingDetails: React.FC = () => {
         onClose={() => setUploadModalVisible(false)}
         onUpload={handleDocumentUpload}
         title="Upload New Document"
-        allowedTypes={["application/pdf"]}
-        buttonLabel="Choose PDF"
+        allowedTypes={["image/*"]}
+        buttonLabel="Click to Upload"
       />
 
       <Animated.View style={[styles.loginButton, { opacity: buttonOpacity }]}>
@@ -681,8 +466,6 @@ const BookingDetails: React.FC = () => {
     </View>
   );
 };
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   container: {
@@ -783,113 +566,6 @@ const styles = StyleSheet.create({
     borderRadius: s(16),
     padding: s(20),
     flexGrow: 1,
-  },
-  fullscreenBlur: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.23)",
-  },
-  documentModalWrapper: {
-    position: "relative",
-    width: SCREEN_WIDTH * 0.85,
-    height: SCREEN_HEIGHT * 0.5,
-    borderRadius: s(20),
-    paddingTop: vs(16),
-    paddingHorizontal: s(12),
-    paddingBottom: vs(2),
-    justifyContent: "center",
-    alignItems: "center",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-  },
-  closeButtonTop: {
-    position: "absolute",
-    top: vs(3),
-    right: s(3),
-    backgroundColor: "#fff",
-    width: s(28),
-    height: s(28),
-    borderRadius: s(14),
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 100,
-    elevation: 1,
-  },
-  pdfContainer: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-    borderRadius: s(10),
-    overflow: "hidden",
-    backgroundColor: "transparent",
-    position: "relative",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 1,
-  },
-  leftNavButton: {
-    position: "absolute",
-    left: -s(22),
-    top: "50%",
-    transform: [{ translateY: -s(20) }],
-    backgroundColor: "#fff",
-    width: s(23),
-    height: s(23),
-    borderRadius: s(18),
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 100,
-    elevation: 6,
-  },
-  rightNavButton: {
-    position: "absolute",
-    right: -s(22),
-    top: "50%",
-    transform: [{ translateY: -s(18) }],
-    backgroundColor: "#fff",
-    width: s(23),
-    height: s(23),
-    borderRadius: s(18),
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 100,
-    elevation: 6,
-  },
-  pdfViewer: {
-    flex: 1,
-    width: SCREEN_WIDTH * 0.85 - s(24),
-    height: SCREEN_HEIGHT * 0.5 - vs(56),
-    backgroundColor: "transparent",
-  },
-  pdfOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  loadingIndicator: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: [{ translateX: -25 }, { translateY: -25 }],
-    zIndex: 2,
-  },
-  errorText: {
-    flex: 1,
-    textAlign: "center",
-    fontFamily: "InterVariable",
-    fontSize: ms(16),
-    color: "#ff0000",
-    zIndex: 10,
-  },
-  disabledButton: {
-    backgroundColor: "#f0f0f0",
-    opacity: 0.5,
   },
 });
 
