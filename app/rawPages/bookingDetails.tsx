@@ -121,19 +121,12 @@ const BookingDetails: React.FC = () => {
   const handleDocumentUpload = async (
     result: DocumentPicker.DocumentPickerResult
   ) => {
-    if (!result.canceled && result.assets && result.assets.length > 0) {
+    if (!result.canceled && result.assets.length > 0) {
       const file = result.assets[0];
-      const newDocument: Document = {
-        name: file.name,
-        date: new Date().toISOString().split("T")[0],
-        type: "pdf",
-        uri: file.uri,
-      };
-      setDocuments((prev) => [...prev, newDocument]);
-      console.log("Document uploaded:", newDocument);
+      // Use this only for uploading (e.g., send to server)
+      console.log("Uploaded (not shown in documents tab):", file.name);
     }
   };
-
   const handleScroll = (event: {
     nativeEvent: { contentOffset: { y: number } };
   }) => {

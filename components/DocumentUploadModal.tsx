@@ -5,10 +5,11 @@ import { ms, s, vs } from "@/utils/scale";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "@react-native-community/blur";
 import * as DocumentPicker from "expo-document-picker";
-import React, { useState } from "react";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
+  Image,
   Modal,
   StyleSheet,
   Text,
@@ -25,7 +26,7 @@ interface DocumentUploadModalProps {
   buttonLabel?: string;
 }
 
-type UploadStatus = "uploading" | "success" | "failed";
+type UploadStatus = "uploading" | "success" | "failed" | "verified";
 
 interface UploadItem {
   name: string;
@@ -47,12 +48,32 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   allowedTypes = ["image/*"],
   buttonLabel = "Select Document",
 }) => {
-  const [uploading, setUploading] = useState<boolean>(false);
+  const [uploading, setUploading] = useState(false);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
+  const [previewUri, setPreviewUri] = useState<string | null>(null);
+  const [selectedUpload, setSelectedUpload] = useState<UploadItem | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const router = useRouter();
 
-  const deleteUpload = (name: string) => {
-    setUploads((prev) => prev.filter((u) => u.name !== name));
-  };
+  useEffect(() => {
+    if (visible) {
+      setUploads([]);
+      setPreviewUri(null);
+      setSelectedUpload(null);
+      setShowSuccess(false);
+    }
+  }, [visible]);
+
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => {
+        setShowSuccess(false);
+        onClose();
+        router.replace("/home/homePage"); // Change path if needed
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess]);
 
   const handleDocumentPick = async () => {
     try {
@@ -61,7 +82,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
         copyToCacheDirectory: true,
       });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
+      if (!result.canceled && result.assets?.length) {
         const file = result.assets[0];
 
         if (file.size && file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
@@ -79,12 +100,13 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
           status: "uploading",
           uri: file.uri,
         };
-        setUploads((prev) => [...prev, uploadItem]);
+
+        setUploads([uploadItem]); // Always replace existing uploads
         setUploading(true);
 
         try {
           for (let p = 10; p <= 100; p += 10) {
-            await new Promise((r) => setTimeout(r, 150));
+            await new Promise((r) => setTimeout(r, 100));
             setUploads((prev) =>
               prev.map((u) =>
                 u.name === cleanName ? { ...u, progress: p } : u
@@ -109,214 +131,328 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
         }
       }
     } catch (error) {
-      console.error("Document picker error:", error);
       Alert.alert("Error", "Failed to select document. Please try again.");
     }
   };
 
+  // const verifiedUpload = uploads.find((u) => u.status === "verified");
+
+  const handleFinalUpload = () => {
+    // if (verifiedUpload) {
+    setShowSuccess(true);
+    // }
+  };
+  const deleteUpload = (name: string) => {
+    setUploads((prev) => prev.filter((u) => u.name !== name));
+  };
+
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <BlurView
-        style={styles.modalContainer}
-        blurType="light"
-        blurAmount={4}
-        reducedTransparencyFallbackColor="black"
+    <>
+      {/* Main Upload Modal */}
+      <Modal
+        visible={visible}
+        transparent
+        animationType="fade"
+        onRequestClose={onClose}
       >
-        <View style={styles.modalContent}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={onClose}
-            activeOpacity={0.7}
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-          >
-            <Ionicons name="close" size={s(15)} color="#080808" />
-          </TouchableOpacity>
+        <BlurView style={styles.modalContainer} blurType="light" blurAmount={4}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Ionicons name="close" size={s(15)} color="#080808" />
+            </TouchableOpacity>
 
-          <Text style={styles.modalTitle}>Upload odometer photo (vehicle)</Text>
+            <Text style={styles.modalTitle}>
+              Upload odometer photo (vehicle)
+            </Text>
 
-          <View style={styles.introWrapper}>
-            <View style={styles.textWrapper}>
-              <Text style={styles.modalSubtitle}>
-                To begin tracking your trip,{"\n"}please upload a clear photo of{" "}
-                {"\n"}your vehicle's odometer.{"\n"}
-                Take a clear photo of your {"\n"}odometer showing the current
-                {"\n"}mileage.
-              </Text>
-            </View>
-            <View style={styles.selfieWrapper}>
-              <Star style={styles.backgroundSvg} width={128} height={128} />
-              <Selfi width={92.06} height={102} style={styles.foregroundSvg} />
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={styles.uploadBox}
-            onPress={handleDocumentPick}
-            disabled={uploading}
-            activeOpacity={0.8}
-          >
-            <Upload width={44} height={44} />
-            <Text style={styles.uploadBoxText}>{buttonLabel}</Text>
-            <Text style={styles.fileNote}>(Max. File size: 25 MB)</Text>
-          </TouchableOpacity>
-
-          {/* Upload Status List */}
-          {uploads.map((item, index) => (
-            <View
-              key={index}
-              style={{
-                marginBottom: vs(12),
-                width: "100%",
-                backgroundColor: "#F9F9F9",
-                borderWidth: 1,
-                borderColor: "#E0E0E0",
-                borderRadius: s(8),
-                padding: s(10),
-              }}
-            >
-              <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
-                <Ionicons
-                  name="document-text-outline"
-                  size={20}
-                  color="#666"
-                  style={{ marginRight: s(8), marginTop: 2 }}
+            <View style={styles.introWrapper}>
+              <View style={styles.textWrapper}>
+                <Text style={styles.modalSubtitle}>
+                  To begin tracking your trip,{"\n"}please upload a clear photo
+                  of {"\n"}your vehicle's odometer.{"\n"}Take a clear photo of
+                  your {"\n"}
+                  odometer showing the current{"\n"}mileage.
+                </Text>
+              </View>
+              <View style={styles.selfieWrapper}>
+                <Star style={styles.backgroundSvg} width={128} height={128} />
+                <Selfi
+                  width={92.06}
+                  height={102}
+                  style={styles.foregroundSvg}
                 />
-                <View style={{ flex: 1 }}>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: ms(14),
-                        fontWeight: "500",
-                        color: item.status === "failed" ? "#F44336" : "#333",
-                        flex: 1,
-                      }}
-                      numberOfLines={1}
-                    >
-                      {item.status === "failed"
-                        ? "Upload failed, please try again"
-                        : item.name}
-                    </Text>
+              </View>
+            </View>
 
-                    {(item.status === "success" ||
-                      item.status === "failed") && (
-                      <TouchableOpacity onPress={() => deleteUpload(item.name)}>
-                        <Ionicons name="trash" size={18} color="#888" />
-                      </TouchableOpacity>
-                    )}
+            <TouchableOpacity
+              style={styles.uploadBox}
+              onPress={handleDocumentPick}
+              disabled={uploading}
+            >
+              <Upload width={44} height={44} />
+              <Text style={styles.uploadBoxText}>{buttonLabel}</Text>
+              <Text style={styles.fileNote}>(Max. File size: 25 MB)</Text>
+            </TouchableOpacity>
 
-                    {item.status === "uploading" && (
-                      <Text style={{ fontSize: ms(12), color: "#888" }}>
-                        {item.progress}%
-                      </Text>
-                    )}
-                  </View>
-
-                  {item.status === "failed" && (
-                    <Text
-                      style={{
-                        fontSize: ms(12),
-                        color: "#999",
-                        marginTop: vs(2),
-                      }}
-                    >
-                      {item.name}
-                    </Text>
-                  )}
-
-                  {item.status === "uploading" || item.status === "failed" ? (
+            {/* Upload Status Cards */}
+            {uploads.map((item, index) => (
+              <View
+                key={index}
+                style={{
+                  marginBottom: vs(12),
+                  width: "100%",
+                  backgroundColor: "#F9F9F9",
+                  borderWidth: 1,
+                  borderColor: "#E0E0E0",
+                  borderRadius: s(8),
+                  padding: s(10),
+                }}
+              >
+                <View
+                  style={{ flexDirection: "row", alignItems: "flex-start" }}
+                >
+                  <Ionicons
+                    name="document-text-outline"
+                    size={20}
+                    color="#666"
+                    style={{ marginRight: s(8), marginTop: 2 }}
+                  />
+                  <View style={{ flex: 1 }}>
                     <View
                       style={{
-                        height: 6,
-                        borderRadius: 3,
-                        backgroundColor: "#eee",
-                        marginTop: vs(6),
-                        overflow: "hidden",
+                        flexDirection: "row",
+                        justifyContent: "space-between",
                       }}
                     >
+                      <Text
+                        style={{
+                          fontSize: ms(14),
+                          fontWeight: "500",
+                          color: item.status === "failed" ? "#F44336" : "#333",
+                          flex: 1,
+                        }}
+                        numberOfLines={1}
+                      >
+                        {item.status === "failed"
+                          ? "Upload failed, please try again"
+                          : item.name}
+                      </Text>
+
+                      {["success", "failed"].includes(item.status) &&
+                        item.status !== "verified" && (
+                          <TouchableOpacity
+                            onPress={() => deleteUpload(item.name)}
+                          >
+                            <Ionicons name="trash" size={18} color="#888" />
+                          </TouchableOpacity>
+                        )}
+                      {item.status === "uploading" && (
+                        <Text style={{ fontSize: ms(12), color: "#888" }}>
+                          {item.progress}%
+                        </Text>
+                      )}
+                    </View>
+
+                    {item.status === "failed" && (
+                      <Text
+                        style={{
+                          fontSize: ms(12),
+                          color: "#999",
+                          marginTop: vs(2),
+                        }}
+                      >
+                        {item.name}
+                      </Text>
+                    )}
+
+                    {["uploading", "failed"].includes(item.status) ? (
                       <View
                         style={{
                           height: 6,
-                          width: `${item.progress}%`,
-                          backgroundColor:
-                            item.status === "failed" ? "#F44336" : "#6A1B9A",
-                        }}
-                      />
-                    </View>
-                  ) : (
-                    <Text
-                      style={{
-                        fontSize: ms(12),
-                        color: "#888",
-                        marginTop: vs(6),
-                      }}
-                    >
-                      {item.size}
-                    </Text>
-                  )}
-
-                  {item.status === "failed" && (
-                    <TouchableOpacity onPress={handleDocumentPick}>
-                      <Text
-                        style={{
-                          color: "#F44336",
-                          marginTop: vs(4),
+                          borderRadius: 3,
+                          backgroundColor: "#eee",
+                          marginTop: vs(6),
+                          overflow: "hidden",
                         }}
                       >
-                        Try again
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-
-                  {item.status === "success" && (
-                    <TouchableOpacity>
+                        <View
+                          style={{
+                            height: 6,
+                            width: `${item.progress}%`,
+                            backgroundColor:
+                              item.status === "failed" ? "#F44336" : "#6A1B9A",
+                          }}
+                        />
+                      </View>
+                    ) : (
                       <Text
                         style={{
-                          fontFamily: "InterMedium",
-                          color: "#69417E",
-                          marginTop: vs(4),
+                          fontSize: ms(12),
+                          color: "#888",
+                          marginTop: vs(6),
                         }}
                       >
-                        Click to view
+                        {item.size}
                       </Text>
-                    </TouchableOpacity>
-                  )}
+                    )}
+
+                    {item.status === "failed" && (
+                      <TouchableOpacity onPress={handleDocumentPick}>
+                        <Text style={{ color: "#F44336", marginTop: vs(4) }}>
+                          Try again
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+
+                    {item.status === "success" && (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setPreviewUri(item.uri);
+                          setSelectedUpload(item);
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontFamily: "InterMedium",
+                            color: "#69417E",
+                            marginTop: vs(4),
+                          }}
+                        >
+                          Click to view
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
               </View>
+            ))}
+
+            <Text style={styles.label}>Started Kilometer</Text>
+            <View style={styles.inputBox}>
+              <Text style={styles.inputText}>10km</Text>
             </View>
-          ))}
 
-          <Text style={styles.label}>Started Kilometer</Text>
-          <View style={styles.inputBox}>
-            <Text style={styles.inputText}>10km</Text>
-          </View>
-
-          <View style={styles.buttonWrapper}>
-            <TouchableOpacity
-              style={[styles.uploadButton, uploading && styles.disabledButton]}
-              onPress={handleDocumentPick}
-              disabled={uploading}
-              activeOpacity={0.7}
-            >
-              {uploading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
+            <View style={styles.buttonWrapper}>
+              <TouchableOpacity
+                style={[
+                  styles.uploadButton,
+                  //   !verifiedUpload && styles.disabledButton,
+                ]}
+                // disabled={!verifiedUpload}
+                onPress={handleFinalUpload}
+              >
                 <Text style={styles.uploadButtonText}>Upload Photo</Text>
-              )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </BlurView>
+      </Modal>
+
+      {/* Preview Modal */}
+      <Modal visible={!!previewUri} transparent animationType="fade">
+        <BlurView style={styles.modalContainer} blurType="light" blurAmount={4}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setPreviewUri(null)}
+            >
+              <Ionicons name="close" size={s(15)} color="#080808" />
+            </TouchableOpacity>
+
+            <Text style={styles.modalTitle}>Preview Uploaded Image</Text>
+            <View
+              style={{
+                width: "100%",
+                height: s(250),
+                marginVertical: vs(12),
+                borderRadius: s(8),
+                overflow: "hidden",
+              }}
+            >
+              <Image
+                source={{ uri: previewUri! }}
+                style={{ width: "100%", height: "100%" }}
+                resizeMode="contain"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.uploadButton}
+              onPress={() => {
+                if (selectedUpload) {
+                  setUploads((prev) =>
+                    prev.map((u) =>
+                      u.name === selectedUpload.name
+                        ? { ...u, status: "verified" }
+                        : u
+                    )
+                  );
+                }
+                setPreviewUri(null);
+              }}
+            >
+              <Text style={styles.uploadButtonText}>Confirm</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </BlurView>
-    </Modal>
+        </BlurView>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal visible={showSuccess} transparent animationType="fade">
+        <BlurView style={styles.modalContainer} blurType="light" blurAmount={4}>
+          <View style={[styles.modalContent, { alignItems: "center" }]}>
+            {/* Close button */}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => {
+                // setShowSuccess(false);
+                router.replace("/home/homePage");
+              }}
+            >
+              <Ionicons name="close" size={s(15)} color="#080808" />
+            </TouchableOpacity>
+
+            <Ionicons
+              name="checkmark"
+              size={34}
+              color="#7F4E2D"
+              style={{
+                backgroundColor: "#FBE1D1",
+                padding: 14,
+                borderRadius: 99,
+                marginBottom: vs(12),
+              }}
+            />
+            <Text
+              style={{
+                fontSize: ms(16),
+                fontWeight: "600",
+                marginBottom: vs(8),
+              }}
+            >
+              Upload Successfully!
+            </Text>
+            <Text
+              style={{
+                textAlign: "center",
+                fontSize: ms(13),
+                color: "#444",
+                marginBottom: vs(16),
+              }}
+            >
+              Your odometer photo has been{"\n"}received and started the
+              Journey.
+            </Text>
+            {/* <TouchableOpacity
+              style={styles.uploadButton}
+              onPress={() => setShowSuccess(false)}
+            >
+              <Text style={styles.uploadButtonText}>OK</Text>
+            </TouchableOpacity> */}
+          </View>
+        </BlurView>
+      </Modal>
+    </>
   );
 };
 
@@ -332,7 +468,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     borderRadius: s(16),
     padding: s(20),
-    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -352,14 +487,10 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   modalTitle: {
-    fontFamily: "InterMedium",
-    color: "#1A1A1A",
     fontSize: ms(16),
-    lineHeight: ms(19),
+    color: "#1A1A1A",
+    fontWeight: "600",
     marginBottom: vs(8),
-    width: "100%",
-    flexShrink: 1,
-    textAlign: "left",
   },
   introWrapper: {
     flexDirection: "row",
@@ -367,12 +498,8 @@ const styles = StyleSheet.create({
     marginBottom: vs(12),
     width: "100%",
   },
-  textWrapper: {
-    flex: 1,
-    paddingRight: s(10),
-  },
+  textWrapper: { flex: 1, paddingRight: s(10) },
   modalSubtitle: {
-    fontFamily: "InterVariable",
     fontSize: ms(12),
     color: "#5E5E5E",
     lineHeight: vs(18),
@@ -420,7 +547,6 @@ const styles = StyleSheet.create({
   },
   label: {
     alignSelf: "flex-start",
-    fontFamily: "InterVariable",
     fontSize: ms(14),
     fontWeight: "600",
     color: "#666",
@@ -440,7 +566,7 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   buttonWrapper: {
-    width: vs(99),
+    width: vs(130),
     marginTop: vs(8),
     alignSelf: "flex-start",
   },
@@ -450,16 +576,15 @@ const styles = StyleSheet.create({
     borderRadius: s(5),
     justifyContent: "center",
     alignItems: "center",
-    elevation: 3,
   },
   uploadButtonText: {
-    fontFamily: "InterMedium",
     fontSize: ms(13),
     color: "#000000",
+    fontWeight: "600",
   },
   disabledButton: {
     backgroundColor: "#ccc",
-    opacity: 0.7,
+    opacity: 0.6,
   },
 });
 
