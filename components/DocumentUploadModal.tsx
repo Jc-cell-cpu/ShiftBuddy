@@ -376,7 +376,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
               />
             </View>
 
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.uploadButton}
               onPress={() => {
                 if (selectedUpload) {
@@ -392,7 +392,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
               }}
             >
               <Text style={styles.uploadButtonText}>Confirm</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         </BlurView>
       </Modal>
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     fontSize: ms(16),
     color: "#1A1A1A",
     fontWeight: "600",
-    marginBottom: vs(8),
+    marginBottom: vs(6),
   },
   introWrapper: {
     flexDirection: "row",
