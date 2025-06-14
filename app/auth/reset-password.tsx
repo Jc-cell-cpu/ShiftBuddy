@@ -152,7 +152,7 @@ const ResetPassword = () => {
           )}
 
           {/* Confirm Password */}
-          <Text style={styles.label}>Confirm Password</Text>
+          <Text style={styles.label}>Confirm New Password</Text>
           <View style={styles.inputWrapper}>
             <TextInput
               style={[
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: "InterVariable",
     fontSize: ms(14),
-    fontWeight: "700",
+    // fontWeight: "700",
     marginTop: vs(8),
     marginBottom: vs(4),
   },

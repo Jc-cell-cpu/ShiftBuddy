@@ -111,10 +111,10 @@ const Home = () => {
                 {hasUnreadNotifications && (
                   <View style={styles.notificationDot} />
                 )}
-                <Ionicons name="notifications-outline" size={24} color="#000" />
+                <Ionicons name="notifications-outline" size={30} color="#000" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.profileCircle}>
-                <SOS width={24} height={24} />
+                <SOS width={30} height={30} />
               </TouchableOpacity>
             </View>
           </View>

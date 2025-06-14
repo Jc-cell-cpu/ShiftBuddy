@@ -109,7 +109,7 @@ const OtpVerification = () => {
             >
               <Ionicons name="chevron-back" size={scale(20)} color="#000" />
             </TouchableOpacity>
-            <Text style={styles.title}>Verify</Text>
+            <Text style={styles.title}>Verification Code</Text>
           </View>
 
           <Text style={styles.subtitle}>Enter OTP</Text>

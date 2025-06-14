@@ -164,9 +164,9 @@ const styles = StyleSheet.create({
     marginBottom: vs(24),
   },
   label: {
-    fontFamily: "InterVariable",
+    fontFamily: "InterMedium",
     fontSize: ms(14),
-    fontWeight: "700",
+    // fontWeight: "700",
     marginTop: vs(12),
     marginBottom: vs(6),
   },
