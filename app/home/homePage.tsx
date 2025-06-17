@@ -54,6 +54,19 @@ const Home = () => {
     router.push("/rawPages/notifications"); // Navigate to notification page
   };
 
+  const redirectToBookingDetails = (booking: any) =>
+    router.push({
+      pathname: "/rawPages/bookingdetails",
+      params: {
+        name: booking.details.name,
+        gender: booking.details.gender,
+        age: booking.details.age,
+        time: booking.details.time,
+        date: booking.date,
+        avatarUrl: booking.details.avatarUrl,
+      },
+    });
+
   // Dummy booking data
   const bookings: any[] = [
     {
@@ -186,19 +199,7 @@ const Home = () => {
               <TouchableOpacity
                 key={index}
                 style={styles.bookingCard}
-                onPress={() =>
-                  router.push({
-                    pathname: "/rawPages/bookingdetails",
-                    params: {
-                      name: booking.details.name,
-                      gender: booking.details.gender,
-                      age: booking.details.age,
-                      time: booking.details.time,
-                      date: booking.date,
-                      avatarUrl: booking.details.avatarUrl,
-                    },
-                  })
-                }
+                onPress={() => redirectToBookingDetails(booking)}
               >
                 <View style={styles.avatarContainer}>
                   <Image
@@ -268,7 +269,7 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FAF5FF",
+    backgroundColor: "#F9F5FC",
   },
   headerBackground: {
     paddingHorizontal: s(15),

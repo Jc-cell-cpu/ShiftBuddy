@@ -1,0 +1,42 @@
+# Node modules and dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+.pnpm-debug.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Git and VCS
+.git
+.gitignore
+.gitattributes
+
+# Build artifacts and local config
+build
+dist
+android/.gradle
+ios/Pods
+*.keystore
+*.jks
+*.p12
+*.key
+*.pem
+
+# IDE / Editor
+.vscode
+.idea
+
+# Environment & credentials
+.env
+.env.*
+*.env
+
+# Test files
+__tests__/
+coverage/
+
+# Custom scripts or assets not needed in builds
+scripts/
+assets/raw-debug-assets/

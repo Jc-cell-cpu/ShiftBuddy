@@ -7,38 +7,47 @@
     "icon": "./assets/BuddyL.png",
     "scheme": "shiftbuddy",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "jsEngine": "hermes",
+    "newArchEnabled": true,
+
     "ios": {
       "supportsTablet": true,
-      "permissions": {
-        "camera": {
-          "description": "Allow $(PRODUCT_NAME) to access your camera to take photos."
-        }
-      },
+      "bundleIdentifier": "com.jc_69.ShiftBuddy",
       "infoPlist": {
+        "NSCameraUsageDescription": "We need camera access to take photos for identity and document verification.",
         "NSFaceIDUsageDescription": "We use Face ID to securely authenticate you before accessing sensitive medical documents.",
-        "NSBiometryUsageDescription": "We use biometrics (Face ID or Touch ID) to securely authenticate you before accessing sensitive medical documents."
+        "NSBiometryUsageDescription": "We use biometrics (Face ID or Touch ID) to securely authenticate you before accessing sensitive medical documents.",
+        "NSPhotoLibraryUsageDescription": "We need access to your photo library to upload images and documents."
       }
     },
+
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/BuddyL.png",
-        "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true,
       "package": "com.jc_69.ShiftBuddy",
       "permissions": [
         "CAMERA",
         "USE_BIOMETRIC",
-        "USE_FINGERPRINT"
-      ]
+        "USE_FINGERPRINT",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/BuddyL.png",
+        "backgroundColor": "#ffffff"
+      },
+      "androidStatusBar": {
+        "backgroundColor": "transparent",
+        "translucent": true,
+        "barStyle": "dark-content"
+      },
+      "edgeToEdgeEnabled": true
     },
+
     "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+
     "plugins": [
       [
         "@config-plugins/react-native-blob-util",
@@ -53,7 +62,9 @@
           "enableDocumentViewer": true
         }
       ],
-      "expo-router",
+  "expo-router",
+  "expo-camera",
+  "expo-font",  
       [
         "expo-splash-screen",
         {
@@ -62,13 +73,13 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ],
-      "expo-font",
-      "expo-camera"
+      ]
     ],
+
     "experiments": {
       "typedRoutes": true
     },
+
     "extra": {
       "router": {},
       "eas": {

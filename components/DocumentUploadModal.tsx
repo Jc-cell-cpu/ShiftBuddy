@@ -68,8 +68,10 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
     if (showSuccess) {
       const timer = setTimeout(() => {
         setShowSuccess(false);
-        onClose();
-        router.replace("/home/homePage"); // Change path if needed
+        onClose(); // This unmounts the modal
+        setTimeout(() => {
+          router.replace("/home/homePage"); // Redirect after modal closes
+        }, 50); // Give React Native a frame to clear UI
       }, 3000);
       return () => clearTimeout(timer);
     }
@@ -398,7 +400,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
       </Modal>
 
       {/* Success Modal */}
-      <Modal visible={showSuccess} transparent animationType="fade">
+      <Modal visible={showSuccess} animationType="fade">
         <BlurView style={styles.modalContainer} blurType="light" blurAmount={4}>
           <View style={[styles.modalContent, { alignItems: "center" }]}>
             {/* Close button */}
@@ -461,7 +463,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.23)",
+    // backgroundColor: "rgba(255, 255, 255, 0.23)",
   },
   modalContent: {
     width: s(320),
