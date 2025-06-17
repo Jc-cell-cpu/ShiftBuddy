@@ -6,9 +6,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "@react-native-community/blur";
 import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Animated,
   Image,
   Modal,
   StyleSheet,
@@ -54,6 +55,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   const [selectedUpload, setSelectedUpload] = useState<UploadItem | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const router = useRouter();
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (visible) {
@@ -73,6 +75,23 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
           router.replace("/home/homePage"); // Redirect after modal closes
         }, 50); // Give React Native a frame to clear UI
       }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess]);
+
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => {
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }).start(() => {
+          setShowSuccess(false); // hide modal after fade
+          onClose(); // remove modal from tree
+          router.replace("/home/homePage"); // then navigate
+        });
+      }, 2000); // keep modal visible before fading
       return () => clearTimeout(timer);
     }
   }, [showSuccess]);
@@ -402,13 +421,18 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
       {/* Success Modal */}
       <Modal visible={showSuccess} animationType="fade">
         <BlurView style={styles.modalContainer} blurType="light" blurAmount={4}>
-          <View style={[styles.modalContent, { alignItems: "center" }]}>
+          <Animated.View
+            style={[
+              styles.modalContent,
+              { alignItems: "center", opacity: fadeAnim },
+            ]}
+          >
             {/* Close button */}
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => {
-                // setShowSuccess(false);
-                router.replace("/home/homePage");
+                setShowSuccess(false);
+                router.push("/home/homePage");
               }}
             >
               <Ionicons name="close" size={s(15)} color="#080808" />
@@ -451,7 +475,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
             >
               <Text style={styles.uploadButtonText}>OK</Text>
             </TouchableOpacity> */}
-          </View>
+          </Animated.View>
         </BlurView>
       </Modal>
     </>

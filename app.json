@@ -28,17 +28,18 @@
         "USE_BIOMETRIC",
         "USE_FINGERPRINT",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_INTERNAL_STORAGE"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/BuddyL.png",
         "backgroundColor": "#ffffff"
       },
-      "androidStatusBar": {
-        "backgroundColor": "transparent",
-        "translucent": true,
-        "barStyle": "dark-content"
-      },
+      // "androidStatusBar": {
+      //   "backgroundColor": "transparent",
+      //   "translucent": true,
+      //   "barStyle": "dark-content"
+      // },
       "edgeToEdgeEnabled": true
     },
 
