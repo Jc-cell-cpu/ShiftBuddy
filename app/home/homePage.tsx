@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import AComplete from "@/assets/AComplete.svg";
 import SOS from "@/assets/SOS.svg";
 import Selfi from "@/assets/Selfi.svg";
 import Star from "@/assets/Star.svg";
 import CalendarComponent from "@/components/CalendarComponent";
+import JourneyStepper from "@/components/JourneyStepper";
 import { ms, s, vs } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -11,7 +13,7 @@ import {
   useNavigation,
   useRouter,
 } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Image,
   ScrollView,
@@ -30,7 +32,16 @@ const Home = () => {
   const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true); // Track unread notifications
+  const { odometerUploaded } = useLocalSearchParams();
+  const [showOdometerCard, setShowOdometerCard] = useState(false);
+  const currentStep = 1; // Example: two steps completed (0 & 1), index starts at 0
 
+  useEffect(() => {
+    if (odometerUploaded === "true") {
+      setShowOdometerCard(true);
+      router.setParams({ odometerUploaded: undefined });
+    }
+  }, [odometerUploaded, router]);
   // Update capturedImage when params.capturedImage changes
   useFocusEffect(
     useCallback(() => {
@@ -132,6 +143,95 @@ const Home = () => {
             </View>
           </View>
         </LinearGradient>
+
+        {showOdometerCard && (
+          <View
+            style={{
+              backgroundColor: "#EDE7FA",
+              borderRadius: s(12),
+              marginHorizontal: s(1),
+              marginTop: vs(10),
+              padding: s(16),
+              position: "relative",
+            }}
+          >
+            <TouchableOpacity
+              style={{
+                position: "absolute",
+                top: s(8),
+                right: s(8),
+                zIndex: 1,
+                borderRadius: 22,
+                borderColor: "#504E4E",
+                borderWidth: 1,
+              }}
+              onPress={() => setShowOdometerCard(false)}
+            >
+              <Ionicons name="close" size={19} color="#504E4E" />
+            </TouchableOpacity>
+
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: vs(10),
+              }}
+            >
+              <Image
+                source={require("@/assets/taxi.png")} // your cab icon
+                style={{ width: 29, height: 29, marginRight: s(10) }}
+                resizeMode="contain"
+              />
+              {/* <Taxi
+                width={29}
+                height={29}
+                style={{ width: 29, height: 29, marginRight: s(10) }}
+              /> */}
+
+              <View>
+                <Text
+                  style={{
+                    fontFamily: "InterSemiBold",
+                    fontSize: ms(15),
+                    // fontWeight: "700",
+                    color: "#000000",
+                  }}
+                >
+                  Journey Started
+                </Text>
+                <Text
+                  style={{
+                    fontSize: ms(14),
+                    color: "#9F9D9D",
+                    marginTop: vs(2),
+                  }}
+                >
+                  Your trip has begun. Drive safe {"\n"}
+                  we’re tracking your mileage.
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={{
+                  marginLeft: "auto",
+                  backgroundColor: "#69417E",
+                  paddingVertical: vs(6),
+                  paddingHorizontal: s(14),
+                  borderRadius: s(6),
+                  marginTop: vs(5),
+                }}
+              >
+                <Text
+                  style={{ color: "#fff", fontWeight: "600", fontSize: ms(13) }}
+                >
+                  Start
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Progress Steps */}
+            <JourneyStepper currentStep={currentStep} />
+          </View>
+        )}
 
         <View style={styles.attendanceCard}>
           {!capturedImage && (
@@ -323,7 +423,7 @@ const styles = StyleSheet.create({
     borderBottomEndRadius: 0,
     borderBottomLeftRadius: 0,
     padding: ms(16),
-    marginTop: vs(9),
+    marginTop: vs(2),
     marginHorizontal: s(2),
   },
   contentRow: {

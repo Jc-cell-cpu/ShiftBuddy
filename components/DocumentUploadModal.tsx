@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import Selfi from "@/assets/Selfi.svg";
 import Star from "@/assets/Starr.svg";
 import Upload from "@/assets/UploadIcon.svg";
@@ -89,7 +91,10 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
         }).start(() => {
           setShowSuccess(false); // hide modal after fade
           onClose(); // remove modal from tree
-          router.replace("/home/homePage"); // then navigate
+          router.replace({
+            pathname: "/home/homePage",
+            params: { odometerUploaded: "true" },
+          }); // then navigate
         });
       }, 2000); // keep modal visible before fading
       return () => clearTimeout(timer);
@@ -190,8 +195,8 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
               <View style={styles.textWrapper}>
                 <Text style={styles.modalSubtitle}>
                   To begin tracking your trip,{"\n"}please upload a clear photo
-                  of {"\n"}your vehicle's odometer.{"\n"}Take a clear photo of
-                  your {"\n"}
+                  of {"\n"}your vehicle&apos;s odometer.{"\n"}Take a clear photo
+                  of your {"\n"}
                   odometer showing the current{"\n"}mileage.
                 </Text>
               </View>
