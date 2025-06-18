@@ -101,7 +101,7 @@ const BookingDetails: React.FC = () => {
       }
     };
     loadAssets();
-  }, []);
+  }, [documents]);
 
   const {
     name = "Unknown",
