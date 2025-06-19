@@ -1,7 +1,10 @@
+import { loginUser } from "@/api/auth";
 import LogoC from "@/assets/LogoC.svg";
 import BackgroundSVGWhite from "@/components/BackgroundSVGWhite";
+import LoadingScreen from "@/components/LoadingScreen";
 import SlideToConfirmButton from "@/components/SliderButton";
 import { ms, s, vs } from "@/utils/scale";
+import { saveToken } from "@/utils/token";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -13,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 export default function Login() {
@@ -24,16 +28,39 @@ export default function Login() {
   const [focusedField, setFocusedField] = useState<"email" | "password" | null>(
     null
   );
+  const [loading, setLoading] = useState(false);
 
-  function handleLogin() {
+  async function handleLogin() {
     const newErrors = { email: "", password: "" };
     if (!email.trim()) newErrors.email = "Email is required";
     if (!password.trim()) newErrors.password = "Password is required";
     setErrors(newErrors);
 
     const hasError = Object.values(newErrors).some((msg) => msg !== "");
-    if (!hasError) {
+    if (hasError) return;
+
+    setLoading(true);
+    try {
+      const data = await loginUser(email, password);
+      if (data?.accessToken) {
+        await saveToken(data.accessToken);
+      }
+      Toast.show({
+        type: "success",
+        text1: "Login successful",
+      });
       router.push("/home/homePage");
+    } catch (error: any) {
+      console.log("error", error);
+      const message =
+        error?.response?.data?.message || "Invalid credentials or server error";
+      Toast.show({
+        type: "error",
+        text1: "Login failed",
+        text2: message,
+      });
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -45,12 +72,10 @@ export default function Login() {
         barStyle="dark-content"
       />
 
-      {/* Background */}
       <View style={StyleSheet.absoluteFill}>
         <BackgroundSVGWhite />
       </View>
 
-      {/* Foreground content */}
       <View style={styles.content}>
         <View style={styles.logoContainer}>
           <LogoC width={100} height={50} />
@@ -70,7 +95,7 @@ export default function Login() {
           ]}
           value={email}
           placeholder="melpeters@gmail.com"
-          placeholderTextColor="#BFBFBF" // Set placeholder color
+          placeholderTextColor="#BFBFBF"
           onChangeText={(text) => {
             setEmail(text);
             setErrors((prev) => ({ ...prev, email: "" }));
@@ -94,7 +119,7 @@ export default function Login() {
             ]}
             value={password}
             placeholder="••••••"
-            placeholderTextColor="#BFBFBF" // Set placeholder color
+            placeholderTextColor="#BFBFBF"
             onChangeText={(text) => {
               setPassword(text);
               setErrors((prev) => ({ ...prev, password: "" }));
@@ -126,7 +151,11 @@ export default function Login() {
         </TouchableOpacity>
 
         <View style={styles.loginButton}>
-          <SlideToConfirmButton label="Login" onComplete={handleLogin} />
+          {loading ? (
+            <LoadingScreen />
+          ) : (
+            <SlideToConfirmButton label="Login" onComplete={handleLogin} />
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -166,7 +195,6 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: "InterMedium",
     fontSize: ms(14),
-    // fontWeight: "700",
     marginTop: vs(12),
     marginBottom: vs(6),
   },

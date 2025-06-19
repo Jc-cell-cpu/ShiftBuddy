@@ -9,7 +9,6 @@
     "userInterfaceStyle": "automatic",
     "jsEngine": "hermes",
     "newArchEnabled": true,
-
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.jc_69.ShiftBuddy",
@@ -20,7 +19,6 @@
         "NSPhotoLibraryUsageDescription": "We need access to your photo library to upload images and documents."
       }
     },
-
     "android": {
       "package": "com.jc_69.ShiftBuddy",
       "permissions": [
@@ -35,20 +33,13 @@
         "foregroundImage": "./assets/BuddyL.png",
         "backgroundColor": "#ffffff"
       },
-      // "androidStatusBar": {
-      //   "backgroundColor": "transparent",
-      //   "translucent": true,
-      //   "barStyle": "dark-content"
-      // },
       "edgeToEdgeEnabled": true
     },
-
     "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-
     "plugins": [
       [
         "@config-plugins/react-native-blob-util",
@@ -63,9 +54,10 @@
           "enableDocumentViewer": true
         }
       ],
-  "expo-router",
-  "expo-camera",
-  "expo-font",  
+      "expo-router",
+      "expo-camera",
+      "expo-font",
+      // "lottie-react-native",
       [
         "expo-splash-screen",
         {
@@ -74,13 +66,12 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
-
     "experiments": {
       "typedRoutes": true
     },
-
     "extra": {
       "router": {},
       "eas": {

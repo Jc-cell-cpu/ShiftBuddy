@@ -28,11 +28,6 @@ ios/Pods
 .vscode
 .idea
 
-# Environment & credentials
-.env
-.env.*
-*.env
-
 # Test files
 __tests__/
 coverage/

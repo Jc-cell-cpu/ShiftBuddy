@@ -44,6 +44,7 @@ const tabs = [
   "Documents",
   "Contact",
   "Progress Note",
+  "Treatment status",
 ] as const;
 
 const BookingDetails: React.FC = () => {

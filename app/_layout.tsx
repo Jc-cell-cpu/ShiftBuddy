@@ -1,11 +1,11 @@
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useCallback } from "react";
+import React, { useCallback } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
-// Keep the splash screen visible while fonts load
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -19,6 +19,7 @@ export default function RootLayout() {
     Inter24Regular: require("@/assets/fonts/Inter_24pt-Regular.ttf"),
     Inter18SemiBold: require("@/assets/fonts/Inter_18pt-SemiBold.ttf"),
   });
+
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {
       await SplashScreen.hideAsync();
@@ -34,6 +35,7 @@ export default function RootLayout() {
           initialRouteName="index"
           screenOptions={{ headerShown: false }}
         />
+        <Toast />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
