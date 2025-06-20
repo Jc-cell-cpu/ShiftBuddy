@@ -2,7 +2,8 @@ import axios from "axios";
 // import Constants from "expo-constants";
 
 const API = axios.create({
-  baseURL: "http://192.168.1.9:4000",
+  baseURL: "http://192.168.10.72:4000",
+  // baseURL: "http://localhost:4000",
   headers: {
     "x-client-type": "app",
     "Content-Type": "application/json",

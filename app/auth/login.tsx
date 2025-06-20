@@ -1,4 +1,4 @@
-import { loginUser } from "@/api/auth";
+import { forgotPassword, loginUser } from "@/api/auth";
 import LogoC from "@/assets/LogoC.svg";
 import BackgroundSVGWhite from "@/components/BackgroundSVGWhite";
 import LoadingScreen from "@/components/LoadingScreen";
@@ -29,6 +29,9 @@ export default function Login() {
     null
   );
   const [loading, setLoading] = useState(false);
+
+  const isValidEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
   async function handleLogin() {
     const newErrors = { email: "", password: "" };
@@ -144,8 +147,36 @@ export default function Login() {
         ) : null}
 
         <TouchableOpacity
-          style={styles.forgotWrapper}
-          onPress={() => router.push("/auth/otpverification")}
+          style={[
+            styles.forgotWrapper,
+            !isValidEmail(email) && { opacity: 0.4 },
+          ]}
+          disabled={!isValidEmail(email)}
+          onPress={async () => {
+            try {
+              setLoading(true);
+              await forgotPassword(email);
+              Toast.show({
+                type: "success",
+                text1: "OTP sent to email",
+                text2: "Check your email for the OTP.",
+              });
+              router.push({
+                pathname: "/auth/otpverification",
+                params: { email },
+              }); // or whatever your next step is
+            } catch (err: any) {
+              const msg =
+                err?.response?.data?.msg || "Unable to send reset email.";
+              Toast.show({
+                type: "error",
+                text1: "Failed",
+                text2: msg,
+              });
+            } finally {
+              setLoading(false);
+            }
+          }}
         >
           <Text style={styles.forgotText}>Forget password?</Text>
         </TouchableOpacity>

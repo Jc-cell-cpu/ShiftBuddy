@@ -1,6 +1,6 @@
 import BackgroundSVGWhite from "@/components/BackgroundSVGWhite";
 import { ms, s, vs } from "@/utils/scale";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
@@ -18,6 +18,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
+import { verifyOtp } from "@/api/auth";
+import LoadingScreen from "@/components/LoadingScreen";
+import Toast from "react-native-toast-message";
+
 const { width } = Dimensions.get("window");
 
 const scale = (size: number) =>
@@ -31,6 +35,8 @@ const OtpVerification = () => {
   const [focused, setFocused] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const textInputRef = useRef<TextInput>(null);
+  const { email } = useLocalSearchParams<{ email: string }>();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (timer > 0) {
@@ -62,7 +68,9 @@ const OtpVerification = () => {
   }, []);
 
   const handleOtpChange = (text: string) => {
-    const newOtp = text.split("").slice(0, 4);
+    // Remove all non-digit characters
+    const numericText = text.replace(/[^0-9]/g, "");
+    const newOtp = numericText.split("").slice(0, 4);
     const paddedOtp = [...newOtp, ...Array(4 - newOtp.length).fill("")];
     setOtp(paddedOtp);
   };
@@ -76,10 +84,29 @@ const OtpVerification = () => {
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     const otpValue = otp.join("");
-    if (otpValue.length === 4) {
-      router.push("/auth/reset-password");
+    if (otpValue.length !== 4 || !email) return;
+    setLoading(true);
+    try {
+      await verifyOtp(email as string, otpValue);
+      Toast.show({
+        type: "success",
+        text1: "OTP Verified",
+      });
+      router.push({
+        pathname: "/auth/reset-password",
+        params: { email },
+      });
+    } catch (err: any) {
+      const msg = err?.response?.data?.msg || "Invalid OTP. Please try again.";
+      Toast.show({
+        type: "error",
+        text1: "Verification Failed",
+        text2: msg,
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -166,17 +193,21 @@ const OtpVerification = () => {
           </View>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.continueButton,
-                otp.join("").length !== 4 && styles.continueButtonDisabled,
-                keyboardVisible && styles.continueButtonWithKeyboard,
-              ]}
-              onPress={handleContinue}
-              disabled={otp.join("").length !== 4}
-            >
-              <Text style={styles.continueButtonText}>Continue</Text>
-            </TouchableOpacity>
+            {loading ? (
+              <LoadingScreen />
+            ) : (
+              <TouchableOpacity
+                style={[
+                  styles.continueButton,
+                  otp.join("").length !== 4 && styles.continueButtonDisabled,
+                  keyboardVisible && styles.continueButtonWithKeyboard,
+                ]}
+                onPress={handleContinue}
+                disabled={otp.join("").length !== 4}
+              >
+                <Text style={styles.continueButtonText}>Continue</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </KeyboardAvoidingView>

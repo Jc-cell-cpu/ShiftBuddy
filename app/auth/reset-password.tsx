@@ -1,5 +1,5 @@
 import BackgroundSVGWhite from "@/components/BackgroundSVGWhite";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -17,6 +17,10 @@ import {
 import { ms, mvs, s, vs } from "react-native-size-matters";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
+import { resetPassword } from "@/api/auth";
+import LoadingScreen from "@/components/LoadingScreen";
+import Toast from "react-native-toast-message";
+
 const ResetPassword = () => {
   const router = useRouter();
   const [newPassword, setNewPassword] = useState("");
@@ -32,6 +36,8 @@ const ResetPassword = () => {
   });
   const [buttonOffset] = useState(new Animated.Value(0));
   const animationInProgress = useRef(false); // Prevent multiple animations
+  const { email } = useLocalSearchParams<{ email: string }>();
+  const [loading, setLoading] = useState(false);
 
   // Keyboard listeners with debouncing
   useEffect(() => {
@@ -69,7 +75,16 @@ const ResetPassword = () => {
     };
   }, [buttonOffset]);
 
-  const handleSave = () => {
+  if (!email) {
+    Toast.show({
+      type: "error",
+      text1: "Missing email",
+      text2: "Please try resetting from the beginning.",
+    });
+    return;
+  }
+
+  const handleSave = async () => {
     const newErrors = { newPassword: "", confirmPassword: "" };
 
     if (!newPassword.trim()) newErrors.newPassword = "New password is required";
@@ -79,10 +94,28 @@ const ResetPassword = () => {
       newErrors.confirmPassword = "Passwords do not match";
 
     setErrors(newErrors);
-
     const hasError = Object.values(newErrors).some((msg) => msg !== "");
-    if (!hasError) {
+    if (hasError) return;
+    setLoading(true);
+
+    try {
+      await resetPassword(email as string, newPassword, confirmPassword);
+      Toast.show({
+        type: "success",
+        text1: "Password Reset",
+        text2: "You can now login with your new password.",
+      });
       router.push("/auth/login");
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.msg || "Failed to reset password. Try again.";
+      Toast.show({
+        type: "error",
+        text1: "Reset Failed",
+        text2: msg,
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -194,16 +227,20 @@ const ResetPassword = () => {
             { transform: [{ translateY: buttonOffset }] },
           ]}
         >
-          <TouchableOpacity
-            style={[
-              styles.saveButton,
-              (!newPassword || !confirmPassword) && styles.saveButtonDisabled,
-            ]}
-            onPress={handleSave}
-            disabled={!newPassword || !confirmPassword}
-          >
-            <Text style={styles.saveButtonText}>Save</Text>
-          </TouchableOpacity>
+          {loading ? (
+            <LoadingScreen />
+          ) : (
+            <TouchableOpacity
+              style={[
+                styles.saveButton,
+                (!newPassword || !confirmPassword) && styles.saveButtonDisabled,
+              ]}
+              onPress={handleSave}
+              disabled={!newPassword || !confirmPassword}
+            >
+              <Text style={styles.saveButtonText}>Save</Text>
+            </TouchableOpacity>
+          )}
         </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
