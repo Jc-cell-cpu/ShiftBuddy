@@ -1,5 +1,5 @@
 import HomePageSkeleton from "@/components/HomePageSkeleton";
-import { isTokenExpired } from "@/utils/token";
+import { isTokenExpired } from "@/utils/jwtUtils";
 import { Slot, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
