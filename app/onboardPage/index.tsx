@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import Arrowii from "@/assets/arrowii.svg";
 import Femaled from "@/assets/femaled.svg";
 import LOGOW from "@/assets/LOGOW.svg";

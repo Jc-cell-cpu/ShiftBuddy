@@ -13,8 +13,11 @@ export default function AuthLayout() {
       const token = await SecureStore.getItemAsync("accessToken");
       if (token && !isTokenExpired(token)) {
         router.push("/home/homePage");
+        // router.push("/rawPages/test");
       }
-      setCheckingAuth(false);
+      setTimeout(() => {
+        setCheckingAuth(false);
+      }, 950);
     };
 
     checkToken();

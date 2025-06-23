@@ -4,7 +4,7 @@ import BackgroundSVGWhite from "@/components/BackgroundSVGWhite";
 import LoadingScreen from "@/components/LoadingScreen";
 import SlideToConfirmButton from "@/components/SliderButton";
 import { ms, s, vs } from "@/utils/scale";
-import { saveToken } from "@/utils/token";
+import { saveTokens } from "@/utils/token";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -46,13 +46,14 @@ export default function Login() {
     try {
       const data = await loginUser(email, password);
       if (data?.accessToken) {
-        await saveToken(data.accessToken);
+        await saveTokens(data.accessToken, data.refreshToken);
       }
       Toast.show({
         type: "success",
         text1: "Login successful",
       });
       router.push("/home/homePage");
+      // router.push("/rawPages/test");
     } catch (error: any) {
       console.log("error", error);
       const message =

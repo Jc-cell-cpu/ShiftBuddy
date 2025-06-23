@@ -1,9 +1,16 @@
+
+import { isTokenExpired } from "@/utils/jwtUtils"; // ✅ updated
 import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+import { refreshAccessToken } from "./refresh";
+
+
 // import Constants from "expo-constants";
 
 const API = axios.create({
   baseURL: "http://192.168.10.72:4000",
-  // baseURL: "http://localhost:4000",
+  // baseURL: "http://192.168.1.9:4000",
+  // baseURL: "http://192.168.1.6:4000",
   headers: {
     "x-client-type": "app",
     "Content-Type": "application/json",
@@ -35,4 +42,19 @@ API.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+API.interceptors.request.use(async (config) => {
+  let token = await SecureStore.getItemAsync("accessToken");
+
+  if (token && isTokenExpired(token, 300)) {
+    token = await refreshAccessToken();
+  }
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
+
 export default API;
