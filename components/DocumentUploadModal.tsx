@@ -3,6 +3,7 @@
 import Selfi from "@/assets/Selfi.svg";
 import Star from "@/assets/Starr.svg";
 import Upload from "@/assets/UploadIcon.svg";
+import { useJourneyStore } from "@/store/useJourneyStore";
 import { ms, s, vs } from "@/utils/scale";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "@react-native-community/blur";
@@ -42,6 +43,7 @@ interface UploadItem {
 const MAX_FILE_SIZE_MB = 25;
 
 const sanitizeFileName = (name: string) => name.replace(/[^\w.\-]/g, "_");
+const { setOdometerUploaded, setCurrentStep } = useJourneyStore.getState();
 
 const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   visible,
@@ -165,6 +167,8 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
 
   const handleFinalUpload = () => {
     // if (verifiedUpload) {
+    setOdometerUploaded(true);
+    setCurrentStep(1); // assuming odometer upload completes step 0
     setShowSuccess(true);
     // }
   };

@@ -5,6 +5,7 @@ import Selfi from "@/assets/Selfi.svg";
 import Star from "@/assets/Star.svg";
 import CalendarComponent from "@/components/CalendarComponent";
 import JourneyStepper from "@/components/JourneyStepper";
+import { useJourneyStore } from "@/store/useJourneyStore";
 import { ms, s, vs } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -34,9 +35,9 @@ const Home = () => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
   const [firstName, setFirstName] = useState<string | null>(null); // Track unread notifications
-  const { odometerUploaded } = useLocalSearchParams();
   const [showOdometerCard, setShowOdometerCard] = useState(false);
   const currentStep = 1; // Example: two steps completed (0 & 1), index starts at 0
+  const { odometerUploaded } = useJourneyStore();
 
   useEffect(() => {
     const loadName = async () => {
@@ -51,12 +52,12 @@ const Home = () => {
     loadName();
   }, []);
 
-  useEffect(() => {
-    if (odometerUploaded === "true") {
-      setShowOdometerCard(true);
-      router.setParams({ odometerUploaded: undefined });
-    }
-  }, [odometerUploaded, router]);
+  // useEffect(() => {
+  //   if (odometerUploaded === "true") {
+  //     setShowOdometerCard(true);
+  //     router.setParams({ odometerUploaded: undefined });
+  //   }
+  // }, [odometerUploaded, router]);
   // Update capturedImage when params.capturedImage changes
   useFocusEffect(
     useCallback(() => {
@@ -161,7 +162,7 @@ const Home = () => {
           </View>
         </LinearGradient>
 
-        {showOdometerCard && (
+        {odometerUploaded && (
           <View
             style={{
               backgroundColor: "#EDE7FA",
