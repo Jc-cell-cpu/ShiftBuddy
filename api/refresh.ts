@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+import { deleteTokens } from "@/utils/authUtils";
 import axios from "axios";
+import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 
 const refreshClient = axios.create({
-  // baseURL: "http://192.168.1.6:4000",
   baseURL: "http://192.168.10.72:4000",
   headers: {
     "Content-Type": "application/json",
@@ -12,7 +15,11 @@ const refreshClient = axios.create({
 
 export const refreshAccessToken = async (): Promise<string | null> => {
   const refreshToken = await SecureStore.getItemAsync("refreshToken");
-  if (!refreshToken) return null;
+  if (!refreshToken) {
+    await deleteTokens();
+    router.replace("/auth/login");
+    return null;
+  }
 
   try {
     const response = await refreshClient.post("/carrier/v1/get-carrier-access-token", {
@@ -23,11 +30,13 @@ export const refreshAccessToken = async (): Promise<string | null> => {
     if (newToken) {
       await SecureStore.setItemAsync("accessToken", newToken);
       return newToken;
+    } else {
+      throw new Error("No accessToken in response");
     }
-
-    return null;
   } catch (error) {
-    console.error("Error refreshing token:", error);
+    // console.error("Error refreshing token:", error);
+    await deleteTokens();
+    router.replace("/auth/login");
     return null;
   }
 };

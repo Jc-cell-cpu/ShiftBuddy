@@ -6,6 +6,7 @@ import SlideToConfirmButton from "@/components/SliderButton";
 import { ms, s, vs } from "@/utils/scale";
 import { saveTokens } from "@/utils/token";
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import React, { useState } from "react";
 import {
   SafeAreaView,
@@ -45,8 +46,15 @@ export default function Login() {
     setLoading(true);
     try {
       const data = await loginUser(email, password);
+      // console.log("Login response:", data);
       if (data?.accessToken) {
         await saveTokens(data.accessToken, data.refreshToken);
+        const fullName = data?.carrer?.name;
+        if (fullName) {
+          await SecureStore.setItemAsync("userName", fullName);
+          // const checkName = await SecureStore.getItemAsync("userName");
+          // console.log("Stored name:", checkName);
+        }
       }
       Toast.show({
         type: "success",

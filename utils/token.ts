@@ -20,11 +20,6 @@ export const getRefreshToken = async () => {
   return await SecureStore.getItemAsync("refreshToken");
 };
 
-// Delete tokens
-export const deleteTokens = async () => {
-  await SecureStore.deleteItemAsync("accessToken");
-  await SecureStore.deleteItemAsync("refreshToken");
-};
 
 // Token expiry check
 // export function isTokenExpired(token: string): boolean {

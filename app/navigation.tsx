@@ -257,6 +257,7 @@ import {
   View,
 } from "react-native";
 import Home from "./home/homePage";
+import ProfileScreen from "./rawPages/Profile";
 
 const Tab = createBottomTabNavigator();
 
@@ -272,17 +273,13 @@ const SearchScreen = () => (
   </View>
 );
 
-const GridScreen = () => (
-  <View style={styles.screen}>
-    <Text>Grid</Text>
-  </View>
-);
-
 const CustomTabBar: React.FC<BottomTabBarProps> = ({
   state,
   descriptors,
   navigation,
 }) => {
+  if (state.routes[state.index].name === "Grid") return null;
+
   return (
     <View style={styles.tabBarContainer}>
       <BlurView intensity={60} tint="light" style={styles.blurWrapper}>
@@ -359,7 +356,7 @@ export default function App() {
           <Tab.Screen name="Home" component={Home} />
           <Tab.Screen name="Calendar" component={CalendarScreen} />
           <Tab.Screen name="Search" component={SearchScreen} />
-          <Tab.Screen name="Grid" component={GridScreen} />
+          <Tab.Screen name="Grid" component={ProfileScreen} />
         </Tab.Navigator>
       </NavigationContainer>
     </NavigationIndependentTree>

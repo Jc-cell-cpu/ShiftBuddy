@@ -13,6 +13,7 @@ import {
   useNavigation,
   useRouter,
 } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Image,
@@ -31,10 +32,24 @@ const Home = () => {
   const navigation = useNavigation();
   const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true); // Track unread notifications
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
+  const [firstName, setFirstName] = useState<string | null>(null); // Track unread notifications
   const { odometerUploaded } = useLocalSearchParams();
   const [showOdometerCard, setShowOdometerCard] = useState(false);
   const currentStep = 1; // Example: two steps completed (0 & 1), index starts at 0
+
+  useEffect(() => {
+    const loadName = async () => {
+      const fullName = await SecureStore.getItemAsync("userName");
+      console.log("Full Name from SecureStore:", fullName);
+      if (fullName) {
+        const first = fullName.split(" ")[0];
+        setFirstName(first);
+      }
+    };
+
+    loadName();
+  }, []);
 
   useEffect(() => {
     if (odometerUploaded === "true") {
@@ -124,7 +139,9 @@ const Home = () => {
         >
           <View style={styles.header}>
             <View>
-              <Text style={styles.greeting}>Hello, Kriti!</Text>
+              <Text style={styles.greeting}>
+                Hello, {firstName ?? "there"}!
+              </Text>
               <Text style={styles.welcome}>Welcome to ShiftBuddy! 👋</Text>
             </View>
             <View style={styles.headerIcons}>
