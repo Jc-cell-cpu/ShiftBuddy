@@ -6,6 +6,7 @@ import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -67,6 +68,11 @@ export default function CameraScreen() {
     // Preview screen
     return (
       <SafeAreaView style={styles.previewContainer}>
+        <StatusBar
+          translucent
+          backgroundColor="transparent"
+          barStyle="dark-content"
+        />
         <Image source={{ uri: photoUri }} style={styles.previewImage} />
         <View style={styles.previewControls}>
           <TouchableOpacity onPress={retakePicture} style={styles.retakeBtn}>

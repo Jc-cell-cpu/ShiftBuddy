@@ -14,6 +14,7 @@ import {
   Animated,
   FlatList,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -44,13 +45,14 @@ const tabs = [
   "Documents",
   "Contact",
   "Progress Note",
-  "Treatment status",
+  // "Treatment status",
 ] as const;
 
 const BookingDetails: React.FC = () => {
   const params = useLocalSearchParams();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Booking");
+  const initialTab = (params?.activeTab as (typeof tabs)[number]) || "Booking";
+  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>(initialTab);
   const [showButton, setShowButton] = useState<boolean>(true);
   const [documentViewerVisible, setDocumentViewerVisible] =
     useState<boolean>(false);
@@ -233,6 +235,11 @@ const BookingDetails: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar
+        translucent
+        backgroundColor="transparent"
+        barStyle="dark-content"
+      />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -469,8 +476,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
+    // justifyContent: "space-between",
     padding: s(16),
-    gap: s(12),
+    gap: s(61),
     marginTop: vs(25),
   },
   headerTitle: {

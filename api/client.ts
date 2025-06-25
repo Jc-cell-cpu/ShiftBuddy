@@ -8,8 +8,8 @@ import { refreshAccessToken } from "./refresh";
 // import Constants from "expo-constants";
 
 const API = axios.create({
-  // baseURL: "http://192.168.10.72:4000",
-  baseURL: "http://192.168.1.6:4000",
+  baseURL: "http://192.168.10.72:4000",
+  // baseURL: "http://192.168.1.6:4000",
   // baseURL: "http://13.60.225.213:4000",
   headers: {
     "x-client-type": "app",

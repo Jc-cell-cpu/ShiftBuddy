@@ -33,6 +33,11 @@ const scaleFont = (size: number) => size * Math.min(widthScale, heightScale);
 export default function OnboardPage() {
   return (
     <View style={styles.container}>
+      {/* <StatusBar
+              translucent
+              backgroundColor="transparent"
+              barStyle="dark-content"
+            /> */}
       {/* Background */}
       <BackgroundSVG width={widthC} height={heightC} />
       {/* <BackgroundSVGWhite /> */}

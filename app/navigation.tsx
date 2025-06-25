@@ -258,18 +258,13 @@ import {
 } from "react-native";
 import Home from "./home/homePage";
 import ProfileScreen from "./rawPages/Profile";
+import SearchScreen from "./rawPages/search";
 
 const Tab = createBottomTabNavigator();
 
 const CalendarScreen = () => (
   <View style={styles.screen}>
     <Text>Calendar</Text>
-  </View>
-);
-
-const SearchScreen = () => (
-  <View style={styles.screen}>
-    <Text>Search</Text>
   </View>
 );
 

@@ -1,3 +1,4 @@
+import { useJourneyStore } from "@/store/useJourneyStore";
 import { ms, s, vs } from "@/utils/scale";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import React from "react";
@@ -6,11 +7,8 @@ import StepIndicator from "react-native-step-indicator";
 
 const labels = ["Start Journey", "Reach", "Start Shift", "Process", "End"];
 
-interface JourneyStepperProps {
-  currentStep: number;
-}
-
-const JourneyStepper: React.FC<JourneyStepperProps> = ({ currentStep }) => {
+const JourneyStepper: React.FC = () => {
+  const { currentStep } = useJourneyStore();
   const customStyles = {
     stepIndicatorSize: s(34),
     currentStepIndicatorSize: s(34),

@@ -11,6 +11,7 @@ import React, { useState } from "react";
 import {
   Image,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -77,6 +78,11 @@ const ProfileScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar
+        translucent
+        backgroundColor="transparent"
+        barStyle="dark-content"
+      />
       <ScrollView
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
@@ -307,6 +313,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    // gap: s(12),
     padding: s(16),
   },
   title: { fontSize: ms(18), fontWeight: "700", color: "#000" },
