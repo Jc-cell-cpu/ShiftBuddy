@@ -243,22 +243,21 @@ const Home = () => {
                   borderRadius: s(6),
                   marginTop: vs(5),
                 }}
-                // onPress={() => {
-                //   console.log("Start button pressed");
-                //   router.push({
-                //     pathname: "/rawPages/bookingdetails",
-                //     params: {
-                //       name: "Emily Harrington",
-                //       gender: "Female",
-                //       age: "28",
-                //       time: "8:30 AM - 9:30 AM",
-                //       date: "2025-07-28",
-                //       avatarUrl:
-                //         "https://media.istockphoto.com/id/1468678624/photo/nurse-hospital-employee-and-portrait-of-black-man-in-a-healthcare-wellness-and-clinic-feeling.jpg?s=2048x2048&w=is&k=20&c=Ha1Z7BjLTrp-wrn131BNHW8T-WMqViY3NrRuXyZtEfk=",
-                //       activeTab: "Treatment status",
-                //     },
-                //   });
-                // }}
+                onPress={() => {
+                  router.push({
+                    pathname: "/rawPages/bookingdetails",
+                    params: {
+                      name: "Emily Harrington",
+                      gender: "Female",
+                      age: "28",
+                      time: "8:30 AM - 9:30 AM",
+                      date: "2025-07-28",
+                      avatarUrl:
+                        "https://media.istockphoto.com/id/1468678624/photo/nurse-hospital-employee-and-portrait-of-black-man-in-a-healthcare-wellness-and-clinic-feeling.jpg?s=2048x2048&w=is&k=20&c=Ha1Z7BjLTrp-wrn131BNHW8T-WMqViY3NrRuXyZtEfk=",
+                      // activeTab: "Treatment status",
+                    },
+                  });
+                }}
               >
                 <Text
                   style={{ color: "#fff", fontWeight: "600", fontSize: ms(13) }}

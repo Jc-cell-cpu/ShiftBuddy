@@ -10,6 +10,7 @@ interface BookingDetailsCardProps {
   date: string; // Format: "YYYY-MM-DD"
   time: string;
   avatarUrl: string;
+  onOpenPress?: () => void;
 }
 
 const BookingDetailsCard: React.FC<BookingDetailsCardProps> = ({
@@ -19,6 +20,7 @@ const BookingDetailsCard: React.FC<BookingDetailsCardProps> = ({
   date,
   time,
   avatarUrl,
+  onOpenPress,
 }) => {
   return (
     <View style={styles.bookingCard}>
@@ -52,7 +54,7 @@ const BookingDetailsCard: React.FC<BookingDetailsCardProps> = ({
           <TouchableOpacity style={styles.actionButton}>
             <Ionicons name="mail-outline" size={18} color="#69417E" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={onOpenPress}>
             <Ionicons name="open-outline" size={18} color="#69417E" />
           </TouchableOpacity>
         </View>
