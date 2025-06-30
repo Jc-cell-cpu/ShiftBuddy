@@ -264,6 +264,7 @@ const BookingDetails: React.FC = () => {
         time={time}
         avatarUrl={avatar}
         onOpenPress={() => setShowOpenSection(true)}
+        showOpenSection={showOpenSection}
       />
 
       {/* Tabs */}
@@ -276,7 +277,10 @@ const BookingDetails: React.FC = () => {
           {tabs.map((tab) => (
             <TouchableOpacity
               key={tab}
-              onPress={() => setActiveTab(tab)}
+              onPress={() => {
+                setActiveTab(tab);
+                setShowOpenSection(false); // ✅ close the open section when a tab is clicked
+              }}
               style={[styles.tab, activeTab === tab && styles.activeTab]}
             >
               <Text
@@ -302,7 +306,7 @@ const BookingDetails: React.FC = () => {
         >
           <View
             style={{
-              backgroundColor: "#FDF6F9",
+              backgroundColor: "#FFF9FF",
               marginHorizontal: s(16),
               padding: s(14),
               borderRadius: s(10),
@@ -312,8 +316,8 @@ const BookingDetails: React.FC = () => {
             <Text
               style={{
                 fontSize: ms(14),
-                fontWeight: "600",
                 marginBottom: vs(8),
+                fontFamily: "InterMedium",
               }}
             >
               Track Treatment - ID09876
@@ -322,8 +326,8 @@ const BookingDetails: React.FC = () => {
               style={{
                 fontSize: ms(13),
                 color: "#666",
-                fontWeight: "600",
                 marginBottom: -vs(8),
+                fontFamily: "InterVariable",
               }}
             >
               Treatment status

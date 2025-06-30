@@ -11,6 +11,7 @@ interface BookingDetailsCardProps {
   time: string;
   avatarUrl: string;
   onOpenPress?: () => void;
+  showOpenSection?: boolean;
 }
 
 const BookingDetailsCard: React.FC<BookingDetailsCardProps> = ({
@@ -21,6 +22,7 @@ const BookingDetailsCard: React.FC<BookingDetailsCardProps> = ({
   time,
   avatarUrl,
   onOpenPress,
+  showOpenSection,
 }) => {
   return (
     <View style={styles.bookingCard}>
@@ -54,7 +56,13 @@ const BookingDetailsCard: React.FC<BookingDetailsCardProps> = ({
           <TouchableOpacity style={styles.actionButton}>
             <Ionicons name="mail-outline" size={18} color="#69417E" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={onOpenPress}>
+          <TouchableOpacity
+            style={[
+              styles.actionButton,
+              showOpenSection && { backgroundColor: "#F2C7AC" }, // ✅ conditional style
+            ]}
+            onPress={onOpenPress}
+          >
             <Ionicons name="open-outline" size={18} color="#69417E" />
           </TouchableOpacity>
         </View>
