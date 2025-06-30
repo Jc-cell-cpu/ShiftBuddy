@@ -34,14 +34,14 @@ const VerticalJourneyStepper: React.FC = () => {
     separatorStrokeWidth: 6,
     currentStepStrokeWidth: 3,
     stepStrokeWidth: 2,
-    stepStrokeCurrentColor: "#FFFFFF",
-    stepStrokeFinishedColor: "#FFFFFF",
-    stepStrokeUnFinishedColor: "#FFFFFF",
+    stepStrokeCurrentColor: "#DDDDDD",
+    stepStrokeFinishedColor: "#69417E",
+    stepStrokeUnFinishedColor: "#DDDDDD",
     separatorFinishedColor: "#69417E",
-    separatorUnFinishedColor: "#FFFFFF",
+    separatorUnFinishedColor: "#DDDDDD",
     stepIndicatorFinishedColor: "#69417E",
-    stepIndicatorUnFinishedColor: "#FFFFFF",
-    stepIndicatorCurrentColor: "#FFFFFF",
+    stepIndicatorUnFinishedColor: "#DDDDDD",
+    stepIndicatorCurrentColor: "#DDDDDD",
     // Hide step numbers safely
     stepIndicatorLabelFontSize: ms(2), // Safe value to avoid Hermes error
     stepIndicatorLabelCurrentColor: "transparent",
@@ -64,12 +64,12 @@ const VerticalJourneyStepper: React.FC = () => {
         style={{
           width: s(28),
           height: s(28),
-          backgroundColor: isCompleted ? "#69417E" : "#FFFFFF",
+          backgroundColor: isCompleted ? "#69417E" : "#DDDDDD",
           justifyContent: "center",
           alignItems: "center",
           borderRadius: s(14),
           borderWidth: isCompleted ? s(2) : 0,
-          borderColor: "#FFFFFF",
+          borderColor: "#69417E",
         }}
       >
         {isCompleted && (
