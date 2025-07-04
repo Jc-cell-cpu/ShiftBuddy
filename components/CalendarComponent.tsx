@@ -1,12 +1,13 @@
-// components/CalendarComponent.tsx
-import { ms, s, vs } from "@/utils/scale"; // Adjust path accordingly
-import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { ms, s, vs } from "@/utils/scale";
+import { LinearGradient } from "expo-linear-gradient";
+import React, { useEffect, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 interface Booking {
-  date: string; // Format: "YYYY-MM-DD"
+  date: string;
   details: {
     name: string;
     gender: string;
@@ -18,14 +19,33 @@ interface Booking {
 interface CalendarComponentProps {
   isExpanded: boolean;
   bookings?: Booking[];
+  showMonthYear?: boolean;
+  withBackgroundColor?: boolean;
+  onDateChange?: (date: Date) => void;
 }
 
 const CalendarComponent: React.FC<CalendarComponentProps> = ({
   isExpanded,
   bookings = [],
+  showMonthYear = false,
+  withBackgroundColor = false,
+  onDateChange,
 }) => {
   const currentDate = new Date();
   const currentDateString = currentDate.toISOString().split("T")[0];
+
+  const [visibleDate, setVisibleDate] = useState(currentDate);
+
+  const formattedMonthYear = visibleDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+
+  useEffect(() => {
+    if (!isExpanded) {
+      setVisibleDate(currentDate);
+    }
+  }, [isExpanded]);
 
   const markedDates = bookings.reduce((acc, booking) => {
     acc[booking.date] = {
@@ -33,7 +53,7 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
       dotColor: "#F5D2BD",
     };
     return acc;
-  }, {} as { [key: string]: { marked?: boolean; dotColor?: string; selected?: boolean; selectedColor?: string; selectedTextColor?: string } });
+  }, {} as { [key: string]: any });
 
   markedDates[currentDateString] = {
     ...markedDates[currentDateString],
@@ -60,16 +80,26 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
   const weekDates = getWeekDates(currentDate);
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-  return (
-    <TouchableOpacity activeOpacity={0.9} style={styles.calendarContainer}>
+  const renderCalendarContent = () => (
+    <>
+      {showMonthYear && !isExpanded && (
+        <View style={styles.monthHeader}>
+          <Text style={styles.monthText}>{formattedMonthYear}</Text>
+        </View>
+      )}
+
       {isExpanded ? (
         <Calendar
+          onDayPress={(day) => {
+            const selected = new Date(day.dateString);
+            onDateChange?.(selected);
+          }}
           current={currentDateString}
-          firstDay={1} // Start week on Monday
+          firstDay={1}
           markedDates={markedDates}
           theme={{
-            backgroundColor: "#FFF",
-            calendarBackground: "#FFF",
+            backgroundColor: "transparent",
+            calendarBackground: "transparent",
             textSectionTitleColor: "#6B7280",
             dayTextColor: "#000",
             todayTextColor: "#69417E",
@@ -93,6 +123,9 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
           )}
           onPressArrowLeft={(subtractMonth) => subtractMonth()}
           onPressArrowRight={(addMonth) => addMonth()}
+          onMonthChange={(date) => {
+            setVisibleDate(new Date(date.year, date.month - 1));
+          }}
         />
       ) : (
         <View style={styles.weekContainer}>
@@ -136,19 +169,42 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
           })}
         </View>
       )}
-    </TouchableOpacity>
+    </>
+  );
+
+  return (
+    <View style={styles.calendarWrapper}>
+      {withBackgroundColor ? (
+        <LinearGradient
+          colors={["#F6E8FF", "#FAF5FF"]}
+          style={styles.gradientBackground}
+        >
+          {renderCalendarContent()}
+        </LinearGradient>
+      ) : (
+        <View style={styles.calendarContainer}>{renderCalendarContent()}</View>
+      )}
+    </View>
   );
 };
 
 export default CalendarComponent;
 
 const styles = StyleSheet.create({
-  calendarContainer: {
-    backgroundColor: "#FFF",
-    borderRadius: ms(16),
-    padding: 0,
+  calendarWrapper: {
+    marginHorizontal: s(1),
     marginBottom: vs(16),
-    marginHorizontal: s(15),
+    borderRadius: ms(16),
+    overflow: "hidden",
+  },
+  calendarContainer: {
+    // backgroundColor: "#FFF",
+    borderRadius: ms(16),
+    padding: s(12),
+  },
+  gradientBackground: {
+    padding: s(12),
+    borderRadius: ms(16),
   },
   fullCalendar: {
     borderRadius: ms(8),
@@ -167,7 +223,7 @@ const styles = StyleSheet.create({
   },
   currentDateDayWrapper: {
     backgroundColor: "#F1E6FF",
-    borderRadius: ms(20), // Circular shape (adjust based on size)
+    borderRadius: ms(20),
   },
   weekDayText: {
     fontFamily: "InterRegular",
@@ -178,7 +234,7 @@ const styles = StyleSheet.create({
     fontFamily: "InterMedium",
     fontSize: ms(16),
     color: "#000",
-    marginTop: vs(2), // Brings day and date closer
+    marginTop: vs(2),
   },
   currentWeekText: {
     color: "#69417E",
@@ -189,5 +245,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5D2BD",
     borderRadius: ms(3),
     marginTop: vs(4),
+  },
+  monthHeader: {
+    alignItems: "center",
+    paddingBottom: vs(6),
+  },
+  monthText: {
+    fontFamily: "InterSemiBold",
+    fontSize: ms(16),
+    color: "#111827",
   },
 });

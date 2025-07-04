@@ -104,8 +104,7 @@ const Home = () => {
         gender: "Female",
         age: 28,
         time: "8:30 AM - 9:30 AM",
-        avatarUrl:
-          "https://media.istockphoto.com/id/1468678624/photo/nurse-hospital-employee-and-portrait-of-black-man-in-a-healthcare-wellness-and-clinic-feeling.jpg?s=2048x2048&w=is&k=20&c=Ha1Z7BjLTrp-wrn131BNHW8T-WMqViY3NrRuXyZtEfk=",
+        avatarUrl: "https://randomuser.me/api/portraits/women/65.jpg",
       },
     },
     {
@@ -115,8 +114,7 @@ const Home = () => {
         gender: "Male",
         age: 35,
         time: "10:00 AM - 11:00 AM",
-        avatarUrl:
-          "https://media.istockphoto.com/id/1468678624/photo/nurse-hospital-employee-and-portrait-of-black-man-in-a-healthcare-wellness-and-clinic-feeling.jpg?s=2048x2048&w=is&k=20&c=Ha1Z7BjLTrp-wrn131BNHW8T-WMqViY3NrRuXyZtEfk=",
+        avatarUrl: "https://randomuser.me/api/portraits/men/45.jpg",
       },
     },
     {
@@ -126,8 +124,7 @@ const Home = () => {
         gender: "Female",
         age: 42,
         time: "2:00 PM - 3:00 PM",
-        avatarUrl:
-          "https://media.istockphoto.com/id/1468678624/photo/nurse-hospital-employee-and-portrait-of-black-man-in-a-healthcare-wellness-and-clinic-feeling.jpg?s=2048x2048&w=is&k=20&c=Ha1Z7BjLTrp-wrn131BNHW8T-WMqViY3NrRuXyZtEfk=",
+        avatarUrl: "https://randomuser.me/api/portraits/women/72.jpg",
       },
     },
   ];

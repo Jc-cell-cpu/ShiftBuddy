@@ -257,16 +257,12 @@ import {
   View,
 } from "react-native";
 import Home from "./home/homePage";
-import ProfileScreen from "./rawPages/Profile";
 import SearchScreen from "./rawPages/search";
 
-const Tab = createBottomTabNavigator();
+import CalendarScreen from "./rawPages/CalendarScreen";
+import ProfileScreen from "./rawPages/Profile";
 
-const CalendarScreen = () => (
-  <View style={styles.screen}>
-    <Text>Calendar</Text>
-  </View>
-);
+const Tab = createBottomTabNavigator();
 
 const CustomTabBar: React.FC<BottomTabBarProps> = ({
   state,
