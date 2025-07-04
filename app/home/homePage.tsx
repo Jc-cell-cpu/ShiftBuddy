@@ -28,6 +28,120 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
+// Dummy booking data
+const bookings: any[] = [
+  {
+    id: "1",
+    date: "2025-07-04",
+    details: {
+      name: "Emily Harrington",
+      gender: "Female",
+      age: 28,
+      time: "8:30 AM - 9:30 AM",
+      avatarUrl: "https://randomuser.me/api/portraits/women/65.jpg",
+    },
+  },
+  {
+    id: "2",
+    date: "2025-07-04",
+    details: {
+      name: "Michael Chen",
+      gender: "Male",
+      age: 35,
+      time: "10:00 AM - 11:00 AM",
+      avatarUrl: "https://randomuser.me/api/portraits/men/45.jpg",
+    },
+  },
+  {
+    id: "3",
+    date: "2025-07-05",
+    details: {
+      name: "Sarah Johnson",
+      gender: "Female",
+      age: 42,
+      time: "2:00 PM - 3:00 PM",
+      avatarUrl: "https://randomuser.me/api/portraits/women/72.jpg",
+    },
+  },
+  {
+    id: "4",
+    date: "2025-07-04",
+    details: {
+      name: "James Lee",
+      gender: "Male",
+      age: 31,
+      time: "9:00 AM - 10:00 AM",
+      avatarUrl: "https://randomuser.me/api/portraits/men/12.jpg",
+    },
+  },
+  {
+    id: "5",
+    date: "2025-07-05",
+    details: {
+      name: "Olivia Brown",
+      gender: "Female",
+      age: 25,
+      time: "11:30 AM - 12:00 PM",
+      avatarUrl: "https://randomuser.me/api/portraits/women/19.jpg",
+    },
+  },
+  {
+    id: "6",
+    date: "2025-08-02",
+    details: {
+      name: "William Davis",
+      gender: "Male",
+      age: 38,
+      time: "1:00 PM - 2:00 PM",
+      avatarUrl: "https://randomuser.me/api/portraits/men/24.jpg",
+    },
+  },
+  {
+    id: "7",
+    date: "2025-08-03",
+    details: {
+      name: "Sophia Wilson",
+      gender: "Female",
+      age: 33,
+      time: "3:30 PM - 4:30 PM",
+      avatarUrl: "https://randomuser.me/api/portraits/women/54.jpg",
+    },
+  },
+  {
+    id: "8",
+    date: "2025-08-04",
+    details: {
+      name: "Daniel Martinez",
+      gender: "Male",
+      age: 45,
+      time: "9:30 AM - 10:30 AM",
+      avatarUrl: "https://randomuser.me/api/portraits/men/67.jpg",
+    },
+  },
+  {
+    id: "9",
+    date: "2025-08-05",
+    details: {
+      name: "Ava Robinson",
+      gender: "Female",
+      age: 29,
+      time: "12:00 PM - 1:00 PM",
+      avatarUrl: "https://randomuser.me/api/portraits/women/32.jpg",
+    },
+  },
+  {
+    id: "10",
+    date: "2025-08-06",
+    details: {
+      name: "Ethan Clark",
+      gender: "Male",
+      age: 40,
+      time: "4:00 PM - 5:00 PM",
+      avatarUrl: "https://randomuser.me/api/portraits/men/81.jpg",
+    },
+  },
+];
+
 const Home = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -37,6 +151,12 @@ const Home = () => {
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
   const [firstName, setFirstName] = useState<string | null>(null); // Track unread notifications
   const [showOdometerCard, setShowOdometerCard] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const selectedDateString = selectedDate.toISOString().split("T")[0];
+  const filteredBookings = bookings.filter(
+    (b) => b.date === selectedDateString
+  );
+
   const currentStep = 1; // Example: two steps completed (0 & 1), index starts at 0
   const { odometerUploaded } = useJourneyStore();
 
@@ -94,40 +214,6 @@ const Home = () => {
         avatarUrl: booking.details.avatarUrl,
       },
     });
-
-  // Dummy booking data
-  const bookings: any[] = [
-    {
-      date: "2025-07-28",
-      details: {
-        name: "Emily Harrington",
-        gender: "Female",
-        age: 28,
-        time: "8:30 AM - 9:30 AM",
-        avatarUrl: "https://randomuser.me/api/portraits/women/65.jpg",
-      },
-    },
-    {
-      date: "2025-07-29",
-      details: {
-        name: "Michael Chen",
-        gender: "Male",
-        age: 35,
-        time: "10:00 AM - 11:00 AM",
-        avatarUrl: "https://randomuser.me/api/portraits/men/45.jpg",
-      },
-    },
-    {
-      date: "2025-07-30",
-      details: {
-        name: "Sarah Johnson",
-        gender: "Female",
-        age: 42,
-        time: "2:00 PM - 3:00 PM",
-        avatarUrl: "https://randomuser.me/api/portraits/women/72.jpg",
-      },
-    },
-  ];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -328,10 +414,12 @@ const Home = () => {
           <CalendarComponent
             isExpanded={isCalendarExpanded}
             bookings={bookings}
+            selectedDate={selectedDate}
+            onDateChange={(date: Date) => setSelectedDate(date)}
           />
 
           {bookings.length > 0 ? (
-            bookings.map((booking, index) => (
+            filteredBookings.map((booking, index) => (
               <TouchableOpacity
                 key={index}
                 style={styles.bookingCard}
