@@ -254,10 +254,10 @@ const styles = StyleSheet.create({
   bookingDot: {
     width: ms(6),
     height: ms(6),
-    backgroundColor: "#FFF",
+    backgroundColor: "rgba(105, 65, 126, 1)",
     borderRadius: ms(3),
     marginTop: vs(4),
-    shadowColor: "#000",
+    shadowColor: "rgba(105, 65, 126, 1)",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 1,
