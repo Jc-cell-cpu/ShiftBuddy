@@ -284,12 +284,6 @@ const ProfileScreen = () => {
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#ccc" }]}
-                onPress={() => setLogoutVisible(false)}
-              >
-                <Text style={styles.modalButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
                 style={[styles.modalButton, { backgroundColor: "#69417E" }]}
                 onPress={async () => {
                   setLogoutVisible(false);
@@ -297,7 +291,24 @@ const ProfileScreen = () => {
                   router.replace("/auth/login");
                 }}
               >
-                <Text style={styles.modalButtonText}>Logout</Text>
+                <Text style={{ color: "#fff", fontFamily: "InterMedium" }}>
+                  Logout
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modalButton,
+                  {
+                    backgroundColor: "#fff",
+                    borderColor: "#69417E",
+                    borderWidth: 1,
+                  },
+                ]}
+                onPress={() => setLogoutVisible(false)}
+              >
+                <Text style={{ color: "#69417E", fontFamily: "InterMedium" }}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -534,10 +545,6 @@ const styles = StyleSheet.create({
     paddingVertical: vs(10),
     borderRadius: ms(8),
     alignItems: "center",
-  },
-  modalButtonText: {
-    color: "#fff",
-    fontWeight: "600",
   },
   absolute: {
     ...StyleSheet.absoluteFillObject,
