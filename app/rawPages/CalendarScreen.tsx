@@ -1,10 +1,12 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import NOB from "@/assets/Nobookings.svg";
 import CalendarComponent from "@/components/CalendarComponent";
 import { ms, s, vs } from "@/utils/scale";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Image,
   ScrollView,
@@ -40,7 +42,7 @@ const bookings: any[] = [
   },
   {
     id: "3",
-    date: "2025-07-30",
+    date: "2025-07-05",
     details: {
       name: "Sarah Johnson",
       gender: "Female",
@@ -62,7 +64,7 @@ const bookings: any[] = [
   },
   {
     id: "5",
-    date: "2025-08-01",
+    date: "2025-07-05",
     details: {
       name: "Olivia Brown",
       gender: "Female",
@@ -165,6 +167,15 @@ const generateTimeSlots = () => {
 
 const CalendarScreen = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const onSlotLayout = (event: any) => {
+    slotHeightRef.current = event.nativeEvent.layout.height;
+  };
+  const scrolledDateKeys = useRef<Set<string>>(new Set());
+  const scrollRef = useRef<ScrollView>(null);
+  const slotHeightRef = useRef(90); // you can fine-tune this if needed
+  const [initialScrollIndex, setInitialScrollIndex] = useState<number | null>(
+    null
+  );
 
   const formattedDayLabel = selectedDate.toLocaleDateString("en-US", {
     weekday: "long",
@@ -176,6 +187,43 @@ const CalendarScreen = () => {
   const filteredBookings = bookings.filter(
     (b) => b.date === selectedDateString
   );
+
+  useEffect(() => {
+    if (filteredBookings.length > 0) {
+      const firstTime = filteredBookings[0].details.time.split("-")[0].trim();
+      const [time, meridiem] = firstTime.split(" ");
+      const [hour, minute] = time.split(":").map(Number);
+
+      const totalMinutes =
+        (meridiem === "PM" && hour !== 12
+          ? hour + 12
+          : meridiem === "AM" && hour === 12
+          ? 0
+          : hour) *
+          60 +
+        minute;
+
+      const index = Math.floor(totalMinutes / 30); // 30-min slots
+      setInitialScrollIndex(index);
+    } else {
+      setInitialScrollIndex(null);
+    }
+  }, [selectedDate]);
+
+  useEffect(() => {
+    if (initialScrollIndex !== null && scrollRef.current) {
+      const offsetY = initialScrollIndex * slotHeightRef.current - -190;
+      // setTimeout(() => {
+      //   scrollRef.current?.scrollTo({ y: offsetY, animated: true });
+      // }, 300);
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({
+          y: offsetY > 0 ? offsetY : 0, // avoid negative scroll
+          animated: true,
+        });
+      }, 300);
+    }
+  }, [initialScrollIndex]);
 
   return (
     <View style={styles.container}>
@@ -221,6 +269,7 @@ const CalendarScreen = () => {
           </View>
 
           <ScrollView
+            ref={scrollRef}
             contentContainerStyle={{ paddingBottom: vs(100) }}
             showsVerticalScrollIndicator={false}
           >
@@ -264,7 +313,17 @@ const CalendarScreen = () => {
               });
 
               return (
-                <View key={index} style={styles.timeline}>
+                <View
+                  key={index}
+                  style={styles.timeline}
+                  onLayout={
+                    index === 0
+                      ? (e) => {
+                          slotHeightRef.current = e.nativeEvent.layout.height;
+                        }
+                      : undefined
+                  }
+                >
                   <View style={styles.timeColumn}>
                     <Text style={styles.timeHour}>{time}</Text>
                     <Text style={styles.timePeriod}>{meridiem}</Text>
