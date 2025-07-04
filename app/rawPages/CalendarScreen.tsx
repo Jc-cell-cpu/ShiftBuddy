@@ -15,27 +15,116 @@ import {
   View,
 } from "react-native";
 
-const bookings = [
+const bookings: any[] = [
   {
     id: "1",
-    name: "Emily Harrington",
-    time: "08:00 AM - 08:30 AM",
-    avatar: "https://randomuser.me/api/portraits/women/65.jpg",
-    bookingDate: "2025-07-04",
+    date: "2025-07-04",
+    details: {
+      name: "Emily Harrington",
+      gender: "Female",
+      age: 28,
+      time: "8:30 AM - 9:30 AM",
+      avatarUrl: "https://randomuser.me/api/portraits/women/65.jpg",
+    },
   },
   {
     id: "2",
-    name: "Leo Carter",
-    time: "08:00 AM - 08:30 AM",
-    avatar: "https://randomuser.me/api/portraits/men/45.jpg",
-    bookingDate: "2025-07-04",
+    date: "2025-07-04",
+    details: {
+      name: "Michael Chen",
+      gender: "Male",
+      age: 35,
+      time: "10:00 AM - 11:00 AM",
+      avatarUrl: "https://randomuser.me/api/portraits/men/45.jpg",
+    },
   },
   {
     id: "3",
-    name: "Emily Harrington",
-    time: "09:00 AM - 10:00 AM",
-    avatar: "https://randomuser.me/api/portraits/women/72.jpg",
-    bookingDate: "2025-07-04",
+    date: "2025-07-30",
+    details: {
+      name: "Sarah Johnson",
+      gender: "Female",
+      age: 42,
+      time: "2:00 PM - 3:00 PM",
+      avatarUrl: "https://randomuser.me/api/portraits/women/72.jpg",
+    },
+  },
+  {
+    id: "4",
+    date: "2025-07-04",
+    details: {
+      name: "James Lee",
+      gender: "Male",
+      age: 31,
+      time: "9:00 AM - 10:00 AM",
+      avatarUrl: "https://randomuser.me/api/portraits/men/12.jpg",
+    },
+  },
+  {
+    id: "5",
+    date: "2025-08-01",
+    details: {
+      name: "Olivia Brown",
+      gender: "Female",
+      age: 25,
+      time: "11:30 AM - 12:00 PM",
+      avatarUrl: "https://randomuser.me/api/portraits/women/19.jpg",
+    },
+  },
+  {
+    id: "6",
+    date: "2025-08-02",
+    details: {
+      name: "William Davis",
+      gender: "Male",
+      age: 38,
+      time: "1:00 PM - 2:00 PM",
+      avatarUrl: "https://randomuser.me/api/portraits/men/24.jpg",
+    },
+  },
+  {
+    id: "7",
+    date: "2025-08-03",
+    details: {
+      name: "Sophia Wilson",
+      gender: "Female",
+      age: 33,
+      time: "3:30 PM - 4:30 PM",
+      avatarUrl: "https://randomuser.me/api/portraits/women/54.jpg",
+    },
+  },
+  {
+    id: "8",
+    date: "2025-08-04",
+    details: {
+      name: "Daniel Martinez",
+      gender: "Male",
+      age: 45,
+      time: "9:30 AM - 10:30 AM",
+      avatarUrl: "https://randomuser.me/api/portraits/men/67.jpg",
+    },
+  },
+  {
+    id: "9",
+    date: "2025-08-05",
+    details: {
+      name: "Ava Robinson",
+      gender: "Female",
+      age: 29,
+      time: "12:00 PM - 1:00 PM",
+      avatarUrl: "https://randomuser.me/api/portraits/women/32.jpg",
+    },
+  },
+  {
+    id: "10",
+    date: "2025-08-06",
+    details: {
+      name: "Ethan Clark",
+      gender: "Male",
+      age: 40,
+      time: "4:00 PM - 5:00 PM",
+      avatarUrl: "https://randomuser.me/api/portraits/men/81.jpg",
+    },
   },
 ];
 
@@ -82,10 +171,10 @@ const CalendarScreen = () => {
     day: "numeric",
   });
 
-  const selectedDateString = selectedDate.toISOString().split("T")[0]; // "2025-07-03"
+  const selectedDateString = selectedDate.toISOString().split("T")[0];
 
   const filteredBookings = bookings.filter(
-    (b) => b.bookingDate === selectedDateString
+    (b) => b.date === selectedDateString
   );
 
   return (
@@ -113,9 +202,10 @@ const CalendarScreen = () => {
         >
           <CalendarComponent
             isExpanded={false}
-            bookings={[]}
+            bookings={bookings}
             showMonthYear={true}
             onDateChange={(date: Date) => setSelectedDate(date)}
+            selectedDate={selectedDate}
           />
         </LinearGradient>
 
@@ -135,38 +225,52 @@ const CalendarScreen = () => {
             showsVerticalScrollIndicator={false}
           >
             {generateTimeSlots().map((slot, index) => {
-              const normalizeTime = (str: string) =>
-                str
-                  .replace(/\u202F/g, " ") // Replace narrow no-break space
-                  .replace(/\s+/g, " ") // Collapse multiple spaces
-                  .trim()
-                  .toUpperCase()
-                  .replace(/^0/, ""); // Remove leading zero from hour
+              const [time, meridiem] = slot.split(" ");
+              const [slotHour, slotMinute] = time.split(":").map(Number);
+              const slotDate = new Date();
+              slotDate.setHours(
+                meridiem === "PM" && slotHour !== 12
+                  ? slotHour + 12
+                  : meridiem === "AM" && slotHour === 12
+                  ? 0
+                  : slotHour,
+                slotMinute,
+                0,
+                0
+              );
 
               const matchedBookings = filteredBookings.filter((b) => {
-                const startTime = normalizeTime(b.time.split("-")[0]);
-                const slotTime = normalizeTime(slot); // <--- THIS IS INSIDE .map(slot)
-                return startTime === slotTime;
-              });
-              // console.log(
-              //   "Slot:",
-              //   slot,
-              //   " | Match:",
-              //   matchedBookings.map((b) => b.time)
-              // );
+                const bookingStart = b.details.time.split("-")[0].trim(); // e.g. "8:30 AM"
+                const [bookingTime, bookingMeridiem] = bookingStart.split(" ");
+                const [bookingHour, bookingMinute] = bookingTime
+                  .split(":")
+                  .map(Number);
+                const bookingDate = new Date();
+                bookingDate.setHours(
+                  bookingMeridiem === "PM" && bookingHour !== 12
+                    ? bookingHour + 12
+                    : bookingMeridiem === "AM" && bookingHour === 12
+                    ? 0
+                    : bookingHour,
+                  bookingMinute,
+                  0,
+                  0
+                );
 
-              const [time, period] = slot.split(" ");
+                return (
+                  slotDate.getHours() === bookingDate.getHours() &&
+                  slotDate.getMinutes() === bookingDate.getMinutes()
+                );
+              });
+
               return (
                 <View key={index} style={styles.timeline}>
-                  {/* Time Column */}
                   <View style={styles.timeColumn}>
                     <Text style={styles.timeHour}>{time}</Text>
-                    <Text style={styles.timePeriod}>{period}</Text>
-                    {/* <View style={styles.verticalLine} /> */}
+                    <Text style={styles.timePeriod}>{meridiem}</Text>
                   </View>
 
                   <View style={{ flex: 1 }}>
-                    {/* Horizontal line */}
                     <View style={styles.horizontalLine} />
                     {matchedBookings.length > 0 ? (
                       matchedBookings.map((booking, i) => (
@@ -174,33 +278,20 @@ const CalendarScreen = () => {
                           key={booking.id}
                           style={[styles.bookingCard, bookingCardStyles[i % 3]]}
                         >
-                          <View
+                          <Image
+                            source={{ uri: booking.details.avatarUrl }}
                             style={{
-                              width: s(40),
-                              height: s(40),
-                              borderRadius: s(20),
-                              borderWidth: 2,
-                              borderColor: bookingCardStyles[i % 3].borderColor,
-                              justifyContent: "center",
-                              alignItems: "center",
+                              width: s(43),
+                              height: s(43),
+                              borderRadius: s(28),
+                              borderWidth: 1,
+                              borderColor: "#E5E7EB",
                               marginRight: s(8),
                             }}
-                          >
-                            <Image
-                              source={{ uri: booking.avatar }}
-                              style={{
-                                width: s(43),
-                                height: s(43),
-                                borderRadius: s(28),
-                                borderWidth: 1,
-                                borderColor: "#E5E7EB",
-                                marginRight: s(8),
-                              }}
-                            />
-                          </View>
+                          />
                           <View>
                             <Text style={styles.bookingName}>
-                              {booking.name}
+                              {booking.details.name}
                             </Text>
                             <View
                               style={{
@@ -217,7 +308,7 @@ const CalendarScreen = () => {
                               />
                               <Text style={styles.timeText}>
                                 {" "}
-                                {booking.time}
+                                {booking.details.time}
                               </Text>
                             </View>
                           </View>
@@ -283,7 +374,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     borderTopLeftRadius: ms(90),
     borderTopRightRadius: ms(90),
-    marginTop: vs(87),
+    marginTop: vs(95),
     zIndex: 3,
   },
   bookingContainer: {

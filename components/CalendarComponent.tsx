@@ -2,7 +2,7 @@
 import { ms, s, vs } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
@@ -22,6 +22,7 @@ interface CalendarComponentProps {
   showMonthYear?: boolean;
   withBackgroundColor?: boolean;
   onDateChange?: (date: Date) => void;
+  selectedDate?: Date;
 }
 
 const CalendarComponent: React.FC<CalendarComponentProps> = ({
@@ -30,6 +31,7 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
   showMonthYear = false,
   withBackgroundColor = false,
   onDateChange,
+  selectedDate,
 }) => {
   const currentDate = new Date();
   const currentDateString = currentDate.toISOString().split("T")[0];
@@ -55,12 +57,15 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
     return acc;
   }, {} as { [key: string]: any });
 
-  markedDates[currentDateString] = {
-    ...markedDates[currentDateString],
-    selected: true,
-    selectedColor: "#69417E",
-    selectedTextColor: "#FFF",
-  };
+  if (selectedDate) {
+    const selectedDateString = selectedDate.toISOString().split("T")[0];
+    markedDates[selectedDateString] = {
+      ...markedDates[selectedDateString],
+      selected: true,
+      selectedColor: "#69417E",
+      selectedTextColor: "#FFF",
+    };
+  }
 
   const getWeekDates = (date: Date) => {
     const dates = [];
@@ -131,25 +136,31 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
         <View style={styles.weekContainer}>
           {weekDates.map((date, index) => {
             const dateString = date.toISOString().split("T")[0];
-            const isCurrentDate =
-              date.getDate() === currentDate.getDate() &&
-              date.getMonth() === currentDate.getMonth() &&
-              date.getFullYear() === currentDate.getFullYear();
+            const isSelectedDate =
+              date.toDateString() === visibleDate.toDateString();
             const hasBooking = bookings.some(
               (booking) => booking.date === dateString
             );
+
             return (
-              <View key={index} style={styles.weekDateContainer}>
+              <TouchableOpacity
+                key={index}
+                onPress={() => {
+                  setVisibleDate(date);
+                  onDateChange?.(date);
+                }}
+                style={styles.weekDateContainer}
+              >
                 <View
                   style={[
                     styles.dateDayWrapper,
-                    isCurrentDate && styles.currentDateDayWrapper,
+                    isSelectedDate && styles.currentDateDayWrapper,
                   ]}
                 >
                   <Text
                     style={[
                       styles.weekDayText,
-                      isCurrentDate && styles.currentWeekText,
+                      isSelectedDate && styles.currentWeekText,
                     ]}
                   >
                     {daysOfWeek[index].slice(0, 1)}
@@ -157,14 +168,15 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
                   <Text
                     style={[
                       styles.weekDateText,
-                      isCurrentDate && styles.currentWeekText,
+                      isSelectedDate && styles.currentWeekText,
                     ]}
                   >
                     {date.getDate()}
                   </Text>
+                  {/* 👇 Dot goes here */}
+                  {hasBooking && <View style={styles.bookingDot} />}
                 </View>
-                {hasBooking && <View style={styles.bookingDot} />}
-              </View>
+              </TouchableOpacity>
             );
           })}
         </View>
@@ -242,9 +254,14 @@ const styles = StyleSheet.create({
   bookingDot: {
     width: ms(6),
     height: ms(6),
-    backgroundColor: "#F5D2BD",
+    backgroundColor: "#FFF",
     borderRadius: ms(3),
     marginTop: vs(4),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 2,
   },
   monthHeader: {
     alignItems: "center",
