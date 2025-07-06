@@ -17,7 +17,11 @@ import {
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useState } from "react";
 import {
+  Alert,
+  Clipboard,
   Image,
+  Linking,
+  Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -28,28 +32,42 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
-// Dummy booking data
+// Dummy booking data (unchanged)
 const bookings: any[] = [
   {
     id: "1",
-    date: "2025-07-04",
+    date: "2025-07-06",
     details: {
       name: "Emily Harrington",
       gender: "Female",
       age: 28,
       time: "8:30 AM - 9:30 AM",
       avatarUrl: "https://randomuser.me/api/portraits/women/65.jpg",
+      location: {
+        address: "123 Main Street, New York, NY 10001",
+        coordinates: "40.7128,-74.0060",
+        placeId: "ChIJOwg_06VPwokRYv534QaPC8g",
+      },
+      phone: "+1 (555) 123-4567",
+      email: "emily.harrington@gmail.com",
     },
   },
   {
     id: "2",
-    date: "2025-07-04",
+    date: "2025-07-06",
     details: {
       name: "Michael Chen",
       gender: "Male",
       age: 35,
       time: "10:00 AM - 11:00 AM",
       avatarUrl: "https://randomuser.me/api/portraits/men/45.jpg",
+      location: {
+        address: "456 Park Avenue, Boston, MA 02108",
+        coordinates: "42.3601,-71.0589",
+        placeId: "ChIJGzE9DS1l44kRoOhiASS_fHg",
+      },
+      phone: "+1 (555) 234-5678",
+      email: "michael.chen@gmail.com",
     },
   },
   {
@@ -61,17 +79,31 @@ const bookings: any[] = [
       age: 42,
       time: "2:00 PM - 3:00 PM",
       avatarUrl: "https://randomuser.me/api/portraits/women/72.jpg",
+      location: {
+        address: "789 Oak Road, Chicago, IL 60601",
+        coordinates: "41.8781,-87.6298",
+        placeId: "ChIJ7cv00DwsDogRAMDACa2m4K8",
+      },
+      phone: "+1 (555) 345-6789",
+      email: "sarah.johnson@gmail.com",
     },
   },
   {
     id: "4",
-    date: "2025-07-04",
+    date: "2025-07-06",
     details: {
       name: "James Lee",
       gender: "Male",
       age: 31,
       time: "9:00 AM - 10:00 AM",
       avatarUrl: "https://randomuser.me/api/portraits/men/12.jpg",
+      location: {
+        address: "321 Pine Street, San Francisco, CA 94101",
+        coordinates: "37.7749,-122.4194",
+        placeId: "ChIJIQBpAG2ahYAR_6128GcTUEo",
+      },
+      phone: "+1 (555) 456-7890",
+      email: "james.lee@gmail.com",
     },
   },
   {
@@ -83,6 +115,13 @@ const bookings: any[] = [
       age: 25,
       time: "11:30 AM - 12:00 PM",
       avatarUrl: "https://randomuser.me/api/portraits/women/19.jpg",
+      location: {
+        address: "567 Maple Avenue, Seattle, WA 98101",
+        coordinates: "47.6062,-122.3321",
+        placeId: "ChIJ7ZhdRkBqkFQRK_yKcp8wfp0",
+      },
+      phone: "+1 (555) 567-8901",
+      email: "olivia.brown@gmail.com",
     },
   },
   {
@@ -94,6 +133,13 @@ const bookings: any[] = [
       age: 38,
       time: "1:00 PM - 2:00 PM",
       avatarUrl: "https://randomuser.me/api/portraits/men/24.jpg",
+      location: {
+        address: "890 Cedar Lane, Austin, TX 78701",
+        coordinates: "30.2672,-97.7431",
+        placeId: "ChIJLwPMoJm1RIYRetVp1EtGm_o",
+      },
+      phone: "+1 (555) 678-9012",
+      email: "william.davis@gmail.com",
     },
   },
   {
@@ -105,17 +151,31 @@ const bookings: any[] = [
       age: 33,
       time: "3:30 PM - 4:30 PM",
       avatarUrl: "https://randomuser.me/api/portraits/women/54.jpg",
+      location: {
+        address: "432 Birch Street, Miami, FL 33101",
+        coordinates: "25.7617,-80.1918",
+        placeId: "ChIJEcHIDqKw2YgRZU-t3XHylv8",
+      },
+      phone: "+1 (555) 789-0123",
+      email: "sophia.wilson@gmail.com",
     },
   },
   {
     id: "8",
-    date: "2025-08-04",
+    date: "2025-08-06",
     details: {
       name: "Daniel Martinez",
       gender: "Male",
       age: 45,
       time: "9:30 AM - 10:30 AM",
       avatarUrl: "https://randomuser.me/api/portraits/men/67.jpg",
+      location: {
+        address: "765 Elm Court, Denver, CO 80201",
+        coordinates: "39.7392,-104.9903",
+        placeId: "ChIJzxcfI6qAa4cR1jaKJ_j0jhE",
+      },
+      phone: "+1 (555) 890-1234",
+      email: "daniel.martinez@gmail.com",
     },
   },
   {
@@ -127,6 +187,13 @@ const bookings: any[] = [
       age: 29,
       time: "12:00 PM - 1:00 PM",
       avatarUrl: "https://randomuser.me/api/portraits/women/32.jpg",
+      location: {
+        address: "234 Willow Way, Portland, OR 97201",
+        coordinates: "45.5155,-122.6789",
+        placeId: "ChIJN3XR5h4KlVQRp5q32gl_Qj4",
+      },
+      phone: "+1 (555) 901-2345",
+      email: "ava.robinson@gmail.com",
     },
   },
   {
@@ -138,9 +205,130 @@ const bookings: any[] = [
       age: 40,
       time: "4:00 PM - 5:00 PM",
       avatarUrl: "https://randomuser.me/api/portraits/men/81.jpg",
+      location: {
+        address: "543 Spruce Drive, Las Vegas, NV 89101",
+        coordinates: "36.1699,-115.1398",
+        placeId: "ChIJ69QoNDjZyIARTIMmDF0Z4kM",
+      },
+      phone: "+1 (555) 012-3456",
+      email: "ethan.clark@gmail.com",
     },
   },
 ];
+
+// Sanitize phone number to remove non-digit characters except '+'
+const sanitizePhoneNumber = (phoneNumber: string): string => {
+  return phoneNumber.replace(/[^+\d]/g, "");
+};
+
+const openInMaps = (location: { coordinates: string; address: string }) => {
+  const [latitude, longitude] = location.coordinates.split(",");
+  const scheme = Platform.select({ ios: "maps:0,0?q=", android: "geo:0,0?q=" });
+  const latLng = `${latitude},${longitude}`;
+  const label = location.address;
+  const url = Platform.select({
+    ios: `${scheme}${encodeURIComponent(label)}@${latLng}`,
+    android: `${scheme}${latLng}(${encodeURIComponent(label)})`,
+  });
+
+  if (url) {
+    Linking.openURL(url).catch((err) => {
+      console.error("Failed to open maps:", err);
+      Alert.alert("Error", "Could not open maps");
+    });
+  }
+};
+
+const openPhoneDialer = async (phoneNumber: string) => {
+  try {
+    // Sanitize phone number
+    const sanitizedPhoneNumber = sanitizePhoneNumber(phoneNumber);
+    const phoneUrl = `tel:${sanitizedPhoneNumber}`;
+    console.log(`Attempting to open phone dialer with URL: ${phoneUrl}`);
+    console.log(
+      `Platform: ${Platform.OS}, Phone Number: ${sanitizedPhoneNumber}`
+    );
+
+    const supported = await Linking.canOpenURL(phoneUrl);
+    console.log(`Can open phone URL: ${supported}`);
+
+    if (supported) {
+      await Linking.openURL(phoneUrl);
+    } else {
+      // Fallback: Copy phone number to clipboard
+      await Clipboard.setString(sanitizedPhoneNumber);
+      Alert.alert(
+        "Phone Dialer Unavailable",
+        `The phone dialer is not available on this device. The phone number ${sanitizedPhoneNumber} has been copied to your clipboard. Paste it into your phone app to make the call.`,
+        [
+          { text: "OK", style: "default" },
+          {
+            text: "Try Alternative",
+            onPress: async () => {
+              // Try without country code as a fallback
+              const altPhoneNumber = sanitizedPhoneNumber.replace(/^\+/, "");
+              const altPhoneUrl = `tel:${altPhoneNumber}`;
+              console.log(`Trying alternative phone URL: ${altPhoneUrl}`);
+              const altSupported = await Linking.canOpenURL(altPhoneUrl);
+              if (altSupported) {
+                await Linking.openURL(altPhoneUrl);
+              } else {
+                Alert.alert(
+                  "Error",
+                  "Alternative phone dialer attempt also failed. Please use the copied number."
+                );
+              }
+            },
+          },
+        ]
+      );
+    }
+  } catch (err) {
+    console.error("Failed to open phone dialer:", err);
+    // Fallback: Copy phone number to clipboard
+    const sanitizedPhoneNumber = sanitizePhoneNumber(phoneNumber);
+    await Clipboard.setString(sanitizedPhoneNumber);
+    Alert.alert(
+      "Error",
+      `Could not open phone dialer. The phone number ${sanitizedPhoneNumber} has been copied to your clipboard.`
+    );
+  }
+};
+
+const openEmail = async (email: string) => {
+  const subject = "Support Request";
+  const body = "Hello, I need help with...";
+  const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(
+    subject
+  )}&body=${encodeURIComponent(body)}`;
+  const gmailWebUrl = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(
+    email
+  )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+  try {
+    const supported = await Linking.canOpenURL(mailtoUrl);
+    if (supported) {
+      await Linking.openURL(mailtoUrl);
+    } else {
+      const webSupported = await Linking.canOpenURL(gmailWebUrl);
+      if (webSupported) {
+        await Linking.openURL(gmailWebUrl);
+      } else {
+        Clipboard.setString(email);
+        Alert.alert(
+          "No Email App",
+          `Couldn't open email app or Gmail. Email ${email} copied to clipboard.`
+        );
+      }
+    }
+  } catch (error) {
+    Clipboard.setString(email);
+    Alert.alert(
+      "Error",
+      `Something went wrong. Email ${email} copied to clipboard.`
+    );
+  }
+};
 
 const Home = () => {
   const router = useRouter();
@@ -149,16 +337,15 @@ const Home = () => {
   const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
-  const [firstName, setFirstName] = useState<string | null>(null); // Track unread notifications
-  const [showOdometerCard, setShowOdometerCard] = useState(false);
+  const [firstName, setFirstName] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const { odometerUploaded, setOdometerUploaded } = useJourneyStore();
   const selectedDateString = selectedDate.toISOString().split("T")[0];
   const filteredBookings = bookings.filter(
     (b) => b.date === selectedDateString
   );
-
-  const currentStep = 1; // Example: two steps completed (0 & 1), index starts at 0
-  const { odometerUploaded } = useJourneyStore();
+  const today = new Date().toISOString().split("T")[0];
+  const todaysBookings = bookings.filter((booking) => booking.date === today);
 
   useEffect(() => {
     const loadName = async () => {
@@ -173,20 +360,13 @@ const Home = () => {
     loadName();
   }, []);
 
-  // useEffect(() => {
-  //   if (odometerUploaded === "true") {
-  //     setShowOdometerCard(true);
-  //     router.setParams({ odometerUploaded: undefined });
-  //   }
-  // }, [odometerUploaded, router]);
-  // Update capturedImage when params.capturedImage changes
   useFocusEffect(
     useCallback(() => {
       if (params?.capturedImage && typeof params.capturedImage === "string") {
         setCapturedImage(params.capturedImage);
         router.setParams({ capturedImage: undefined });
       }
-    }, [params, router])
+    }, [router, params?.capturedImage])
   );
 
   const toggleCalendar = () => {
@@ -198,8 +378,8 @@ const Home = () => {
   };
 
   const handleNotificationPress = () => {
-    setHasUnreadNotifications(false); // Hide dot on click
-    router.push("/rawPages/notifications"); // Navigate to notification page
+    setHasUnreadNotifications(false);
+    router.push("/rawPages/notifications");
   };
 
   const redirectToBookingDetails = (booking: any) =>
@@ -272,7 +452,7 @@ const Home = () => {
                 borderColor: "#504E4E",
                 borderWidth: 1,
               }}
-              onPress={() => setShowOdometerCard(false)}
+              onPress={() => setOdometerUploaded(false)}
             >
               <Ionicons name="close" size={19} color="#504E4E" />
             </TouchableOpacity>
@@ -285,22 +465,15 @@ const Home = () => {
               }}
             >
               <Image
-                source={require("@/assets/taxi.png")} // your cab icon
+                source={require("@/assets/taxi.png")}
                 style={{ width: 29, height: 29, marginRight: s(10) }}
                 resizeMode="contain"
               />
-              {/* <Taxi
-                width={29}
-                height={29}
-                style={{ width: 29, height: 29, marginRight: s(10) }}
-              /> */}
-
               <View>
                 <Text
                   style={{
                     fontFamily: "InterSemiBold",
                     fontSize: ms(15),
-                    // fontWeight: "700",
                     color: "#000000",
                   }}
                 >
@@ -327,19 +500,20 @@ const Home = () => {
                   marginTop: vs(5),
                 }}
                 onPress={() => {
-                  router.push({
-                    pathname: "/rawPages/bookingdetails",
-                    params: {
-                      name: "Emily Harrington",
-                      gender: "Female",
-                      age: "28",
-                      time: "8:30 AM - 9:30 AM",
-                      date: "2025-07-28",
-                      avatarUrl:
-                        "https://media.istockphoto.com/id/1468678624/photo/nurse-hospital-employee-and-portrait-of-black-man-in-a-healthcare-wellness-and-clinic-feeling.jpg?s=2048x2048&w=is&k=20&c=Ha1Z7BjLTrp-wrn131BNHW8T-WMqViY3NrRuXyZtEfk=",
-                      // activeTab: "Treatment status",
-                    },
-                  });
+                  if (todaysBookings.length > 0) {
+                    const firstBooking = todaysBookings[0];
+                    router.push({
+                      pathname: "/rawPages/bookingdetails",
+                      params: {
+                        name: firstBooking.details.name,
+                        gender: firstBooking.details.gender,
+                        age: firstBooking.details.age.toString(),
+                        time: firstBooking.details.time,
+                        date: firstBooking.date,
+                        avatarUrl: firstBooking.details.avatarUrl,
+                      },
+                    });
+                  }
                 }}
               >
                 <Text
@@ -350,7 +524,6 @@ const Home = () => {
               </TouchableOpacity>
             </View>
 
-            {/* Progress Steps */}
             <JourneyStepper />
           </View>
         )}
@@ -418,7 +591,7 @@ const Home = () => {
             onDateChange={(date: Date) => setSelectedDate(date)}
           />
 
-          {bookings.length > 0 ? (
+          {filteredBookings.length > 0 ? (
             filteredBookings.map((booking, index) => (
               <TouchableOpacity
                 key={index}
@@ -453,7 +626,10 @@ const Home = () => {
                       {booking.details.time}
                     </Text>
                   </View>
-                  <TouchableOpacity style={styles.locationRow}>
+                  <TouchableOpacity
+                    style={styles.locationRow}
+                    onPress={() => openInMaps(booking.details.location)}
+                  >
                     <Ionicons
                       name="location-outline"
                       size={14}
@@ -462,10 +638,16 @@ const Home = () => {
                     <Text style={styles.locationLink}>See Location</Text>
                   </TouchableOpacity>
                   <View style={styles.actions}>
-                    <TouchableOpacity style={styles.actionButton}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => openPhoneDialer(booking.details.phone)}
+                    >
                       <Ionicons name="call-outline" size={18} color="#69417E" />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionButton}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => openEmail(booking.details.email)}
+                    >
                       <Ionicons name="mail-outline" size={18} color="#69417E" />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.actionButton}>
@@ -515,20 +697,20 @@ const styles = StyleSheet.create({
   },
   notificationDot: {
     position: "absolute",
-    right: 9, // Position on the left side of the icon
+    right: 9,
     top: "40%",
     width: 9,
     height: 9,
-    backgroundColor: "#69417E", // Red dot for visibility
-    borderRadius: 4.5, // Make it circular
-    zIndex: 1, // Ensure it appears above the icon
-    transform: [{ translateY: -5 }], // Center vertically
+    backgroundColor: "#69417E",
+    borderRadius: 4.5,
+    zIndex: 1,
+    transform: [{ translateY: -5 }],
   },
   profileCircle: {
     backgroundColor: "#fff",
     padding: ms(8),
     borderRadius: ms(20),
-    position: "relative", // Allow positioning of the notification dot
+    position: "relative",
   },
   greeting: {
     fontFamily: "InterBold",

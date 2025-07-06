@@ -27,6 +27,13 @@ const bookings: any[] = [
       age: 28,
       time: "8:30 AM - 9:30 AM",
       avatarUrl: "https://randomuser.me/api/portraits/women/65.jpg",
+      location: {
+        address: "123 Main Street, New York, NY 10001",
+        coordinates: "40.7128,-74.0060",
+        placeId: "ChIJOwg_06VPwokRYv534QaPC8g" // New York coordinates
+      },
+      phone: "+1 (555) 123-4567",
+      email: "emily.harrington@email.com"
     },
   },
   {
@@ -38,6 +45,13 @@ const bookings: any[] = [
       age: 35,
       time: "10:00 AM - 11:00 AM",
       avatarUrl: "https://randomuser.me/api/portraits/men/45.jpg",
+      location: {
+        address: "456 Park Avenue, Boston, MA 02108",
+        coordinates: "42.3601,-71.0589",
+        placeId: "ChIJGzE9DS1l44kRoOhiASS_fHg" // Boston coordinates
+      },
+      phone: "+1 (555) 234-5678",
+      email: "michael.chen@email.com"
     },
   },
   {
@@ -49,6 +63,13 @@ const bookings: any[] = [
       age: 42,
       time: "2:00 PM - 3:00 PM",
       avatarUrl: "https://randomuser.me/api/portraits/women/72.jpg",
+      location: {
+        address: "789 Oak Road, Chicago, IL 60601",
+        coordinates: "41.8781,-87.6298",
+        placeId: "ChIJ7cv00DwsDogRAMDACa2m4K8" // Chicago coordinates
+      },
+      phone: "+1 (555) 345-6789",
+      email: "sarah.johnson@email.com"
     },
   },
   {
@@ -60,6 +81,13 @@ const bookings: any[] = [
       age: 31,
       time: "9:00 AM - 10:00 AM",
       avatarUrl: "https://randomuser.me/api/portraits/men/12.jpg",
+      location: {
+        address: "321 Pine Street, San Francisco, CA 94101",
+        coordinates: "37.7749,-122.4194",
+        placeId: "ChIJIQBpAG2ahYAR_6128GcTUEo" // San Francisco coordinates
+      },
+      phone: "+1 (555) 456-7890",
+      email: "james.lee@email.com"
     },
   },
   {
@@ -71,6 +99,13 @@ const bookings: any[] = [
       age: 25,
       time: "11:30 AM - 12:00 PM",
       avatarUrl: "https://randomuser.me/api/portraits/women/19.jpg",
+      location: {
+        address: "567 Maple Avenue, Seattle, WA 98101",
+        coordinates: "47.6062,-122.3321",
+        placeId: "ChIJ7ZhdRkBqkFQRK_yKcp8wfp0" // Seattle coordinates
+      },
+      phone: "+1 (555) 567-8901",
+      email: "olivia.brown@email.com"
     },
   },
   {
@@ -82,6 +117,13 @@ const bookings: any[] = [
       age: 38,
       time: "1:00 PM - 2:00 PM",
       avatarUrl: "https://randomuser.me/api/portraits/men/24.jpg",
+      location: {
+        address: "890 Cedar Lane, Austin, TX 78701",
+        coordinates: "30.2672,-97.7431",
+        placeId: "ChIJLwPMoJm1RIYRetVp1EtGm_o" // Austin coordinates
+      },
+      phone: "+1 (555) 678-9012",
+      email: "william.davis@email.com"
     },
   },
   {
@@ -93,6 +135,13 @@ const bookings: any[] = [
       age: 33,
       time: "3:30 PM - 4:30 PM",
       avatarUrl: "https://randomuser.me/api/portraits/women/54.jpg",
+      location: {
+        address: "432 Birch Street, Miami, FL 33101",
+        coordinates: "25.7617,-80.1918",
+        placeId: "ChIJEcHIDqKw2YgRZU-t3XHylv8" // Miami coordinates
+      },
+      phone: "+1 (555) 789-0123",
+      email: "sophia.wilson@email.com"
     },
   },
   {
@@ -104,6 +153,13 @@ const bookings: any[] = [
       age: 45,
       time: "9:30 AM - 10:30 AM",
       avatarUrl: "https://randomuser.me/api/portraits/men/67.jpg",
+      location: {
+        address: "765 Elm Court, Denver, CO 80201",
+        coordinates: "39.7392,-104.9903",
+        placeId: "ChIJzxcfI6qAa4cR1jaKJ_j0jhE" // Denver coordinates
+      },
+      phone: "+1 (555) 890-1234",
+      email: "daniel.martinez@email.com"
     },
   },
   {
@@ -115,6 +171,13 @@ const bookings: any[] = [
       age: 29,
       time: "12:00 PM - 1:00 PM",
       avatarUrl: "https://randomuser.me/api/portraits/women/32.jpg",
+      location: {
+        address: "234 Willow Way, Portland, OR 97201",
+        coordinates: "45.5155,-122.6789",
+        placeId: "ChIJN3XR5h4KlVQRp5q32gl_Qj4" // Portland coordinates
+      },
+      phone: "+1 (555) 901-2345",
+      email: "ava.robinson@email.com"
     },
   },
   {
@@ -126,6 +189,13 @@ const bookings: any[] = [
       age: 40,
       time: "4:00 PM - 5:00 PM",
       avatarUrl: "https://randomuser.me/api/portraits/men/81.jpg",
+      location: {
+        address: "543 Spruce Drive, Las Vegas, NV 89101",
+        coordinates: "36.1699,-115.1398",
+        placeId: "ChIJ69QoNDjZyIARTIMmDF0Z4kM" // Las Vegas coordinates
+      },
+      phone: "+1 (555) 012-3456",
+      email: "ethan.clark@email.com"
     },
   },
 ];
