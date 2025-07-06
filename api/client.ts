@@ -8,8 +8,8 @@ import { refreshAccessToken } from "./refresh";
 // import Constants from "expo-constants";
 
 const API = axios.create({
-  baseURL: "http://10.223.4.72:4000",
-  // baseURL: "http://192.168.1.6:4000",
+  // baseURL: "http://10.223.4.72:4000",
+  baseURL: "http://192.168.1.8:4000",
   // baseURL: "http://13.60.225.213:4000",
   headers: {
     "x-client-type": "app",
@@ -30,7 +30,7 @@ API.interceptors.request.use((config) => {
 // Log all responses
 API.interceptors.response.use(
   (response) => {
-    console.log("✅ Response:", response.status, response.data);
+    console.log(  '✅ Response:', response.status, response.data);
     return response;
   },
   (error) => {

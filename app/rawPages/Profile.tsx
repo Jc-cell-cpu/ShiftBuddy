@@ -4,6 +4,7 @@ import Checked from "@/assets/CIcons/checked.svg";
 import Insurance from "@/assets/CIcons/Insurance.svg";
 import Spring from "@/assets/CIcons/Spring.svg";
 import Support from "@/assets/CIcons/Support.svg";
+import ChangeVehicleModal from "@/components/ChangeVehicleModal";
 import { deleteTokens } from "@/utils/authUtils";
 import { BlurView } from "@react-native-community/blur";
 import { router } from "expo-router";
@@ -50,6 +51,7 @@ const mockProfile = {
 const ProfileScreen = () => {
   const [logoutVisible, setLogoutVisible] = useState(false);
   const [statusOptions] = useState(["Available", "Busy", "Offline"]);
+  const [showVehicleModal, setShowVehicleModal] = useState(false);
   const [empTypeOptions] = useState([
     "Full Time",
     "Part Time",
@@ -227,7 +229,7 @@ const ProfileScreen = () => {
               <Text style={styles.vehicleInfo}>
                 License expiry: {mockProfile.vehicle.expiry}
               </Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowVehicleModal(true)}>
                 <Text style={styles.link}>Change Vehicle</Text>
               </TouchableOpacity>
             </View>
@@ -314,6 +316,14 @@ const ProfileScreen = () => {
           </View>
         </View>
       )}
+      <ChangeVehicleModal
+        visible={showVehicleModal}
+        onClose={() => setShowVehicleModal(false)}
+        onSubmit={() => {
+          setShowVehicleModal(false);
+          // handle actual change action here
+        }}
+      />
     </SafeAreaView>
   );
 };

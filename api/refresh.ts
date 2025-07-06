@@ -6,9 +6,9 @@ import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 
 const refreshClient = axios.create({
-  baseURL: "http://10.223.4.72:4000",
+  // baseURL: "http://10.223.4.72:4000",
   // baseURL: "http://13.60.225.213:4000",
-  // baseURL: "http://192.168.1.6:4000",
+  baseURL: "http://192.168.1.8:4000",
   headers: {
     "Content-Type": "application/json",
     "x-client-type": "app",
