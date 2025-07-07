@@ -885,7 +885,7 @@ const styles = StyleSheet.create({
   noBookingsContainer: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: vs(40),
+    paddingVertical: vs(50),
   },
   noBookingsText: {
     fontFamily: "InterSemiBold",
