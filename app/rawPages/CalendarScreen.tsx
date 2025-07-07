@@ -20,7 +20,7 @@ import {
 const bookings: any[] = [
   {
     id: "1",
-    date: "2025-07-04",
+    date: "2025-07-07",
     details: {
       name: "Emily Harrington",
       gender: "Female",
@@ -38,7 +38,7 @@ const bookings: any[] = [
   },
   {
     id: "2",
-    date: "2025-07-04",
+    date: "2025-07-08",
     details: {
       name: "Michael Chen",
       gender: "Male",
@@ -56,7 +56,7 @@ const bookings: any[] = [
   },
   {
     id: "3",
-    date: "2025-07-05",
+    date: "2025-07-09",
     details: {
       name: "Sarah Johnson",
       gender: "Female",
@@ -496,8 +496,8 @@ const styles = StyleSheet.create({
     paddingBottom: vs(15),
   },
   calendarSeam: {
-    height: vs(15),
-    width: "80%",
+    height: vs(22),
+    width: "85%",
     backgroundColor: "rgba(255, 255, 255, 0.5)",
     alignSelf: "center",
     position: "absolute",

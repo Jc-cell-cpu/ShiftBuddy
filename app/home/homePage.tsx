@@ -36,7 +36,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 const bookings: any[] = [
   {
     id: "1",
-    date: "2025-07-06",
+    date: "2025-07-07",
     details: {
       name: "Emily Harrington",
       gender: "Female",
@@ -54,7 +54,7 @@ const bookings: any[] = [
   },
   {
     id: "2",
-    date: "2025-07-06",
+    date: "2025-07-07",
     details: {
       name: "Michael Chen",
       gender: "Male",
@@ -72,7 +72,7 @@ const bookings: any[] = [
   },
   {
     id: "3",
-    date: "2025-07-05",
+    date: "2025-07-08",
     details: {
       name: "Sarah Johnson",
       gender: "Female",
@@ -90,7 +90,7 @@ const bookings: any[] = [
   },
   {
     id: "4",
-    date: "2025-07-06",
+    date: "2025-07-07",
     details: {
       name: "James Lee",
       gender: "Male",
@@ -108,7 +108,7 @@ const bookings: any[] = [
   },
   {
     id: "5",
-    date: "2025-07-05",
+    date: "2025-07-08",
     details: {
       name: "Olivia Brown",
       gender: "Female",
@@ -256,7 +256,7 @@ const openPhoneDialer = async (phoneNumber: string) => {
       await Linking.openURL(phoneUrl);
     } else {
       // Fallback: Copy phone number to clipboard
-      await Clipboard.setString(sanitizedPhoneNumber);
+      Clipboard.setString(sanitizedPhoneNumber);
       Alert.alert(
         "Phone Dialer Unavailable",
         `The phone dialer is not available on this device. The phone number ${sanitizedPhoneNumber} has been copied to your clipboard. Paste it into your phone app to make the call.`,
@@ -287,7 +287,7 @@ const openPhoneDialer = async (phoneNumber: string) => {
     console.error("Failed to open phone dialer:", err);
     // Fallback: Copy phone number to clipboard
     const sanitizedPhoneNumber = sanitizePhoneNumber(phoneNumber);
-    await Clipboard.setString(sanitizedPhoneNumber);
+    Clipboard.setString(sanitizedPhoneNumber);
     Alert.alert(
       "Error",
       `Could not open phone dialer. The phone number ${sanitizedPhoneNumber} has been copied to your clipboard.`
@@ -296,14 +296,8 @@ const openPhoneDialer = async (phoneNumber: string) => {
 };
 
 const openEmail = async (email: string) => {
-  const subject = "Support Request";
-  const body = "Hello, I need help with...";
-  const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(
-    subject
-  )}&body=${encodeURIComponent(body)}`;
-  const gmailWebUrl = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(
-    email
-  )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const mailtoUrl = `mailto:${email}`;
+  const gmailWebUrl = `https://mail.google.com/mail`;
 
   try {
     const supported = await Linking.canOpenURL(mailtoUrl);
@@ -587,6 +581,7 @@ const Home = () => {
           <CalendarComponent
             isExpanded={isCalendarExpanded}
             bookings={bookings}
+            showMonthYear={true}
             selectedDate={selectedDate}
             onDateChange={(date: Date) => setSelectedDate(date)}
           />

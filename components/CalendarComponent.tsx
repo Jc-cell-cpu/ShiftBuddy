@@ -2,8 +2,16 @@
 import { ms, s, vs } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Animated,
+  I18nManager,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Calendar } from "react-native-calendars";
+import { PanGestureHandler, State } from "react-native-gesture-handler";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 interface Booking {
@@ -37,15 +45,13 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
   const currentDateString = currentDate.toISOString().split("T")[0];
 
   const [visibleDate, setVisibleDate] = useState(currentDate);
-
-  const formattedMonthYear = visibleDate.toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
+  const [weekOffset, setWeekOffset] = useState(0);
+  const translateX = new Animated.Value(0);
 
   useEffect(() => {
     if (!isExpanded) {
       setVisibleDate(currentDate);
+      setWeekOffset(0);
     }
   }, [isExpanded]);
 
@@ -67,23 +73,55 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
     };
   }
 
-  const getWeekDates = (date: Date) => {
-    const dates = [];
-    const startOfWeek = new Date(date);
+  const getWeekDates = (baseDate: Date, offset = 0) => {
+    const startOfWeek = new Date(baseDate);
     const dayOfWeek = startOfWeek.getDay();
     const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    startOfWeek.setDate(startOfWeek.getDate() - daysToMonday);
+    startOfWeek.setDate(startOfWeek.getDate() - daysToMonday + offset * 7);
 
+    const week = [];
     for (let i = 0; i < 7; i++) {
       const day = new Date(startOfWeek);
       day.setDate(startOfWeek.getDate() + i);
-      dates.push(day);
+      week.push(day);
     }
-    return dates;
+    return week;
+  };
+  const currentWeekDates = getWeekDates(currentDate, weekOffset);
+  const formattedMonthYear = currentWeekDates[0].toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+  const weekDates = currentWeekDates;
+  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  const onSwipe = (direction: "left" | "right") => {
+    const change = direction === "left" ? 1 : -1;
+    Animated.timing(translateX, {
+      toValue: direction === "left" ? -300 : 300,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      setWeekOffset((prev) => prev + change);
+      translateX.setValue(0);
+    });
   };
 
-  const weekDates = getWeekDates(currentDate);
-  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationX: translateX } }],
+    { useNativeDriver: true }
+  );
+
+  const onHandlerStateChange = ({ nativeEvent }: any) => {
+    if (nativeEvent.state === State.END) {
+      const threshold = 60;
+      if (nativeEvent.translationX < -threshold) {
+        onSwipe(I18nManager.isRTL ? "right" : "left");
+      } else if (nativeEvent.translationX > threshold) {
+        onSwipe(I18nManager.isRTL ? "left" : "right");
+      }
+    }
+  };
 
   const renderCalendarContent = () => (
     <>
@@ -133,53 +171,59 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
           }}
         />
       ) : (
-        <View style={styles.weekContainer}>
-          {weekDates.map((date, index) => {
-            const dateString = date.toISOString().split("T")[0];
-            const isSelectedDate =
-              date.toDateString() === visibleDate.toDateString();
-            const hasBooking = bookings.some(
-              (booking) => booking.date === dateString
-            );
+        <PanGestureHandler
+          onGestureEvent={onGestureEvent}
+          onHandlerStateChange={onHandlerStateChange}
+        >
+          <Animated.View
+            style={[styles.weekContainer, { transform: [{ translateX }] }]}
+          >
+            {weekDates.map((date, index) => {
+              const dateString = date.toISOString().split("T")[0];
+              const isSelectedDate =
+                date.toDateString() === visibleDate.toDateString();
+              const hasBooking = bookings.some(
+                (booking) => booking.date === dateString
+              );
 
-            return (
-              <TouchableOpacity
-                key={index}
-                onPress={() => {
-                  setVisibleDate(date);
-                  onDateChange?.(date);
-                }}
-                style={styles.weekDateContainer}
-              >
-                <View
-                  style={[
-                    styles.dateDayWrapper,
-                    isSelectedDate && styles.currentDateDayWrapper,
-                  ]}
+              return (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => {
+                    setVisibleDate(date);
+                    onDateChange?.(date);
+                  }}
+                  style={styles.weekDateContainer}
                 >
-                  <Text
+                  <View
                     style={[
-                      styles.weekDayText,
-                      isSelectedDate && styles.currentWeekText,
+                      styles.dateDayWrapper,
+                      isSelectedDate && styles.currentDateDayWrapper,
                     ]}
                   >
-                    {daysOfWeek[index].slice(0, 1)}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.weekDateText,
-                      isSelectedDate && styles.currentWeekText,
-                    ]}
-                  >
-                    {date.getDate()}
-                  </Text>
-                  {/* 👇 Dot goes here */}
-                  {hasBooking && <View style={styles.bookingDot} />}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+                    <Text
+                      style={[
+                        styles.weekDayText,
+                        isSelectedDate && styles.currentWeekText,
+                      ]}
+                    >
+                      {daysOfWeek[index].slice(0, 1)}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.weekDateText,
+                        isSelectedDate && styles.currentWeekText,
+                      ]}
+                    >
+                      {date.getDate()}
+                    </Text>
+                    {hasBooking && <View style={styles.bookingDot} />}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </Animated.View>
+        </PanGestureHandler>
       )}
     </>
   );
@@ -210,7 +254,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   calendarContainer: {
-    // backgroundColor: "#FFF",
     borderRadius: ms(16),
     padding: s(12),
   },
@@ -227,6 +270,7 @@ const styles = StyleSheet.create({
   },
   weekDateContainer: {
     alignItems: "center",
+    flex: 1,
   },
   dateDayWrapper: {
     alignItems: "center",
@@ -252,11 +296,11 @@ const styles = StyleSheet.create({
     color: "#69417E",
   },
   bookingDot: {
-    width: ms(6),
-    height: ms(6),
+    width: ms(4),
+    height: ms(4),
     backgroundColor: "rgba(105, 65, 126, 1)",
     borderRadius: ms(3),
-    marginTop: vs(4),
+    marginTop: vs(1),
     shadowColor: "rgba(105, 65, 126, 1)",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
