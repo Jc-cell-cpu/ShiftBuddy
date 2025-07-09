@@ -65,6 +65,7 @@ const BookingDetails: React.FC = () => {
   const lastScrollY = useRef<number>(0);
   const buttonOpacity = useRef<Animated.Value>(new Animated.Value(1)).current;
   const [showOpenSection, setShowOpenSection] = useState(false);
+  const tabScrollViewRef = useRef<ScrollView>(null);
   const [documents, setDocuments] = useState<Document[]>([
     {
       name: "Prescription sheet",
@@ -79,6 +80,17 @@ const BookingDetails: React.FC = () => {
       type: "pdf",
     },
   ]);
+
+  // Effect to scroll tab into view when activeTab changes
+  useEffect(() => {
+    const index = tabs.indexOf(activeTab);
+    if (tabScrollViewRef.current && index >= 0) {
+      tabScrollViewRef.current.scrollTo({
+        x: index * s(90), // Assuming each tab is approximately 100 scaled units wide
+        animated: true,
+      });
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     const loadAssets = async () => {
@@ -198,15 +210,30 @@ const BookingDetails: React.FC = () => {
   const onSwipeGesture = (event: any) => {
     if (event.nativeEvent.state === State.END) {
       const dx = event.nativeEvent.translationX;
-      console.log("Swipe detected - dx:", dx, "Current tab:", activeTab);
+      const velocity = event.nativeEvent.velocityX;
+
+      console.log(
+        "Swipe detected - dx:",
+        dx,
+        "velocity:",
+        velocity,
+        "Current tab:",
+        activeTab
+      );
+
       const currentIndex = tabs.indexOf(activeTab);
-      if (dx < -30 && currentIndex < tabs.length - 1) {
+
+      // Improved swipe detection with velocity consideration
+      const isSwipeLeft = dx < -50 || (dx < -20 && velocity < -500);
+      const isSwipeRight = dx > 50 || (dx > 20 && velocity > 500);
+
+      if (isSwipeLeft && currentIndex < tabs.length - 1) {
         console.log(
           "Swiping left - Moving to next tab:",
           tabs[currentIndex + 1]
         );
         setActiveTab(tabs[currentIndex + 1]);
-      } else if (dx > 30 && currentIndex > 0) {
+      } else if (isSwipeRight && currentIndex > 0) {
         console.log(
           "Swiping right - Moving to previous tab:",
           tabs[currentIndex - 1]
@@ -270,6 +297,7 @@ const BookingDetails: React.FC = () => {
       {/* Tabs */}
       <View style={styles.tabContainer}>
         <ScrollView
+          ref={tabScrollViewRef}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={[styles.tabRow, { justifyContent: "center" }]}
