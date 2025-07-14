@@ -61,7 +61,7 @@ const ProfileScreen = () => {
 
   const moreOptions = [
     { label: "Bookings", Icon: Calendar, route: "/rawPages/test" },
-    { label: "Leaves", Icon: Spring, route: "/rawPages/homePage" },
+    { label: "Leaves", Icon: Spring, route: "/rawPages/LeaveScreen" },
     { label: "Help & Support", Icon: Support, route: "/rawPages/homePage" },
     { label: "Privacy Policy", Icon: Insurance, route: "/rawPages/homePage" },
     { label: "FAQ", Icon: Insurance, route: "/rawPages/homePage" },
