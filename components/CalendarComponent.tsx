@@ -31,6 +31,7 @@ interface CalendarComponentProps {
   withBackgroundColor?: boolean;
   onDateChange?: (date: Date) => void;
   selectedDate?: Date;
+  selectedRange?: { startDate: Date | null; endDate: Date | null };
 }
 
 const CalendarComponent: React.FC<CalendarComponentProps> = ({
@@ -40,6 +41,7 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
   withBackgroundColor = false,
   onDateChange,
   selectedDate,
+    selectedRange,
 }) => {
   const currentDate = new Date();
   const currentDateString = currentDate.toISOString().split("T")[0];
@@ -63,15 +65,50 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
     return acc;
   }, {} as { [key: string]: any });
 
-  if (selectedDate) {
-    const selectedDateString = selectedDate.toISOString().split("T")[0];
-    markedDates[selectedDateString] = {
-      ...markedDates[selectedDateString],
-      selected: true,
-      selectedColor: "#69417E",
-      selectedTextColor: "#FFF",
-    };
+  // if (selectedDate) {
+  //   const selectedDateString = selectedDate.toISOString().split("T")[0];
+  //   markedDates[selectedDateString] = {
+  //     ...markedDates[selectedDateString],
+  //     selected: true,
+  //     selectedColor: "#69417E",
+  //     selectedTextColor: "#FFF",
+  //   };
+  // }
+
+  if (selectedRange?.startDate) {
+    const startStr = selectedRange.startDate.toISOString().split("T")[0];
+
+    if (!selectedRange.endDate) {
+      // Only one date selected (1-day leave)
+      markedDates[startStr] = {
+        selected: true,
+        selectedColor: "#69417E",
+        selectedTextColor: "#FFF",
+        startingDay: true,
+        endingDay: true,
+      };
+    } else {
+      const endStr = selectedRange.endDate.toISOString().split("T")[0];
+
+      // Use moment-like iteration
+      let current = new Date(selectedRange.startDate);
+      while (current <= selectedRange.endDate) {
+        const dateStr = current.toISOString().split("T")[0];
+
+        markedDates[dateStr] = {
+          selected: true,
+          selectedColor: "#69417E",
+          selectedTextColor: "#FFF",
+          ...(dateStr === startStr && { startingDay: true }),
+          ...(dateStr === endStr && { endingDay: true }),
+        };
+
+        current.setDate(current.getDate() + 1);
+      }
+    }
   }
+
+
 
   const getWeekDates = (baseDate: Date, offset = 0) => {
     const startOfWeek = new Date(baseDate);
@@ -135,7 +172,9 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
         <Calendar
           onDayPress={(day) => {
             const selected = new Date(day.dateString);
-            onDateChange?.(selected);
+            if (onDateChange) {
+              onDateChange(selected);
+            }
           }}
           current={currentDateString}
           firstDay={1}
@@ -248,21 +287,26 @@ export default CalendarComponent;
 
 const styles = StyleSheet.create({
   calendarWrapper: {
+    width: '100%',
     marginHorizontal: s(1),
     marginBottom: vs(16),
     borderRadius: ms(16),
     overflow: "hidden",
   },
   calendarContainer: {
+    width: '100%',
     borderRadius: ms(16),
     padding: s(12),
   },
   gradientBackground: {
     padding: s(12),
     borderRadius: ms(16),
+    width: '100%',
   },
   fullCalendar: {
     borderRadius: ms(8),
+    width: '100%',
+    alignSelf: 'center',
   },
   weekContainer: {
     flexDirection: "row",
