@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
         borderWidth: 0.3,
         justifyContent: "center",
         alignItems: "center",
-        marginRight: s(12),
+        marginRight: -s(12),
     },
     headerTitle: {
         fontFamily: "InterSemiBold",

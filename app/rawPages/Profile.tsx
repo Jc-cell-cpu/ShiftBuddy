@@ -64,7 +64,7 @@ const ProfileScreen = () => {
     { label: "Leaves", Icon: Spring, route: "/rawPages/LeaveScreen" },
     { label: "Help & Support", Icon: Support, route: "/rawPages/homePage" },
     { label: "Privacy Policy", Icon: Insurance, route: "/rawPages/PrivacyPolicy" },
-    { label: "FAQ", Icon: Insurance, route: "/rawPages/homePage" },
+    { label: "FAQ", Icon: Insurance, route: "/rawPages/FaqScreen" },
     {
       label: "Terms & Conditions",
       Icon: Checked,
