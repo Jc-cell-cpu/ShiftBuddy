@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
         marginBottom: vs(10),
     },
     leaveTypeButton: {
-        backgroundColor: '#FBEAEF',
+        backgroundColor: 'rgba(242, 199, 172, 0.27)',
         paddingHorizontal: s(12),
         paddingVertical: vs(6),
         borderRadius: s(8),
@@ -415,5 +415,4 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         fontSize: ms(16),
     },
-
 });
