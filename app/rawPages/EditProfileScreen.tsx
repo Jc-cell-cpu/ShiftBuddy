@@ -77,6 +77,7 @@ const EditProfileScreen = () => {
                         <TextInput style={styles.input} value={age} onChangeText={setAge} />
                     </View>
                 </View>
+                <View style={styles.bottomAccent} />
             </View>
 
             <TouchableOpacity style={styles.saveButton}>
@@ -103,7 +104,6 @@ const styles = StyleSheet.create({
         right: s(10), // move it to the right like the design
         zIndex: -1, // keep it behind the card, not behind the header
     },
-
     header: {
         flexDirection: "row",
         alignItems: "center",
@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
         width: s(34),
         height: s(34),
         borderRadius: s(22),
-        backgroundColor: "rgba(243, 243, 243, 1)",
-        borderColor: "#ccc",
+        backgroundColor: "rgba(255, 255, 255, 1)",
+        borderColor: "#fff",
         borderWidth: 0.3,
         justifyContent: "center",
         alignItems: "center",
@@ -127,6 +127,17 @@ const styles = StyleSheet.create({
         fontSize: ms(18),
         fontWeight: "600",
     },
+    // card: {
+    //     backgroundColor: "#fff",
+    //     marginHorizontal: s(10),
+    //     marginTop: vs(56),
+    //     borderRadius: ms(16),
+    //     padding: s(29),
+    //     elevation: 4,
+    //     shadowColor: "#000",
+    //     shadowOpacity: 0.07,
+    //     shadowRadius: 8,
+    // },
     card: {
         backgroundColor: "#fff",
         marginHorizontal: s(10),
@@ -137,6 +148,19 @@ const styles = StyleSheet.create({
         shadowColor: "#000",
         shadowOpacity: 0.07,
         shadowRadius: 8,
+        shadowOffset: { width: 0, height: 8 },
+        overflow: "hidden", // clip accent to card shape
+        position: "relative",
+    },
+    bottomAccent: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: vs(6),
+        backgroundColor: "#FFD347",
+        borderBottomLeftRadius: ms(16),
+        borderBottomRightRadius: ms(16),
     },
     avatar: {
         width: ms(80),
