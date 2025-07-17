@@ -125,7 +125,7 @@ const ProfileScreen = () => {
             <Text
               style={styles.memberId}
             >{`Member No. ${mockProfile.memberId}`}</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push("/rawPages/EditProfileScreen")}>
               <Text style={styles.edit}>Edit Profile</Text>
             </TouchableOpacity>
           </View>
