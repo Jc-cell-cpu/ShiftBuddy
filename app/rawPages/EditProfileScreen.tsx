@@ -26,6 +26,7 @@ const genderOptions = [
 ];
 
 const EditProfileScreen = () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const insets = useSafeAreaInsets();
   const [name, setName] = useState("Kriti Saren");
   const [email, setEmail] = useState("yessieklein@gmail.com");
@@ -70,14 +71,14 @@ const EditProfileScreen = () => {
           <Text style={styles.label}>Full Name</Text>
           <TextInput style={styles.input} value={name} onChangeText={setName} />
 
-                    <Text style={styles.label}>Email</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                    />
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
           <Text style={styles.label}>Phone Number</Text>
           <TextInput

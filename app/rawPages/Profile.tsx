@@ -62,8 +62,12 @@ const ProfileScreen = () => {
   const moreOptions = [
     { label: "Bookings", Icon: Calendar, route: "/rawPages/test" },
     { label: "Leaves", Icon: Spring, route: "/rawPages/LeaveScreen" },
-    { label: "Help & Support", Icon: Support, route: "/rawPages/homePage" },
-    { label: "Privacy Policy", Icon: Insurance, route: "/rawPages/PrivacyPolicy" },
+    { label: "Help & Support", Icon: Support, route: "/rawPages/ChatScreen" },
+    {
+      label: "Privacy Policy",
+      Icon: Insurance,
+      route: "/rawPages/PrivacyPolicy",
+    },
     { label: "FAQ", Icon: Insurance, route: "/rawPages/FaqScreen" },
     {
       label: "Terms & Conditions",
@@ -125,7 +129,9 @@ const ProfileScreen = () => {
             <Text
               style={styles.memberId}
             >{`Member No. ${mockProfile.memberId}`}</Text>
-            <TouchableOpacity onPress={() => router.push("/rawPages/EditProfileScreen")}>
+            <TouchableOpacity
+              onPress={() => router.push("/rawPages/EditProfileScreen")}
+            >
               <Text style={styles.edit}>Edit Profile</Text>
             </TouchableOpacity>
           </View>

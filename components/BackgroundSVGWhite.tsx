@@ -1,6 +1,7 @@
 import { Dimensions, SafeAreaView, StatusBar, StyleSheet } from "react-native";
 import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const { width, height } = Dimensions.get("window");
 const heightC = 1000; // Adjusted height for the background
 
