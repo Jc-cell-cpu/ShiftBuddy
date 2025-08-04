@@ -70,13 +70,14 @@ const EditProfileScreen = () => {
           <Text style={styles.label}>Full Name</Text>
           <TextInput style={styles.input} value={name} onChangeText={setName} />
 
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            editable={false}
-          />
+                    <Text style={styles.label}>Email</Text>
+                    <TextInput
+                        style={styles.input}
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                    />
 
           <Text style={styles.label}>Phone Number</Text>
           <TextInput
@@ -235,6 +236,11 @@ const styles = StyleSheet.create({
     fontSize: ms(13),
     borderColor: "#ddd",
     borderWidth: 1,
+  },
+  disabledInput: {
+    backgroundColor: "#F5F5F5",
+    color: "#999",
+    borderColor: "#E0E0E0",
   },
   placeholderStyle: {
     fontSize: ms(13),
