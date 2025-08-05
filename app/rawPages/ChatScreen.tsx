@@ -1,8 +1,9 @@
 import { ms, s, vs } from "@/utils/scale";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   StatusBar,
@@ -67,6 +68,31 @@ const messages: Message[] = [
 
 export default function ChatScreen() {
   const [inputText, setInputText] = useState("");
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+        setIsKeyboardVisible(true);
+      }
+    );
+
+    const keyboardDidHideListener = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => {
+        setKeyboardHeight(0);
+        setIsKeyboardVisible(false);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
+  }, []);
 
   const renderMessage = ({ item }: { item: Message }) => {
     const isSelf = item.sender === "self";
@@ -99,7 +125,7 @@ export default function ChatScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor="transparent"
@@ -109,7 +135,7 @@ export default function ChatScreen() {
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? vs(10) : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
         {/* Header */}
         <View style={styles.header}>
@@ -136,7 +162,14 @@ export default function ChatScreen() {
         />
 
         {/* Input Container */}
-        <View style={styles.inputContainer}>
+        <View
+          style={[
+            styles.inputContainer,
+            Platform.OS === "android" &&
+              !isKeyboardVisible &&
+              styles.inputContainerWithBottomSpace,
+          ]}
+        >
           <TouchableOpacity style={styles.attachButton}>
             <Ionicons name="attach" size={ms(20)} color="#666" />
           </TouchableOpacity>
@@ -159,7 +192,7 @@ export default function ChatScreen() {
           >
             <Ionicons
               name="send"
-              size={ms(18)}
+              size={ms(23)}
               color={inputText.trim() ? "#69417E" : "#ccc"}
             />
           </TouchableOpacity>
@@ -302,11 +335,15 @@ const styles = StyleSheet.create({
     textAlignVertical: "center",
   },
   sendButton: {
-    padding: s(8),
-    marginLeft: s(8),
+    padding: s(10),
+    marginLeft: s(10),
   },
   sendButtonActive: {
-    backgroundColor: "#F0E6D6",
+    // backgroundColor: "#F0E6D6",
     borderRadius: ms(20),
+  },
+  inputContainerWithBottomSpace: {
+    paddingBottom: vs(25),
+    marginBottom: -vs(25),
   },
 });
