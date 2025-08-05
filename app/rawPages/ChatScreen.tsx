@@ -68,6 +68,7 @@ const messages: Message[] = [
 
 export default function ChatScreen() {
   const [inputText, setInputText] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
@@ -171,7 +172,7 @@ export default function ChatScreen() {
           ]}
         >
           <TouchableOpacity style={styles.attachButton}>
-            <Ionicons name="attach" size={ms(20)} color="#666" />
+            <Ionicons name="attach" size={ms(20)} color="#69417E" />
           </TouchableOpacity>
           <TextInput
             style={styles.input}
@@ -308,14 +309,14 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     paddingHorizontal: s(16),
     paddingVertical: vs(12),
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderTopColor: "#E5E5E5",
-    elevation: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    // backgroundColor: "#fff",
+    // borderTopWidth: 1,
+    // borderTopColor: "#E5E5E5",
+    // elevation: 8,
+    // shadowColor: "#000",
+    // shadowOffset: { width: 0, height: -2 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 8,
   },
   attachButton: {
     padding: s(8),
@@ -327,7 +328,7 @@ const styles = StyleSheet.create({
     maxHeight: vs(100),
     paddingHorizontal: s(16),
     paddingVertical: vs(10),
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "rgba(236, 240, 240, 1)",
     borderRadius: ms(20),
     fontSize: ms(14),
     color: "#1A1A1A",
