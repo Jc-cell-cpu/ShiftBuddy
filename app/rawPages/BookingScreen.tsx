@@ -346,8 +346,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingBottom: vs(20), // Increased bottom padding to container
-    marginBottom: vs(10), // Added bottom margin for extra space
+    paddingBottom: -vs(3), // Increased bottom padding to container
+    marginBottom: vs(2), // Added bottom margin for extra space
   },
   header: {
     flexDirection: "row",
@@ -484,20 +484,18 @@ const styles = StyleSheet.create({
   },
   bookingCard: {
     flexDirection: "row",
-    padding: s(16),
-    marginBottom: vs(12),
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "rgba(241, 230, 255, 0.3)",
     borderRadius: ms(16),
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
+    padding: ms(12),
+    marginBottom: vs(12),
+    marginTop: vs(10),
+    marginHorizontal: s(10),
+    alignItems: "center",
+    gap: ms(12),
+    elevation: 0,
+    shadowColor: "transparent",
+    borderWidth: 0,
+    borderColor: "rgba(209, 208, 207, 0.9)",
   },
   avatar: {
     width: ms(60),
@@ -515,13 +513,12 @@ const styles = StyleSheet.create({
     fontFamily: "InterSemiBold",
     fontSize: ms(16),
     color: "#1F2937",
-    marginBottom: vs(4),
   },
   meta: {
     fontFamily: "InterRegular",
     fontSize: ms(13),
     color: "#6B7280",
-    marginBottom: vs(6),
+    marginBottom: vs(8),
   },
   location: {
     fontFamily: "InterMedium",
@@ -531,18 +528,20 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: vs(4),
+    marginBottom: vs(6),
+    gap: ms(6),
   },
   metaWithIcon: {
     fontFamily: "InterRegular",
     fontSize: ms(12),
     color: "#6B7280",
-    marginLeft: s(6),
+    // marginLeft: s(6),
   },
   locationRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: vs(8),
+    marginBottom: vs(12),
+    gap: ms(6),
   },
   locationLink: {
     fontFamily: "InterMedium",
@@ -551,16 +550,13 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: "row",
-    gap: s(12),
-    marginTop: vs(8),
+    gap: s(16),
+    marginTop: vs(4),
   },
   actionButton: {
-    width: s(36),
-    height: s(36),
-    borderRadius: s(18),
+    padding: ms(8),
+    borderRadius: ms(20),
     backgroundColor: "rgba(105, 65, 126, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
   },
   emptyState: {
     flex: 1,
