@@ -2,6 +2,7 @@ import { ms, s, vs } from "@/utils/scale";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
+import { useJourneyStore } from "@/store/useJourneyStore";
 import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -21,6 +22,7 @@ export default function CameraScreen() {
   const [loading, setLoading] = useState(false);
   const cameraRef = useRef<CameraView | null>(null);
   const router = useRouter();
+  const { setDestinationReached, setImageUploaded, progressToNextStep } = useJourneyStore();
 
   if (!permission?.granted) {
     requestPermission();
@@ -49,6 +51,11 @@ export default function CameraScreen() {
 
   const confirmPicture = () => {
     if (photoUri) {
+      // Update journey state when image is confirmed
+      setDestinationReached(true);
+      setImageUploaded(true);
+      progressToNextStep(); // Move to "Reach" step (step 1)
+      
       router.replace({
         pathname: "/home/homePage",
         params: { capturedImage: photoUri },

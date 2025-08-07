@@ -3,13 +3,12 @@
 import Selfi from "@/assets/Selfi.svg";
 import Star from "@/assets/Starr.svg";
 import Upload from "@/assets/UploadIcon.svg";
-import { useJourneyStore } from "@/store/useJourneyStore";
 import { ms, s, vs } from "@/utils/scale";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "@react-native-community/blur";
 import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import {
   Alert,
   Animated,
@@ -28,6 +27,10 @@ interface DocumentUploadModalProps {
   title?: string;
   allowedTypes?: string[];
   buttonLabel?: string;
+  modalType?: "odometer" | "destination" | "consent" | "other";
+  subtitle?: string;
+  showKilometerField?: boolean;
+  kilometerValue?: string;
 }
 
 type UploadStatus = "uploading" | "success" | "failed" | "verified";
@@ -43,7 +46,6 @@ interface UploadItem {
 const MAX_FILE_SIZE_MB = 25;
 
 const sanitizeFileName = (name: string) => name.replace(/[^\w.\-]/g, "_");
-const { setOdometerUploaded, setCurrentStep } = useJourneyStore.getState();
 
 const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   visible,
@@ -52,11 +54,16 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   title = "Upload Document",
   allowedTypes = ["image/*"],
   buttonLabel = "Select Document",
+  modalType = "other",
+  subtitle,
+  showKilometerField = true,
+  kilometerValue = "10km",
 }) => {
   const [uploading, setUploading] = useState(false);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
   const [selectedUpload, setSelectedUpload] = useState<UploadItem | null>(null);
+  const [selectedFile, setSelectedFile] = useState<DocumentPicker.DocumentPickerResult | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -132,31 +139,14 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
         setUploads([uploadItem]); // Always replace existing uploads
         setUploading(true);
 
-        try {
-          for (let p = 10; p <= 100; p += 10) {
-            await new Promise((r) => setTimeout(r, 100));
-            setUploads((prev) =>
-              prev.map((u) =>
-                u.name === cleanName ? { ...u, progress: p } : u
-              )
-            );
-          }
-
-          await onUpload(result);
-          setUploads((prev) =>
-            prev.map((u) =>
-              u.name === cleanName ? { ...u, status: "success" } : u
-            )
-          );
-        } catch (err) {
-          setUploads((prev) =>
-            prev.map((u) =>
-              u.name === cleanName ? { ...u, status: "failed" } : u
-            )
-          );
-        } finally {
-          setUploading(false);
-        }
+        // Store the selected file for later upload and mark as ready
+        setSelectedFile(result);
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.name === cleanName ? { ...u, status: "success" } : u
+          )
+        );
+        setUploading(false);
       }
     } catch (error) {
       Alert.alert("Error", "Failed to select document. Please try again.");
@@ -165,16 +155,111 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
 
   // const verifiedUpload = uploads.find((u) => u.status === "verified");
 
-  const handleFinalUpload = () => {
-    // if (verifiedUpload) {
-    setOdometerUploaded(true);
-    setCurrentStep(1); // assuming odometer upload completes step 0
-    setShowSuccess(true);
-    // }
+  const handleFinalUpload = async () => {
+    if (!selectedFile) {
+      Alert.alert("No File Selected", "Please select a file first before uploading.");
+      return;
+    }
+
+    try {
+      setUploading(true);
+      
+      // Show upload progress animation
+      const fileName = uploads[0]?.name || "document";
+      
+      // Update upload status to show progress
+      setUploads((prev) =>
+        prev.map((u) =>
+          u.name === fileName ? { ...u, status: "uploading", progress: 0 } : u
+        )
+      );
+
+      // Simulate upload progress
+      for (let p = 10; p <= 100; p += 10) {
+        await new Promise((r) => setTimeout(r, 100));
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.name === fileName ? { ...u, progress: p } : u
+          )
+        );
+      }
+
+      // Call the parent upload handler
+      await onUpload(selectedFile);
+      
+      // Mark upload as successful
+      setUploads((prev) =>
+        prev.map((u) =>
+          u.name === fileName ? { ...u, status: "success" } : u
+        )
+      );
+      
+      // Show success modal after a brief delay
+      setTimeout(() => {
+        setShowSuccess(true);
+      }, 300);
+      
+    } catch (error) {
+      console.error("Upload failed:", error);
+      
+      // Mark upload as failed
+      const fileName = uploads[0]?.name || "document";
+      setUploads((prev) =>
+        prev.map((u) =>
+          u.name === fileName ? { ...u, status: "failed", progress: 0 } : u
+        )
+      );
+      
+      Alert.alert("Upload Failed", "Failed to upload the document. Please try again.");
+    } finally {
+      setUploading(false);
+    }
   };
+
   const deleteUpload = (name: string) => {
     setUploads((prev) => prev.filter((u) => u.name !== name));
   };
+
+  // Get dynamic content based on modalType - memoized to recalculate when modalType changes
+  const modalContent = useMemo(() => {
+    console.log('📋 DocumentUploadModal - modalType:', modalType);
+    switch (modalType) {
+      case "odometer":
+        return {
+          title: "Upload odometer photo (vehicle)",
+          subtitle:
+            "To begin tracking your trip,\nplease upload a clear photo of \nyour vehicle's odometer.\nTake a clear photo of your \nodometer showing the current\nmileage.",
+          buttonText: "Upload Photo",
+          successMessage:
+            "Your odometer photo has been\nreceived and started the\nJourney.",
+        };
+      case "destination":
+        return {
+          title: "Upload destination photo",
+          subtitle:
+            "Please upload a clear photo \nto confirm you have reached \nthe destination.\nThis will help us track your \njourney progress.",
+          buttonText: "Upload Photo",
+          successMessage:
+            "Your destination photo has been\nreceived and confirmed your\narrival.",
+        };
+      case "consent":
+        return {
+          title: "Upload consent form",
+          subtitle:
+            "Please upload the signed \nconsent form to start the \ntreatment process.\nEnsure all required fields \nare completed.",
+          buttonText: "Upload Form",
+          successMessage:
+            "Your consent form has been\nreceived and treatment can\nbegin.",
+        };
+      default:
+        return {
+          title: title || "Upload Document",
+          subtitle: subtitle || "Please upload the required document.",
+          buttonText: "Upload Document",
+          successMessage: "Your document has been\nuploaded successfully.",
+        };
+    }
+  }, [modalType, title, subtitle]);
 
   return (
     <>
@@ -191,17 +276,12 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
               <Ionicons name="close" size={s(15)} color="#080808" />
             </TouchableOpacity>
 
-            <Text style={styles.modalTitle}>
-              Upload odometer photo (vehicle)
-            </Text>
+            <Text style={styles.modalTitle}>{modalContent.title}</Text>
 
             <View style={styles.introWrapper}>
               <View style={styles.textWrapper}>
                 <Text style={styles.modalSubtitle}>
-                  To begin tracking your trip,{"\n"}please upload a clear photo
-                  of {"\n"}your vehicle&apos;s odometer.{"\n"}Take a clear photo
-                  of your {"\n"}
-                  odometer showing the current{"\n"}mileage.
+                  {modalContent.subtitle}
                 </Text>
               </View>
               <View style={styles.selfieWrapper}>
@@ -357,10 +437,14 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
               </View>
             ))}
 
-            <Text style={styles.label}>Started Kilometer</Text>
-            <View style={styles.inputBox}>
-              <Text style={styles.inputText}>10km</Text>
-            </View>
+            {showKilometerField && (
+              <>
+                <Text style={styles.label}>Started Kilometer</Text>
+                <View style={styles.inputBox}>
+                  <Text style={styles.inputText}>{kilometerValue}</Text>
+                </View>
+              </>
+            )}
 
             <View style={styles.buttonWrapper}>
               <TouchableOpacity
@@ -371,7 +455,9 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
                 // disabled={!verifiedUpload}
                 onPress={handleFinalUpload}
               >
-                <Text style={styles.uploadButtonText}>Upload Photo</Text>
+                <Text style={styles.uploadButtonText}>
+                  {modalContent.buttonText}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -475,8 +561,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
                 marginBottom: vs(16),
               }}
             >
-              Your odometer photo has been{"\n"}received and started the
-              Journey.
+              {modalContent.successMessage}
             </Text>
             {/* <TouchableOpacity
               style={styles.uploadButton}

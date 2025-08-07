@@ -52,7 +52,21 @@ const tabs = [
 
 const BookingDetails: React.FC = () => {
   const params = useLocalSearchParams();
-  const { odometerUploaded } = useJourneyStore();
+  const {
+    odometerUploaded,
+    destinationReached,
+    imageUploaded,
+    consentFormUploaded,
+    treatmentStarted,
+    currentStep,
+    setOdometerUploaded,
+    setDestinationReached,
+    setImageUploaded,
+    setConsentFormUploaded,
+    setTreatmentStarted,
+    setCurrentStep,
+    progressToNextStep,
+  } = useJourneyStore();
   const router = useRouter();
   const initialTab = (params?.activeTab as (typeof tabs)[number]) || "Booking";
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>(initialTab);
@@ -134,7 +148,19 @@ const BookingDetails: React.FC = () => {
   const avatar = Array.isArray(avatarUrl) ? avatarUrl[0] : avatarUrl;
 
   const handleLogin = () => {
-    setUploadModalVisible(true);
+    if (!odometerUploaded) {
+      // Start Journey - show upload modal for odometer
+      setUploadModalVisible(true);
+    } else if (odometerUploaded && !destinationReached) {
+      // User is sliding "Reach Destination" - show upload modal for image
+      setUploadModalVisible(true);
+    } else if (destinationReached && imageUploaded && currentStep === 2) {
+      // User is sliding "Start Treatment" - show upload modal for consent form
+      setUploadModalVisible(true);
+    } else {
+      // Fallback - show upload modal or progress to next step
+      setUploadModalVisible(true);
+    }
   };
 
   const handleDocumentUpload = async (
@@ -142,10 +168,66 @@ const BookingDetails: React.FC = () => {
   ) => {
     if (!result.canceled && result.assets.length > 0) {
       const file = result.assets[0];
-      // Use this only for uploading (e.g., send to server)
-      console.log("Uploaded (not shown in documents tab):", file.name);
+      console.log("Document uploaded:", file.name);
+
+      // Update journey state based on current step
+      if (!odometerUploaded) {
+        // This is the start journey upload (odometer)
+        console.log("📸 Odometer uploaded - Journey started!");
+        setOdometerUploaded(true);
+        setCurrentStep(1); // Move to step 1 ("Reach")
+      } else if (odometerUploaded && !destinationReached) {
+        // This is the reach destination upload (image)
+        console.log("📍 Destination reached - Image uploaded!");
+        setDestinationReached(true);
+        setImageUploaded(true);
+        setCurrentStep(2); // Move to step 2 ("Start Shift")
+      } else if (destinationReached && imageUploaded && currentStep === 2) {
+        // This is the start treatment upload (consent form)
+        console.log("📝 Consent form uploaded - Treatment can begin!");
+        setConsentFormUploaded(true);
+        setTreatmentStarted(true);
+        setCurrentStep(3); // Move to step 3 ("Process")
+      }
+
+      // Use this for any additional processing (e.g., send to server)
+      console.log("Upload processed for current journey state");
     }
   };
+
+  // Get the modal configuration based on current state
+  const getModalConfig = () => {
+    if (!odometerUploaded) {
+      return {
+        modalType: "odometer" as const,
+        showKilometerField: true,
+        allowedTypes: ["image/*"],
+        buttonLabel: "Click to Upload",
+      };
+    } else if (odometerUploaded && !destinationReached) {
+      return {
+        modalType: "destination" as const,
+        showKilometerField: true,
+        allowedTypes: ["image/*"],
+        buttonLabel: "Click to Upload",
+      };
+    } else if (destinationReached && imageUploaded && currentStep === 2) {
+      return {
+        modalType: "consent" as const,
+        showKilometerField: false,
+        allowedTypes: ["*/*"], // Allow any file type for consent forms
+        buttonLabel: "Click to Upload",
+      };
+    }
+    return {
+      modalType: "other" as const,
+      showKilometerField: false,
+      allowedTypes: ["*/*"],
+      buttonLabel: "Click to Upload",
+    };
+  };
+
+  const modalConfig = getModalConfig();
   const handleScroll = (event: {
     nativeEvent: { contentOffset: { y: number } };
   }) => {
@@ -534,14 +616,27 @@ const BookingDetails: React.FC = () => {
         visible={uploadModalVisible}
         onClose={() => setUploadModalVisible(false)}
         onUpload={handleDocumentUpload}
-        title="Upload New Document"
-        allowedTypes={["image/*"]}
-        buttonLabel="Click to Upload"
+        modalType={modalConfig.modalType}
+        showKilometerField={modalConfig.showKilometerField}
+        allowedTypes={modalConfig.allowedTypes}
+        buttonLabel={modalConfig.buttonLabel}
       />
 
       <Animated.View style={[styles.loginButton, { opacity: buttonOpacity }]}>
         <SlideToConfirmButton
-          label={odometerUploaded ? "Reach Destination" : "Start Journey"}
+          label={
+            !odometerUploaded
+              ? "Start Journey"
+              : !destinationReached
+              ? "Reach Destination"
+              : destinationReached && imageUploaded && !consentFormUploaded
+              ? "Start Treatment"
+              : consentFormUploaded && treatmentStarted && currentStep === 3
+              ? "Treatment in Progress"
+              : currentStep >= 4
+              ? "Complete Treatment"
+              : "Continue Journey"
+          }
           onComplete={handleLogin}
         />
       </Animated.View>
