@@ -73,6 +73,96 @@ const bookingData: BookingItem[] = [
       email: "leo.carter@email.com",
     },
   },
+  {
+    id: "3",
+    date: "2025-08-05", // future
+    details: {
+      name: "Nina Patel",
+      gender: "Female",
+      age: 32,
+      time: "2:00 PM - 3:00 PM",
+      avatarUrl: "https://randomuser.me/api/portraits/women/68.jpg",
+      location: {
+        address: "789 Broadway, Los Angeles, CA 90015",
+        coordinates: "34.0522,-118.2437",
+        placeId: "ChIJ7aVxnOTHwoARxKIntFtakKo",
+      },
+      phone: "+1 (555) 345-6789",
+      email: "nina.patel@email.com",
+    },
+  },
+  {
+    id: "4",
+    date: "2025-08-10", // future
+    details: {
+      name: "Carlos Gomez",
+      gender: "Male",
+      age: 45,
+      time: "10:00 AM - 11:00 AM",
+      avatarUrl: "https://randomuser.me/api/portraits/men/33.jpg",
+      location: {
+        address: "300 Market St, San Francisco, CA 94103",
+        coordinates: "37.7749,-122.4194",
+        placeId: "ChIJIQBpAG2ahYAR_6128GcTUEo",
+      },
+      phone: "+1 (555) 456-7890",
+      email: "carlos.gomez@email.com",
+    },
+  },
+  {
+    id: "5",
+    date: "2025-07-20", // past
+    details: {
+      name: "Hannah Smith",
+      gender: "Female",
+      age: 29,
+      time: "3:30 PM - 4:30 PM",
+      avatarUrl: "https://randomuser.me/api/portraits/women/72.jpg",
+      location: {
+        address: "400 Queen St, Toronto, ON M5V 2B6",
+        coordinates: "43.6532,-79.3832",
+        placeId: "ChIJpTvG15DL1IkRd8S0KlBVNTI",
+      },
+      phone: "+1 (555) 567-8901",
+      email: "hannah.smith@email.com",
+    },
+  },
+  {
+    id: "6",
+    date: "2025-07-10", // past
+    details: {
+      name: "Ryan Mitchell",
+      gender: "Male",
+      age: 41,
+      time: "11:00 AM - 12:00 PM",
+      avatarUrl: "https://randomuser.me/api/portraits/men/45.jpg",
+      location: {
+        address: "600 King St, Seattle, WA 98104",
+        coordinates: "47.6062,-122.3321",
+        placeId: "ChIJVTPokywQkFQRmtVEaUZlJRA",
+      },
+      phone: "+1 (555) 678-9012",
+      email: "ryan.mitchell@email.com",
+    },
+  },
+  {
+    id: "7",
+    date: "2025-08-15", // future
+    details: {
+      name: "Olivia White",
+      gender: "Female",
+      age: 34,
+      time: "9:00 AM - 10:00 AM",
+      avatarUrl: "https://randomuser.me/api/portraits/women/59.jpg",
+      location: {
+        address: "123 Ocean Drive, Miami Beach, FL",
+        coordinates: "25.7617,-80.1918",
+        placeId: "ChIJD9lXVCbM2YgRkHytCaHMuXI",
+      },
+      phone: "+1 (555) 789-0123",
+      email: "olivia.white@email.com",
+    },
+  },
 ];
 
 const BookingScreen = () => {
@@ -199,62 +289,112 @@ const BookingScreen = () => {
     setShowFullCalendar(!showFullCalendar);
   };
 
-  const renderBookingItem = ({ item }: { item: BookingItem }) => (
-    <TouchableOpacity
-      style={styles.bookingCard}
-      onPress={() => {
-        // You can add navigation logic here if needed
-      }}
-    >
-      <View style={styles.avatarContainer}>
-        <Image
-          source={{ uri: item.details.avatarUrl }}
-          style={styles.avatarImage}
-        />
-      </View>
+  const renderBookingItem = ({ item }: { item: BookingItem }) => {
+    const now = new Date();
+    const today = now.toISOString().split("T")[0];
+    const isPast = item.date < today;
 
-      <View style={styles.bookingDetails}>
-        <Text style={styles.name}>{item.details.name}</Text>
-        <Text style={styles.meta}>
-          {item.details.gender} | {item.details.age} Years
-        </Text>
-        <View style={styles.metaRow}>
-          <Ionicons name="calendar-outline" size={14} color="#6B7280" />
-          <Text style={styles.metaWithIcon}>
-            {item.date.split("-").reverse().join("/")}
+    return (
+      <TouchableOpacity
+        style={[
+          styles.bookingCard,
+          isPast && styles.disabledCard, // Apply gray style for past bookings
+        ]}
+        onPress={() => {
+          if (!isPast) {
+            // Enable interaction only for non-past bookings
+            // Add your navigation logic or interaction here
+          }
+        }}
+        disabled={isPast} // Disable touch for past
+      >
+        <View style={styles.avatarContainer}>
+          <Image
+            source={{ uri: item.details.avatarUrl }}
+            style={[
+              styles.avatarImage,
+              isPast && { opacity: 0.4 }, // Faded avatar for past
+            ]}
+          />
+        </View>
+
+        <View style={styles.bookingDetails}>
+          <Text style={[styles.name, isPast && styles.disabledText]}>
+            {item.details.name}
           </Text>
-        </View>
-        <View style={styles.metaRow}>
-          <Ionicons name="time-outline" size={14} color="#6B7280" />
-          <Text style={styles.metaWithIcon}>{item.details.time}</Text>
-        </View>
-        <TouchableOpacity
-          style={styles.locationRow}
-          onPress={() => openInMaps(item.details.location)}
-        >
-          <Ionicons name="location-outline" size={14} color="#69417E" />
-          <Text style={styles.locationLink}>See Location</Text>
-        </TouchableOpacity>
-        <View style={styles.actions}>
+          <Text style={[styles.meta, isPast && styles.disabledText]}>
+            {item.details.gender} | {item.details.age} Years
+          </Text>
+          <View style={styles.metaRow}>
+            <Ionicons
+              name="calendar-outline"
+              size={14}
+              color={isPast ? "#9CA3AF" : "#6B7280"}
+            />
+            <Text style={[styles.metaWithIcon, isPast && styles.disabledText]}>
+              {item.date.split("-").reverse().join("/")}
+            </Text>
+          </View>
+          <View style={styles.metaRow}>
+            <Ionicons
+              name="time-outline"
+              size={14}
+              color={isPast ? "#9CA3AF" : "#6B7280"}
+            />
+            <Text style={[styles.metaWithIcon, isPast && styles.disabledText]}>
+              {item.details.time}
+            </Text>
+          </View>
           <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => openPhoneDialer(item.details.phone)}
+            style={styles.locationRow}
+            onPress={() => openInMaps(item.details.location)}
+            disabled={isPast}
           >
-            <Ionicons name="call-outline" size={18} color="#69417E" />
+            <Ionicons
+              name="location-outline"
+              size={14}
+              color={isPast ? "#9CA3AF" : "#69417E"}
+            />
+            <Text style={[styles.locationLink, isPast && styles.disabledText]}>
+              See Location
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => openEmail(item.details.email)}
-          >
-            <Ionicons name="mail-outline" size={18} color="#69417E" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="open-outline" size={18} color="#69417E" />
-          </TouchableOpacity>
+
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => openPhoneDialer(item.details.phone)}
+              disabled={isPast}
+            >
+              <Ionicons
+                name="call-outline"
+                size={18}
+                color={isPast ? "#B0B0B0" : "#69417E"}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => openEmail(item.details.email)}
+              disabled={isPast}
+            >
+              <Ionicons
+                name="mail-outline"
+                size={18}
+                color={isPast ? "#B0B0B0" : "#69417E"}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton} disabled={isPast}>
+              <Ionicons
+                name="open-outline"
+                size={18}
+                color={isPast ? "#B0B0B0" : "#69417E"}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
@@ -328,7 +468,7 @@ const BookingScreen = () => {
         onDateChange={(date: Date) => setSelectedDate(date)}
       />
       <FlatList
-        data={bookingData}
+        data={getFilteredBookings()}
         renderItem={renderBookingItem}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
@@ -557,6 +697,15 @@ const styles = StyleSheet.create({
     padding: ms(8),
     borderRadius: ms(20),
     backgroundColor: "rgba(105, 65, 126, 0.1)",
+  },
+  disabledCard: {
+    backgroundColor: "#F3F4F6",
+    borderColor: "#E5E7EB",
+    opacity: 0.7,
+  },
+
+  disabledText: {
+    color: "#9CA3AF",
   },
   emptyState: {
     flex: 1,

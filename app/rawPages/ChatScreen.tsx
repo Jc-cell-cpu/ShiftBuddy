@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
     borderRadius: ms(20),
   },
   inputContainerWithBottomSpace: {
-    paddingBottom: vs(25),
+    paddingBottom: vs(27),
     marginBottom: -vs(25),
   },
 });
