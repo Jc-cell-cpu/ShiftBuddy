@@ -65,6 +65,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   const [selectedUpload, setSelectedUpload] = useState<UploadItem | null>(null);
   const [selectedFile, setSelectedFile] = useState<DocumentPicker.DocumentPickerResult | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [uploadStartModalType, setUploadStartModalType] = useState<string | null>(null);
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -161,6 +162,10 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
       return;
     }
 
+    // Capture the current modalType before starting upload to prevent race condition
+    setUploadStartModalType(modalType);
+    console.log('🚀 Starting upload for modalType:', modalType);
+
     try {
       setUploading(true);
       
@@ -184,10 +189,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
         );
       }
 
-      // Call the parent upload handler
-      await onUpload(selectedFile);
-      
-      // Mark upload as successful
+      // Mark upload as successful first
       setUploads((prev) =>
         prev.map((u) =>
           u.name === fileName ? { ...u, status: "success" } : u
@@ -198,6 +200,17 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
       setTimeout(() => {
         setShowSuccess(true);
       }, 300);
+      
+      // Delay calling parent upload handler to prevent UI flash
+      // This ensures our success modal shows before parent updates modalType
+      setTimeout(async () => {
+        try {
+          await onUpload(selectedFile);
+          console.log('✅ Parent upload handler completed after UI update');
+        } catch (error) {
+          console.error('❌ Parent upload handler failed:', error);
+        }
+      }, 500); // Delay slightly longer than success modal show
       
     } catch (error) {
       console.error("Upload failed:", error);
@@ -218,6 +231,20 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
 
   const deleteUpload = (name: string) => {
     setUploads((prev) => prev.filter((u) => u.name !== name));
+  };
+
+  // Function to get success message based on a specific modal type
+  const getSuccessMessage = (modalType: string) => {
+    switch (modalType) {
+      case "odometer":
+        return "Your odometer photo has been\nreceived and started the\nJourney.";
+      case "destination":
+        return "Your destination photo has been\nreceived and confirmed your\narrival.";
+      case "consent":
+        return "Your consent form has been\nreceived and treatment can\nbegin.";
+      default:
+        return "Your document has been\nuploaded successfully.";
+    }
   };
 
   // Get dynamic content based on modalType - memoized to recalculate when modalType changes
@@ -561,7 +588,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
                 marginBottom: vs(16),
               }}
             >
-              {modalContent.successMessage}
+              {getSuccessMessage(uploadStartModalType || modalType)}
             </Text>
             {/* <TouchableOpacity
               style={styles.uploadButton}
