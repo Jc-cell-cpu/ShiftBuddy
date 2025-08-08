@@ -4,14 +4,14 @@
     "slug": "ShiftBuddy",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/BuddyL.png",
+    "icon": "./assets/BuddyLOGO.jpg",
     "scheme": "shiftbuddy",
     "userInterfaceStyle": "automatic",
     "jsEngine": "hermes",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.jc_69.ShiftBuddy",
+      "bundleIdentifier": "app.jckk.shiftbuddy",
       "infoPlist": {
         "NSCameraUsageDescription": "We need camera access to take photos for identity and document verification.",
         "NSFaceIDUsageDescription": "We use Face ID to securely authenticate you before accessing sensitive medical documents.",
@@ -30,7 +30,7 @@
         "READ_INTERNAL_STORAGE"
       ],
       "adaptiveIcon": {
-        "foregroundImage": "./assets/BuddyL.png",
+        "foregroundImage": "./assets/BuddyLOGO.jpg",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
