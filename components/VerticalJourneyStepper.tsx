@@ -1,10 +1,9 @@
 import StartJourneyIcon from "@/assets/Truck.svg";
 import StartShiftIcon from "@/assets/briefcase.svg";
 import ReachIcon from "@/assets/security-user.svg";
-import {
-  default as EndIcon,
-  default as ProcessIcon,
-} from "@/assets/send-2.svg";
+import ProcessIcon from "@/assets/send-2.svg";
+import ProgressNoteIcon from "@/assets/note-add.svg";
+import ShareFeedbackIcon from "@/assets/Star.svg";
 import { useJourneyStore } from "@/store/useJourneyStore";
 import { ms, s, vs } from "@/utils/scale";
 import React from "react";
@@ -12,7 +11,7 @@ import { StyleSheet, Text, View } from "react-native";
 import StepIndicator from "react-native-step-indicator";
 import Svg, { Path } from "react-native-svg";
 
-const labels = ["Start Journey", "Reach", "Start Shift", "Process", "End"];
+const labels = ["Start Journey", "Reach", "Start Shift", "Process", "Progress Note", "Share Feedback"];
 
 // Map labels to SVG components
 const labelIcons: {
@@ -22,7 +21,8 @@ const labelIcons: {
   Reach: ReachIcon,
   "Start Shift": StartShiftIcon,
   Process: ProcessIcon,
-  End: EndIcon,
+  "Progress Note": ProgressNoteIcon,
+  "Share Feedback": ShareFeedbackIcon,
 };
 
 const VerticalJourneyStepper: React.FC = () => {
@@ -98,7 +98,7 @@ const VerticalJourneyStepper: React.FC = () => {
   }) => {
     const isCurrent = position === currentStep;
     const isCompleted = stepStatus === "finished";
-    const IconComponent = labelIcons[label] || EndIcon; // Fallback to EndIcon
+    const IconComponent = labelIcons[label] || ShareFeedbackIcon; // Fallback to ShareFeedbackIcon
 
     return (
       <View style={styles.labelContainer}>
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     marginVertical: vs(16),
     paddingHorizontal: s(16),
     backgroundColor: "transparent",
-    minHeight: vs(250), // Ensure enough space for vertical layout
+    minHeight: vs(300), // Adjusted for 6 steps total
   },
   labelContainer: {
     flexDirection: "row",

@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "@react-native-community/blur";
 import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Animated,
@@ -16,6 +16,7 @@ import {
   Modal,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -27,10 +28,18 @@ interface DocumentUploadModalProps {
   title?: string;
   allowedTypes?: string[];
   buttonLabel?: string;
-  modalType?: "odometer" | "destination" | "consent" | "other";
+  modalType?:
+    | "odometer"
+    | "destination"
+    | "consent"
+    | "progress_note"
+    | "other";
   subtitle?: string;
   showKilometerField?: boolean;
   kilometerValue?: string;
+  showProgressNoteField?: boolean;
+  progressNoteValue?: string;
+  onProgressNoteChange?: (text: string) => void;
 }
 
 type UploadStatus = "uploading" | "success" | "failed" | "verified";
@@ -58,14 +67,20 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   subtitle,
   showKilometerField = true,
   kilometerValue = "10km",
+  showProgressNoteField = false,
+  progressNoteValue = "",
+  onProgressNoteChange,
 }) => {
   const [uploading, setUploading] = useState(false);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
   const [selectedUpload, setSelectedUpload] = useState<UploadItem | null>(null);
-  const [selectedFile, setSelectedFile] = useState<DocumentPicker.DocumentPickerResult | null>(null);
+  const [selectedFile, setSelectedFile] =
+    useState<DocumentPicker.DocumentPickerResult | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [uploadStartModalType, setUploadStartModalType] = useState<string | null>(null);
+  const [uploadStartModalType, setUploadStartModalType] = useState<
+    string | null
+  >(null);
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -157,64 +172,90 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   // const verifiedUpload = uploads.find((u) => u.status === "verified");
 
   const handleFinalUpload = async () => {
-    if (!selectedFile) {
-      Alert.alert("No File Selected", "Please select a file first before uploading.");
+    // For progress notes, file upload is optional
+    if (modalType !== "progress_note" && !selectedFile) {
+      Alert.alert(
+        "No File Selected",
+        "Please select a file first before uploading."
+      );
+      return;
+    }
+
+    // For progress notes, check if at least text is provided
+    if (
+      modalType === "progress_note" &&
+      !progressNoteValue?.trim() &&
+      !selectedFile
+    ) {
+      Alert.alert(
+        "Progress Note Required",
+        "Please write a progress note or attach a supporting document."
+      );
       return;
     }
 
     // Capture the current modalType before starting upload to prevent race condition
     setUploadStartModalType(modalType);
-    console.log('🚀 Starting upload for modalType:', modalType);
+    console.log("🚀 Starting upload for modalType:", modalType);
 
     try {
       setUploading(true);
-      
-      // Show upload progress animation
-      const fileName = uploads[0]?.name || "document";
-      
-      // Update upload status to show progress
-      setUploads((prev) =>
-        prev.map((u) =>
-          u.name === fileName ? { ...u, status: "uploading", progress: 0 } : u
-        )
-      );
 
-      // Simulate upload progress
-      for (let p = 10; p <= 100; p += 10) {
-        await new Promise((r) => setTimeout(r, 100));
+      // For progress notes with only text (no file), skip file upload simulation
+      if (
+        modalType === "progress_note" &&
+        !selectedFile &&
+        progressNoteValue?.trim()
+      ) {
+        // Just show progress for text submission without file upload
+        // Skip file upload simulation and go straight to success
+      } else {
+        // Show upload progress animation for file uploads
+        const fileName = uploads[0]?.name || "document";
+
+        // Update upload status to show progress
         setUploads((prev) =>
           prev.map((u) =>
-            u.name === fileName ? { ...u, progress: p } : u
+            u.name === fileName ? { ...u, status: "uploading", progress: 0 } : u
+          )
+        );
+
+        // Simulate upload progress
+        for (let p = 10; p <= 100; p += 10) {
+          await new Promise((r) => setTimeout(r, 100));
+          setUploads((prev) =>
+            prev.map((u) => (u.name === fileName ? { ...u, progress: p } : u))
+          );
+        }
+
+        // Mark upload as successful first
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.name === fileName ? { ...u, status: "success" } : u
           )
         );
       }
 
-      // Mark upload as successful first
-      setUploads((prev) =>
-        prev.map((u) =>
-          u.name === fileName ? { ...u, status: "success" } : u
-        )
-      );
-      
       // Show success modal after a brief delay
       setTimeout(() => {
         setShowSuccess(true);
       }, 300);
-      
+
       // Delay calling parent upload handler to prevent UI flash
       // This ensures our success modal shows before parent updates modalType
       setTimeout(async () => {
         try {
-          await onUpload(selectedFile);
-          console.log('✅ Parent upload handler completed after UI update');
+          if (selectedFile) {
+            await onUpload(selectedFile);
+            console.log("✅ Parent upload handler completed after UI update");
+          }
         } catch (error) {
-          console.error('❌ Parent upload handler failed:', error);
+          console.error("❌ Parent upload handler failed:", error);
         }
       }, 500); // Delay slightly longer than success modal show
-      
     } catch (error) {
       console.error("Upload failed:", error);
-      
+
       // Mark upload as failed
       const fileName = uploads[0]?.name || "document";
       setUploads((prev) =>
@@ -222,8 +263,11 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
           u.name === fileName ? { ...u, status: "failed", progress: 0 } : u
         )
       );
-      
-      Alert.alert("Upload Failed", "Failed to upload the document. Please try again.");
+
+      Alert.alert(
+        "Upload Failed",
+        "Failed to upload the document. Please try again."
+      );
     } finally {
       setUploading(false);
     }
@@ -242,6 +286,8 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
         return "Your destination photo has been\nreceived and confirmed your\narrival.";
       case "consent":
         return "Your consent form has been\nreceived and treatment can\nbegin.";
+      case "progress_note":
+        return "Your progress note has been\nsubmitted successfully.";
       default:
         return "Your document has been\nuploaded successfully.";
     }
@@ -249,7 +295,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
 
   // Get dynamic content based on modalType - memoized to recalculate when modalType changes
   const modalContent = useMemo(() => {
-    console.log('📋 DocumentUploadModal - modalType:', modalType);
+    console.log("📋 DocumentUploadModal - modalType:", modalType);
     switch (modalType) {
       case "odometer":
         return {
@@ -277,6 +323,15 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
           buttonText: "Upload Form",
           successMessage:
             "Your consent form has been\nreceived and treatment can\nbegin.",
+        };
+      case "progress_note":
+        return {
+          title: "Write Progress Note",
+          subtitle:
+            "Please write a detailed \nprogress note about the \ncurrent treatment status.\nOptionally attach any \nsupporting documents.",
+          buttonText: "Submit Progress Note",
+          successMessage:
+            "Your progress note has been\nsubmitted successfully.",
         };
       default:
         return {
@@ -470,6 +525,22 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
                 <View style={styles.inputBox}>
                   <Text style={styles.inputText}>{kilometerValue}</Text>
                 </View>
+              </>
+            )}
+
+            {showProgressNoteField && (
+              <>
+                <Text style={styles.label}>Write a Progress Note</Text>
+                <TextInput
+                  style={styles.progressNoteInput}
+                  placeholder="Enter detailed progress note about the current treatment status..."
+                  placeholderTextColor="#999"
+                  value={progressNoteValue}
+                  onChangeText={onProgressNoteChange}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
               </>
             )}
 
@@ -732,6 +803,19 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: "#ccc",
     opacity: 0.6,
+  },
+  progressNoteInput: {
+    width: "100%",
+    minHeight: vs(100),
+    padding: s(12),
+    borderWidth: 0.4,
+    borderRadius: s(8),
+    borderColor: "#E0E0E0",
+    backgroundColor: "#FAFAFA",
+    fontSize: ms(14),
+    color: "#333",
+    marginBottom: vs(16),
+    textAlignVertical: "top",
   },
 });
 

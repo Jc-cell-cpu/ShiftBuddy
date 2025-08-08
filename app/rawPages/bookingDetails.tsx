@@ -1,5 +1,6 @@
 import BiometricAuth from "@/components/BiometricAuth"; // New component
 import DocumentUploadModal from "@/components/DocumentUploadModal";
+import FeedbackModal from "@/components/FeedbackModal";
 import PDFViewerModal from "@/components/PDFViewerModal"; // New component
 import ProfileCard from "@/components/ProfileCard";
 import SlideToConfirmButton from "@/components/SliderButton";
@@ -15,6 +16,7 @@ import {
   Alert,
   Animated,
   FlatList,
+  Modal,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -58,12 +60,16 @@ const BookingDetails: React.FC = () => {
     imageUploaded,
     consentFormUploaded,
     treatmentStarted,
+    progressNoteUploaded,
+    feedbackSubmitted,
     currentStep,
     setOdometerUploaded,
     setDestinationReached,
     setImageUploaded,
     setConsentFormUploaded,
     setTreatmentStarted,
+    setProgressNoteUploaded,
+    setFeedbackSubmitted,
     setCurrentStep,
     progressToNextStep,
   } = useJourneyStore();
@@ -74,6 +80,8 @@ const BookingDetails: React.FC = () => {
   const [documentViewerVisible, setDocumentViewerVisible] =
     useState<boolean>(false);
   const [uploadModalVisible, setUploadModalVisible] = useState<boolean>(false);
+  const [feedbackModalVisible, setFeedbackModalVisible] = useState<boolean>(false);
+  const [journeyCompleteModalVisible, setJourneyCompleteModalVisible] = useState<boolean>(false);
   const [selectedDocumentIndex, setSelectedDocumentIndex] = useState<number>(0);
   const [isAuthenticating, setIsAuthenticating] = useState<boolean>(false);
   const lastScrollY = useRef<number>(0);
@@ -94,6 +102,20 @@ const BookingDetails: React.FC = () => {
       type: "pdf",
     },
   ]);
+  const [progressNoteText, setProgressNoteText] = useState("");
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackReview, setFeedbackReview] = useState("");
+
+  const handleFeedbackSubmit = async (rating: number, review: string) => {
+    console.log("⭐ Feedback submitted:", { rating, review });
+    setFeedbackSubmitted(true);
+    setCurrentStep(5); // Move to step 5 ("Share Feedback") - final step
+  };
+
+  const handleJourneyComplete = () => {
+    console.log("🎉 Journey completed!");
+    setJourneyCompleteModalVisible(true);
+  };
 
   // Effect to scroll tab into view when activeTab changes
   useEffect(() => {
@@ -157,6 +179,15 @@ const BookingDetails: React.FC = () => {
     } else if (destinationReached && imageUploaded && currentStep === 2) {
       // User is sliding "Start Treatment" - show upload modal for consent form
       setUploadModalVisible(true);
+    } else if (consentFormUploaded && treatmentStarted && currentStep === 3) {
+      // User is sliding "Write Progress Note" - show progress note modal
+      setUploadModalVisible(true);
+    } else if (progressNoteUploaded && currentStep === 4) {
+      // User is sliding "Share Feedback" - show feedback modal
+      setFeedbackModalVisible(true);
+    } else if (feedbackSubmitted && currentStep >= 5) {
+      // User is sliding after feedback submitted - show journey complete popup
+      handleJourneyComplete();
     } else {
       // Fallback - show upload modal or progress to next step
       setUploadModalVisible(true);
@@ -166,6 +197,18 @@ const BookingDetails: React.FC = () => {
   const handleDocumentUpload = async (
     result: DocumentPicker.DocumentPickerResult
   ) => {
+    // Handle progress note submission (could be with or without file)
+    if (modalConfig.modalType === "progress_note") {
+      console.log("📝 Progress note submitted!");
+      console.log("Progress note text:", progressNoteText);
+      if (result && !result.canceled && result.assets.length > 0) {
+        console.log("Progress note attachment:", result.assets[0].name);
+      }
+      setProgressNoteUploaded(true);
+      setCurrentStep(4); // Move to step 4 ("Progress Note")
+      return;
+    }
+
     if (!result.canceled && result.assets.length > 0) {
       const file = result.assets[0];
       console.log("Document uploaded:", file.name);
@@ -201,6 +244,7 @@ const BookingDetails: React.FC = () => {
       return {
         modalType: "odometer" as const,
         showKilometerField: true,
+        showProgressNoteField: false,
         allowedTypes: ["image/*"],
         buttonLabel: "Click to Upload",
       };
@@ -208,6 +252,7 @@ const BookingDetails: React.FC = () => {
       return {
         modalType: "destination" as const,
         showKilometerField: true,
+        showProgressNoteField: false,
         allowedTypes: ["image/*"],
         buttonLabel: "Click to Upload",
       };
@@ -215,13 +260,23 @@ const BookingDetails: React.FC = () => {
       return {
         modalType: "consent" as const,
         showKilometerField: false,
+        showProgressNoteField: false,
         allowedTypes: ["*/*"], // Allow any file type for consent forms
         buttonLabel: "Click to Upload",
+      };
+    } else if (consentFormUploaded && treatmentStarted && currentStep === 3) {
+      return {
+        modalType: "progress_note" as const,
+        showKilometerField: false,
+        showProgressNoteField: true,
+        allowedTypes: ["*/*"], // Allow any file type for attachments
+        buttonLabel: "Optional: Attach Document",
       };
     }
     return {
       modalType: "other" as const,
       showKilometerField: false,
+      showProgressNoteField: false,
       allowedTypes: ["*/*"],
       buttonLabel: "Click to Upload",
     };
@@ -618,9 +673,44 @@ const BookingDetails: React.FC = () => {
         onUpload={handleDocumentUpload}
         modalType={modalConfig.modalType}
         showKilometerField={modalConfig.showKilometerField}
+        showProgressNoteField={modalConfig.showProgressNoteField}
+        progressNoteValue={progressNoteText}
+        onProgressNoteChange={setProgressNoteText}
         allowedTypes={modalConfig.allowedTypes}
         buttonLabel={modalConfig.buttonLabel}
       />
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        visible={feedbackModalVisible}
+        onClose={() => setFeedbackModalVisible(false)}
+        onSubmit={handleFeedbackSubmit}
+      />
+
+      {/* Journey Complete Modal */}
+      {journeyCompleteModalVisible && (
+        <Modal visible={journeyCompleteModalVisible} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={styles.journeyCompleteModal}>
+              <Ionicons name="checkmark-circle" size={s(64)} color="#4CAF50" />
+              <Text style={styles.journeyCompleteTitle}>Journey Complete!</Text>
+              <Text style={styles.journeyCompleteMessage}>
+                Congratulations! You have successfully completed all steps of your journey.
+                Thank you for your dedication and professionalism.
+              </Text>
+              <TouchableOpacity
+                style={styles.journeyCompleteButton}
+                onPress={() => {
+                  setJourneyCompleteModalVisible(false);
+                  router.replace("/home/homePage");
+                }}
+              >
+                <Text style={styles.journeyCompleteButtonText}>Return to Home</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
 
       <Animated.View style={[styles.loginButton, { opacity: buttonOpacity }]}>
         <SlideToConfirmButton
@@ -632,9 +722,11 @@ const BookingDetails: React.FC = () => {
               : destinationReached && imageUploaded && !consentFormUploaded
               ? "Start Treatment"
               : consentFormUploaded && treatmentStarted && currentStep === 3
-              ? "Treatment in Progress"
-              : currentStep >= 4
-              ? "Complete Treatment"
+              ? "Write Progress Note"
+              : progressNoteUploaded && currentStep === 4
+              ? "Share Feedback"
+              : feedbackSubmitted && currentStep >= 5
+              ? "Journey Complete"
               : "Continue Journey"
           }
           onComplete={handleLogin}
@@ -750,6 +842,52 @@ const styles = StyleSheet.create({
     borderRadius: s(16),
     padding: -s(4),
     flexGrow: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  journeyCompleteModal: {
+    backgroundColor: "#FDF9FF",
+    borderRadius: s(16),
+    padding: s(32),
+    margin: s(20),
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  journeyCompleteTitle: {
+    fontSize: ms(20),
+    fontFamily: "InterSemiBold",
+    color: "#333",
+    marginTop: vs(16),
+    marginBottom: vs(12),
+  },
+  journeyCompleteMessage: {
+    fontSize: ms(14),
+    fontFamily: "InterVariable",
+    color: "#666",
+    textAlign: "center",
+    lineHeight: ms(20),
+    marginBottom: vs(24),
+  },
+  journeyCompleteButton: {
+    backgroundColor: "#4D61E2",
+    borderRadius: s(8),
+    paddingVertical: vs(14),
+    paddingHorizontal: s(32),
+    minWidth: s(180),
+    alignItems: "center",
+  },
+  journeyCompleteButtonText: {
+    color: "#FFF",
+    fontSize: ms(16),
+    fontFamily: "InterSemiBold",
   },
 });
 
