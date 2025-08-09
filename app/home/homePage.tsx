@@ -7,6 +7,7 @@ import CalendarComponent from "@/components/CalendarComponent";
 import JourneyStepper from "@/components/JourneyStepper";
 import { useJourneyStore } from "@/store/useJourneyStore";
 import { ms, s, vs } from "@/utils/scale";
+import { handleScrollDirection } from "@/utils/tabBarVisibility";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   useFocusEffect,
@@ -126,7 +127,7 @@ const bookings: any[] = [
   },
   {
     id: "6",
-    date: "2025-08-02",
+    date: "2025-08-17",
     details: {
       name: "William Davis",
       gender: "Male",
@@ -144,7 +145,7 @@ const bookings: any[] = [
   },
   {
     id: "7",
-    date: "2025-08-03",
+    date: "2025-08-10",
     details: {
       name: "Sophia Wilson",
       gender: "Female",
@@ -162,7 +163,7 @@ const bookings: any[] = [
   },
   {
     id: "8",
-    date: "2025-08-06",
+    date: "2025-08-10",
     details: {
       name: "Daniel Martinez",
       gender: "Male",
@@ -180,7 +181,7 @@ const bookings: any[] = [
   },
   {
     id: "9",
-    date: "2025-08-05",
+    date: "2025-08-10",
     details: {
       name: "Ava Robinson",
       gender: "Female",
@@ -198,7 +199,7 @@ const bookings: any[] = [
   },
   {
     id: "10",
-    date: "2025-08-06",
+    date: "2025-08-10",
     details: {
       name: "Ethan Clark",
       gender: "Male",
@@ -396,7 +397,13 @@ const Home = () => {
         backgroundColor="transparent"
         barStyle="dark-content"
       />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        onScroll={(e) => {
+          handleScrollDirection(e.nativeEvent.contentOffset.y);
+        }}
+        scrollEventThrottle={16}
+      >
         <LinearGradient
           colors={["#F6E8FF", "#FAF5FF"]}
           style={styles.headerBackground}
@@ -793,6 +800,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     paddingTop: vs(20),
     marginTop: vs(1),
+    paddingBottom: vs(10),
   },
   sectionHeader: {
     flexDirection: "row",
@@ -803,7 +811,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: "InterSemiBold",
-    fontSize: ms(16),
+    fontSize: ms(18),
     color: "#000",
   },
   calendarIcon: {
@@ -886,6 +894,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: vs(50),
+    transform: [{ translateY: -vs(30) }], // smooth upward shift
   },
   noBookingsText: {
     fontFamily: "InterSemiBold",

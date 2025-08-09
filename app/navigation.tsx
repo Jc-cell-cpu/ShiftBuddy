@@ -237,7 +237,7 @@
 //   },
 // });
 
-import { ms, s, vs } from "@/utils/scale"; // adjust path as needed
+import { ms, s, vs } from "@/utils/scale";
 import { Ionicons } from "@expo/vector-icons";
 import {
   BottomTabBarProps,
@@ -248,19 +248,20 @@ import {
   NavigationIndependentTree,
 } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Animated,
   Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
 } from "react-native";
-import Home from "./home/homePage";
-import SearchScreen from "./rawPages/search";
 
+import { registerTabBarVisibility } from "@/utils/tabBarVisibility";
+import Home from "./home/homePage";
 import CalendarScreen from "./rawPages/CalendarScreen";
 import ProfileScreen from "./rawPages/Profile";
+import SearchScreen from "./rawPages/search";
 
 const Tab = createBottomTabNavigator();
 
@@ -269,20 +270,37 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
   descriptors,
   navigation,
 }) => {
+  const [visible, setVisible] = useState(true);
+  const translateY = new Animated.Value(0);
+
+  // Register global hide/show functions
+  useEffect(() => {
+    registerTabBarVisibility(
+      () => setVisible(false),
+      () => setVisible(true)
+    );
+  }, []);
+
+  // Animate tab bar when visible state changes
+  useEffect(() => {
+    Animated.timing(translateY, {
+      toValue: visible ? 0 : 100,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [visible]);
+
+  // Hide tab bar completely on "Grid" screen
   if (state.routes[state.index].name === "Grid") return null;
 
   return (
-    <View style={styles.tabBarContainer}>
+    <Animated.View
+      style={[styles.tabBarContainer, { transform: [{ translateY }] }]}
+    >
       <BlurView intensity={60} tint="light" style={styles.blurWrapper}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
-          const label =
-            options.tabBarLabel !== undefined
-              ? options.tabBarLabel
-              : options.title !== undefined
-              ? options.title
-              : route.name;
-
+          const label = options.tabBarLabel ?? options.title ?? route.name;
           const isFocused = state.index === index;
 
           const onPress = () => {
@@ -314,29 +332,22 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
               activeOpacity={0.8}
             >
               <Ionicons
-                name={iconName as any} // Type assertion; consider proper typing
+                name={iconName as any}
                 size={20}
                 color={isFocused ? "#69417E" : "#1C1C1C"}
               />
               {isFocused && typeof label === "string" && (
-                <Text
-                  style={[
-                    styles.label, // Base style
-                    styles.activeLabel, // Active style, always applied when focused
-                  ]}
-                >
-                  {label}
-                </Text>
+                <Text style={[styles.label, styles.activeLabel]}>{label}</Text>
               )}
             </TouchableOpacity>
           );
         })}
       </BlurView>
-    </View>
+    </Animated.View>
   );
 };
 
-export default function App() {
+export default function AppNavigation() {
   return (
     <NavigationIndependentTree>
       <NavigationContainer>
@@ -355,24 +366,16 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#F9F5FC",
-    justifyContent: "center",
-    alignItems: "center",
-  },
   tabBarContainer: {
     position: "absolute",
-    bottom: vs(50),
+    bottom: vs(39),
     left: s(16),
     right: s(16),
     borderRadius: s(30),
     overflow: "hidden",
-    backgroundColor: "rgba(222, 235, 237, 0.68)", // ensures consistent blur + color
+    backgroundColor: "rgba(222, 235, 237, 0.68)",
     ...Platform.select({
-      android: {
-        elevation: 8,
-      },
+      android: { elevation: 8 },
       ios: {
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
