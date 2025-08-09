@@ -1,9 +1,8 @@
 import { ms, s, vs } from "@/utils/scale";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   FlatList,
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
   StatusBar,
@@ -68,32 +67,7 @@ const messages: Message[] = [
 
 export default function ChatScreen() {
   const [inputText, setInputText] = useState("");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      (e) => {
-        setKeyboardHeight(e.endCoordinates.height);
-        setIsKeyboardVisible(true);
-      }
-    );
-
-    const keyboardDidHideListener = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => {
-        setKeyboardHeight(0);
-        setIsKeyboardVisible(false);
-      }
-    );
-
-    return () => {
-      keyboardDidShowListener?.remove();
-      keyboardDidHideListener?.remove();
-    };
-  }, []);
+  const flatListRef = useRef<FlatList>(null);
 
   const renderMessage = ({ item }: { item: Message }) => {
     const isSelf = item.sender === "self";
@@ -119,9 +93,9 @@ export default function ChatScreen() {
 
   const handleSendMessage = () => {
     if (inputText.trim()) {
-      // Handle sending message logic here
       console.log("Sending message:", inputText);
       setInputText("");
+      flatListRef.current?.scrollToEnd({ animated: true });
     }
   };
 
@@ -135,7 +109,7 @@ export default function ChatScreen() {
 
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
         {/* Header */}
@@ -154,23 +128,20 @@ export default function ChatScreen() {
 
         {/* Messages */}
         <FlatList
+          ref={flatListRef}
           data={messages}
           renderItem={renderMessage}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.messageList}
           showsVerticalScrollIndicator={false}
-          inverted={false}
+          keyboardShouldPersistTaps="handled"
+          onContentSizeChange={() =>
+            flatListRef.current?.scrollToEnd({ animated: true })
+          }
         />
 
         {/* Input Container */}
-        <View
-          style={[
-            styles.inputContainer,
-            Platform.OS === "android" &&
-              !isKeyboardVisible &&
-              styles.inputContainerWithBottomSpace,
-          ]}
-        >
+        <View style={styles.inputContainer}>
           <TouchableOpacity style={styles.attachButton}>
             <Ionicons name="attach" size={ms(20)} color="#69417E" />
           </TouchableOpacity>
@@ -204,13 +175,8 @@ export default function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8F9FA",
-  },
-  keyboardContainer: {
-    flex: 1,
-  },
+  container: { flex: 1, backgroundColor: "#F8F9FA" },
+  keyboardContainer: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -236,10 +202,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: s(20),
   },
-  headerContent: {
-    flex: 1,
-    alignItems: "center",
-  },
+  headerContent: { flex: 1, alignItems: "center" },
   headerTitle: {
     marginRight: s(40),
     fontSize: ms(18),
@@ -259,9 +222,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: s(16),
     paddingVertical: vs(8),
   },
-  messageWrapper: {
-    marginVertical: vs(4),
-  },
+  messageWrapper: { marginVertical: vs(4) },
   messageContainer: {
     maxWidth: "75%",
     borderRadius: ms(16),
@@ -309,19 +270,11 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     paddingHorizontal: s(16),
     paddingVertical: vs(12),
-    // backgroundColor: "#fff",
-    // borderTopWidth: 1,
-    // borderTopColor: "#E5E5E5",
-    // elevation: 8,
-    // shadowColor: "#000",
-    // shadowOffset: { width: 0, height: -2 },
-    // shadowOpacity: 0.1,
-    // shadowRadius: 8,
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#E5E5E5",
   },
-  attachButton: {
-    padding: s(8),
-    marginRight: s(8),
-  },
+  attachButton: { padding: s(8), marginRight: s(8) },
   input: {
     flex: 1,
     minHeight: vs(40),
@@ -335,16 +288,6 @@ const styles = StyleSheet.create({
     fontFamily: "Inter18Regular",
     textAlignVertical: "center",
   },
-  sendButton: {
-    padding: s(10),
-    marginLeft: s(10),
-  },
-  sendButtonActive: {
-    // backgroundColor: "#F0E6D6",
-    borderRadius: ms(20),
-  },
-  inputContainerWithBottomSpace: {
-    paddingBottom: vs(27),
-    marginBottom: -vs(25),
-  },
+  sendButton: { padding: s(10), marginLeft: s(10) },
+  sendButtonActive: { borderRadius: ms(20) },
 });
