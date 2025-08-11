@@ -5,10 +5,11 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
   FlatList,
   Platform,
+  RefreshControl,
   SafeAreaView,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -16,6 +17,7 @@ import {
   View,
 } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
+import Modal from "react-native-modal";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 dayjs.extend(relativeTime);
@@ -25,7 +27,7 @@ type Notification = {
   type: "success" | "leave";
   title: string;
   message: string;
-  time: string; // ISO date string
+  time: string;
   read: boolean;
 };
 
@@ -36,6 +38,8 @@ const Notifications = () => {
   const [activeTab, setActiveTab] = useState("All");
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedNoti, setSelectedNoti] = useState<Notification | null>(null);
+  const [isMenuVisible, setMenuVisible] = useState(false);
 
   const loadNotifications = async () => {
     try {
@@ -43,7 +47,6 @@ const Notifications = () => {
       if (stored) {
         setNotifications(JSON.parse(stored));
       } else {
-        // Initial mock data
         const now = new Date().toISOString();
         const initialData: Notification[] = [
           {
@@ -131,11 +134,7 @@ const Notifications = () => {
     activeTab === "All"
       ? notifications
       : notifications.filter(
-          (n) =>
-            n.type.toLowerCase() === activeTab.toLowerCase() &&
-            (activeTab === "Success"
-              ? n.type === "success"
-              : n.type === "leave")
+          (n) => n.type.toLowerCase() === activeTab.toLowerCase()
         );
 
   const navigateFromNotification = (item: Notification) => {
@@ -146,51 +145,61 @@ const Notifications = () => {
     }
   };
 
-  const renderRightActions = (item: Notification) => (
-    <TouchableOpacity
-      style={styles.swipeDelete}
-      onPress={() => deleteNotification(item.id)}
-    >
-      <Ionicons name="trash-outline" size={22} color="#fff" />
-    </TouchableOpacity>
-  );
-
-  const renderLeftActions = (item: Notification) => (
-    <TouchableOpacity
-      style={styles.swipeMark}
-      onPress={() => toggleRead(item.id)}
-    >
-      <Ionicons
-        name={item.read ? "mail-unread-outline" : "mail-open-outline"}
-        size={22}
-        color="#fff"
-      />
-    </TouchableOpacity>
-  );
-
-  const onLongPress = (item: Notification) => {
-    Alert.alert("Options", "Choose an action", [
-      {
-        text: item.read ? "Mark as Unread" : "Mark as Read",
-        onPress: () => toggleRead(item.id),
-      },
-      {
-        text: "Copy Message",
-        onPress: () => {
-          Alert.alert("Copied", "Message copied to clipboard");
+  const renderRightActions = (item: Notification, dragX: any) => (
+    <View
+      style={[
+        styles.swipeAction,
+        {
+          backgroundColor: "#EF4444",
+          borderTopRightRadius: ms(12),
+          borderBottomRightRadius: ms(12),
         },
-      },
-      { text: "Delete", onPress: () => deleteNotification(item.id) },
-      { text: "Cancel", style: "cancel" },
-    ]);
+      ]}
+    >
+      <TouchableOpacity
+        onPress={() => deleteNotification(item.id)}
+        style={styles.actionBtn}
+      >
+        <Ionicons name="trash-outline" size={20} color="#fff" />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderLeftActions = (item: Notification, dragX: any) => (
+    <View
+      style={[
+        styles.swipeAction,
+        {
+          backgroundColor: "#10B981",
+          borderTopLeftRadius: ms(12),
+          borderBottomLeftRadius: ms(12),
+        },
+      ]}
+    >
+      <TouchableOpacity
+        onPress={() => toggleRead(item.id)}
+        style={styles.actionBtn}
+      >
+        <Ionicons
+          name={item.read ? "mail-unread-outline" : "mail-open-outline"}
+          size={20}
+          color="#fff"
+        />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const openMenu = (item: Notification) => {
+    setSelectedNoti(item);
+    setMenuVisible(true);
   };
 
   const renderNotification = ({ item }: { item: Notification }) => {
     const isSuccess = item.type === "success";
     return (
       <Swipeable
-        renderRightActions={() => renderRightActions(item)}
-        renderLeftActions={() => renderLeftActions(item)}
+        renderRightActions={(progress) => renderRightActions(item, progress)}
+        renderLeftActions={(progress) => renderLeftActions(item, progress)}
       >
         <TouchableOpacity
           style={[
@@ -202,7 +211,7 @@ const Notifications = () => {
             },
           ]}
           onPress={() => navigateFromNotification(item)}
-          onLongPress={() => onLongPress(item)}
+          onLongPress={() => openMenu(item)}
         >
           <View style={styles.headerRow}>
             {!item.read && <View style={styles.unreadDot} />}
@@ -260,21 +269,73 @@ const Notifications = () => {
         <FlatList
           data={filteredNotifications}
           keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, { flexGrow: 1 }]}
           renderItem={renderNotification}
           refreshing={refreshing}
           onRefresh={onRefresh}
+          alwaysBounceVertical
+          overScrollMode="always"
         />
       ) : (
-        <View style={styles.emptyContainer}>
+        <ScrollView
+          contentContainerStyle={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
           <Ionicons
             name="notifications-off-outline"
             size={50}
             color="#6B7280"
           />
           <Text style={styles.emptyText}>No Notifications Yet</Text>
-        </View>
+        </ScrollView>
       )}
+
+      {/* Custom Bottom Sheet */}
+      <Modal
+        isVisible={isMenuVisible}
+        onBackdropPress={() => setMenuVisible(false)}
+        style={{ justifyContent: "flex-end", margin: 0 }}
+      >
+        <View style={styles.bottomSheet}>
+          <TouchableOpacity
+            style={styles.sheetButton}
+            onPress={() => {
+              if (selectedNoti) toggleRead(selectedNoti.id);
+              setMenuVisible(false);
+            }}
+          >
+            <Ionicons name="mail-outline" size={20} color="#69417E" />
+            <Text style={styles.sheetText}>
+              {selectedNoti?.read ? "Mark as Unread" : "Mark as Read"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.sheetButton}
+            onPress={() => setMenuVisible(false)}
+          >
+            <Ionicons name="copy-outline" size={20} color="#69417E" />
+            <Text style={styles.sheetText}>Copy Message</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.sheetButton, { backgroundColor: "#FEE2E2" }]}
+            onPress={() => {
+              if (selectedNoti) deleteNotification(selectedNoti.id);
+              setMenuVisible(false);
+            }}
+          >
+            <Ionicons name="trash-outline" size={20} color="#EF4444" />
+            <Text style={[styles.sheetText, { color: "#EF4444" }]}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -315,12 +376,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: vs(4),
   },
-  titleText: {
-    fontSize: ms(14),
-    fontWeight: "600",
-    color: "#111827",
-    flex: 1,
-  },
+  titleText: { fontSize: ms(14), fontWeight: "600", color: "#111827", flex: 1 },
   timeText: { fontSize: ms(12), color: "#6B7280" },
   messageText: { fontSize: ms(14), color: "#4B5563", marginTop: vs(2) },
   unreadDot: {
@@ -330,21 +386,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#8B5CF6",
     marginRight: s(6),
   },
-  swipeDelete: {
-    backgroundColor: "#EF4444",
+  swipeAction: {
     justifyContent: "center",
     alignItems: "center",
-    width: s(60),
-    borderRadius: ms(12),
-    marginVertical: vs(5),
+    height: "83%",
   },
-  swipeMark: {
-    backgroundColor: "#10B981",
+  actionBtn: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    width: s(60),
-    borderRadius: ms(12),
-    marginVertical: vs(5),
+    paddingHorizontal: s(10),
   },
   tabRow: {
     flexDirection: "row",
@@ -360,22 +411,29 @@ const styles = StyleSheet.create({
     marginHorizontal: s(3),
     alignItems: "center",
   },
-  tabButtonActive: {
-    backgroundColor: "#69417E",
-  },
+  tabButtonActive: { backgroundColor: "#69417E" },
   tabText: { fontSize: ms(14), color: "#6B7280" },
   tabTextActive: { color: "#fff", fontWeight: "600" },
-  emptyContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   emptyText: {
     fontFamily: "InterSemiBold",
     fontSize: ms(16),
     color: "#6B7280",
     marginTop: vs(12),
   },
+  bottomSheet: {
+    backgroundColor: "#fff",
+    padding: s(15),
+    borderTopLeftRadius: ms(20),
+    borderTopRightRadius: ms(20),
+  },
+  sheetButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: vs(12),
+    paddingHorizontal: s(10),
+    borderRadius: ms(12),
+  },
+  sheetText: { marginLeft: s(10), fontSize: ms(16), color: "#111827" },
 });
 
 export default Notifications;
