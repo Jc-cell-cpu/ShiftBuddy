@@ -9,7 +9,7 @@ const refreshClient = axios.create({
   // baseURL: "http://10.223.4.72:4000",
   // baseURL: "http://13.60.225.213:4000",
   // baseURL: "http://192.168.1.2:4000",
-  baseURL: "https://shift-buddy-backend.onrender.com",
+  baseURL: "https://shift-buddy-carrier-service-main-updated.onrender.com",
   headers: {
     "Content-Type": "application/json",
     "x-client-type": "app",
