@@ -248,7 +248,7 @@ import {
   NavigationIndependentTree,
 } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Platform,
@@ -271,7 +271,8 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
   navigation,
 }) => {
   const [visible, setVisible] = useState(true);
-  const translateY = new Animated.Value(0);
+  const translateY = useRef(new Animated.Value(0)).current;
+  const [tabBarHeight, setTabBarHeight] = useState(0);
 
   // Register global hide/show functions
   useEffect(() => {
@@ -284,11 +285,11 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
   // Animate tab bar when visible state changes
   useEffect(() => {
     Animated.timing(translateY, {
-      toValue: visible ? 0 : 100,
-      duration: 200,
+      toValue: visible ? 0 : tabBarHeight || 100, // fallback 100 if not measured yet
+      duration: 250,
       useNativeDriver: true,
     }).start();
-  }, [visible]);
+  }, [visible, tabBarHeight, translateY]);
 
   // Hide tab bar completely on "Grid" screen
   if (state.routes[state.index].name === "Grid") return null;
@@ -296,6 +297,10 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
   return (
     <Animated.View
       style={[styles.tabBarContainer, { transform: [{ translateY }] }]}
+      onLayout={(e) => {
+        const { height } = e.nativeEvent.layout;
+        setTabBarHeight(height + vs(10)); // small buffer for safety
+      }}
     >
       <BlurView intensity={60} tint="light" style={styles.blurWrapper}>
         {state.routes.map((route, index) => {
@@ -346,7 +351,6 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
     </Animated.View>
   );
 };
-
 export default function AppNavigation() {
   return (
     <NavigationIndependentTree>
