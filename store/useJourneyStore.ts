@@ -1,3 +1,4 @@
+// useJourneyStore.ts
 import { create } from "zustand";
 
 interface JourneyState {
@@ -9,6 +10,7 @@ interface JourneyState {
   progressNoteUploaded: boolean;
   feedbackSubmitted: boolean;
   currentStep: number;
+  journeyId: string | null;
   setOdometerUploaded: (status: boolean) => void;
   setDestinationReached: (status: boolean) => void;
   setImageUploaded: (status: boolean) => void;
@@ -17,6 +19,7 @@ interface JourneyState {
   setProgressNoteUploaded: (status: boolean) => void;
   setFeedbackSubmitted: (status: boolean) => void;
   setCurrentStep: (step: number) => void;
+  setJourneyId: (id: string | null) => void;
   progressToNextStep: () => void;
   resetJourney: () => void;
 }
@@ -30,6 +33,7 @@ export const useJourneyStore = create<JourneyState>((set, get) => ({
   progressNoteUploaded: false,
   feedbackSubmitted: false,
   currentStep: 0,
+  journeyId: null,
   setOdometerUploaded: (status) => set({ odometerUploaded: status }),
   setDestinationReached: (status) => set({ destinationReached: status }),
   setImageUploaded: (status) => set({ imageUploaded: status }),
@@ -38,6 +42,7 @@ export const useJourneyStore = create<JourneyState>((set, get) => ({
   setProgressNoteUploaded: (status) => set({ progressNoteUploaded: status }),
   setFeedbackSubmitted: (status) => set({ feedbackSubmitted: status }),
   setCurrentStep: (step) => set({ currentStep: step }),
+  setJourneyId: (id) => set({ journeyId: id }),
   progressToNextStep: () => {
     const { currentStep } = get();
     if (currentStep < 5) { // Max step is 5 (Share Feedback) - feedback is the final step
@@ -53,5 +58,6 @@ export const useJourneyStore = create<JourneyState>((set, get) => ({
     progressNoteUploaded: false,
     feedbackSubmitted: false,
     currentStep: 0,
+    journeyId: null,
   }),
 }));

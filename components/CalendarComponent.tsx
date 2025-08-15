@@ -41,7 +41,7 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
   withBackgroundColor = false,
   onDateChange,
   selectedDate,
-    selectedRange,
+  selectedRange,
 }) => {
   const currentDate = new Date();
   const currentDateString = currentDate.toISOString().split("T")[0];
@@ -65,21 +65,10 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
     return acc;
   }, {} as { [key: string]: any });
 
-  // if (selectedDate) {
-  //   const selectedDateString = selectedDate.toISOString().split("T")[0];
-  //   markedDates[selectedDateString] = {
-  //     ...markedDates[selectedDateString],
-  //     selected: true,
-  //     selectedColor: "#69417E",
-  //     selectedTextColor: "#FFF",
-  //   };
-  // }
-
   if (selectedRange?.startDate) {
     const startStr = selectedRange.startDate.toISOString().split("T")[0];
 
     if (!selectedRange.endDate) {
-      // Only one date selected (1-day leave)
       markedDates[startStr] = {
         selected: true,
         selectedColor: "#69417E",
@@ -89,12 +78,9 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
       };
     } else {
       const endStr = selectedRange.endDate.toISOString().split("T")[0];
-
-      // Use moment-like iteration
       let current = new Date(selectedRange.startDate);
       while (current <= selectedRange.endDate) {
         const dateStr = current.toISOString().split("T")[0];
-
         markedDates[dateStr] = {
           selected: true,
           selectedColor: "#69417E",
@@ -102,19 +88,17 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
           ...(dateStr === startStr && { startingDay: true }),
           ...(dateStr === endStr && { endingDay: true }),
         };
-
         current.setDate(current.getDate() + 1);
       }
     }
   }
 
-
-
+  // ✅ Fixed week calculation so Sunday doesn't jump to next Monday
   const getWeekDates = (baseDate: Date, offset = 0) => {
     const startOfWeek = new Date(baseDate);
-    const dayOfWeek = startOfWeek.getDay();
-    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    startOfWeek.setDate(startOfWeek.getDate() - daysToMonday + offset * 7);
+    const dayOfWeek = startOfWeek.getDay(); // Sun=0, Mon=1, ...
+    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Sunday → back to previous Monday
+    startOfWeek.setDate(startOfWeek.getDate() + daysToMonday + offset * 7);
 
     const week = [];
     for (let i = 0; i < 7; i++) {
@@ -124,6 +108,7 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
     }
     return week;
   };
+
   const currentWeekDates = getWeekDates(currentDate, weekOffset);
   const formattedMonthYear = currentWeekDates[0].toLocaleDateString("en-US", {
     month: "long",
@@ -230,7 +215,7 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
                   key={index}
                   onPress={() => {
                     setVisibleDate(date);
-                    onDateChange?.(date);
+                    onDateChange?.(new Date(date)); // ✅ Send exact clicked date
                   }}
                   style={styles.weekDateContainer}
                 >
@@ -287,26 +272,26 @@ export default CalendarComponent;
 
 const styles = StyleSheet.create({
   calendarWrapper: {
-    width: '100%',
+    width: "100%",
     marginHorizontal: s(1),
     marginBottom: vs(16),
     borderRadius: ms(16),
     overflow: "hidden",
   },
   calendarContainer: {
-    width: '100%',
+    width: "100%",
     borderRadius: ms(16),
     padding: s(12),
   },
   gradientBackground: {
     padding: s(12),
     borderRadius: ms(16),
-    width: '100%',
+    width: "100%",
   },
   fullCalendar: {
     borderRadius: ms(8),
-    width: '100%',
-    alignSelf: 'center',
+    width: "100%",
+    alignSelf: "center",
   },
   weekContainer: {
     flexDirection: "row",

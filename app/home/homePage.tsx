@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { getCarrierSlots } from "@/api/client";
 import AComplete from "@/assets/AComplete.svg";
 import SOS from "@/assets/SOS.svg";
 import Selfi from "@/assets/Selfi.svg";
@@ -8,6 +9,7 @@ import JourneyStepper from "@/components/JourneyStepper";
 import { useJourneyStore } from "@/store/useJourneyStore";
 import { ms, s, vs } from "@/utils/scale";
 import { handleScrollDirection } from "@/utils/tabBarVisibility";
+import dayjs from "dayjs";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   useFocusEffect,
@@ -32,190 +34,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "react-native-vector-icons/Ionicons";
-
-// Dummy booking data (unchanged)
-const bookings: any[] = [
-  {
-    id: "1",
-    date: "2025-07-07",
-    details: {
-      name: "Emily Harrington",
-      gender: "Female",
-      age: 28,
-      time: "8:30 AM - 9:30 AM",
-      avatarUrl: "https://randomuser.me/api/portraits/women/65.jpg",
-      location: {
-        address: "123 Main Street, New York, NY 10001",
-        coordinates: "40.7128,-74.0060",
-        placeId: "ChIJOwg_06VPwokRYv534QaPC8g",
-      },
-      phone: "+1 (555) 123-4567",
-      email: "emily.harrington@gmail.com",
-    },
-  },
-  {
-    id: "2",
-    date: "2025-07-07",
-    details: {
-      name: "Michael Chen",
-      gender: "Male",
-      age: 35,
-      time: "10:00 AM - 11:00 AM",
-      avatarUrl: "https://randomuser.me/api/portraits/men/45.jpg",
-      location: {
-        address: "456 Park Avenue, Boston, MA 02108",
-        coordinates: "42.3601,-71.0589",
-        placeId: "ChIJGzE9DS1l44kRoOhiASS_fHg",
-      },
-      phone: "+1 (555) 234-5678",
-      email: "michael.chen@gmail.com",
-    },
-  },
-  {
-    id: "3",
-    date: "2025-07-08",
-    details: {
-      name: "Sarah Johnson",
-      gender: "Female",
-      age: 42,
-      time: "2:00 PM - 3:00 PM",
-      avatarUrl: "https://randomuser.me/api/portraits/women/72.jpg",
-      location: {
-        address: "789 Oak Road, Chicago, IL 60601",
-        coordinates: "41.8781,-87.6298",
-        placeId: "ChIJ7cv00DwsDogRAMDACa2m4K8",
-      },
-      phone: "+1 (555) 345-6789",
-      email: "sarah.johnson@gmail.com",
-    },
-  },
-  {
-    id: "4",
-    date: "2025-07-07",
-    details: {
-      name: "James Lee",
-      gender: "Male",
-      age: 31,
-      time: "9:00 AM - 10:00 AM",
-      avatarUrl: "https://randomuser.me/api/portraits/men/12.jpg",
-      location: {
-        address: "321 Pine Street, San Francisco, CA 94101",
-        coordinates: "37.7749,-122.4194",
-        placeId: "ChIJIQBpAG2ahYAR_6128GcTUEo",
-      },
-      phone: "+1 (555) 456-7890",
-      email: "james.lee@gmail.com",
-    },
-  },
-  {
-    id: "5",
-    date: "2025-07-08",
-    details: {
-      name: "Olivia Brown",
-      gender: "Female",
-      age: 25,
-      time: "11:30 AM - 12:00 PM",
-      avatarUrl: "https://randomuser.me/api/portraits/women/19.jpg",
-      location: {
-        address: "567 Maple Avenue, Seattle, WA 98101",
-        coordinates: "47.6062,-122.3321",
-        placeId: "ChIJ7ZhdRkBqkFQRK_yKcp8wfp0",
-      },
-      phone: "+1 (555) 567-8901",
-      email: "olivia.brown@gmail.com",
-    },
-  },
-  {
-    id: "6",
-    date: "2025-08-17",
-    details: {
-      name: "William Davis",
-      gender: "Male",
-      age: 38,
-      time: "1:00 PM - 2:00 PM",
-      avatarUrl: "https://randomuser.me/api/portraits/men/24.jpg",
-      location: {
-        address: "890 Cedar Lane, Austin, TX 78701",
-        coordinates: "30.2672,-97.7431",
-        placeId: "ChIJLwPMoJm1RIYRetVp1EtGm_o",
-      },
-      phone: "+1 (555) 678-9012",
-      email: "william.davis@gmail.com",
-    },
-  },
-  {
-    id: "7",
-    date: "2025-08-10",
-    details: {
-      name: "Sophia Wilson",
-      gender: "Female",
-      age: 33,
-      time: "3:30 PM - 4:30 PM",
-      avatarUrl: "https://randomuser.me/api/portraits/women/54.jpg",
-      location: {
-        address: "432 Birch Street, Miami, FL 33101",
-        coordinates: "25.7617,-80.1918",
-        placeId: "ChIJEcHIDqKw2YgRZU-t3XHylv8",
-      },
-      phone: "+1 (555) 789-0123",
-      email: "sophia.wilson@gmail.com",
-    },
-  },
-  {
-    id: "8",
-    date: "2025-08-10",
-    details: {
-      name: "Daniel Martinez",
-      gender: "Male",
-      age: 45,
-      time: "9:30 AM - 10:30 AM",
-      avatarUrl: "https://randomuser.me/api/portraits/men/67.jpg",
-      location: {
-        address: "765 Elm Court, Denver, CO 80201",
-        coordinates: "39.7392,-104.9903",
-        placeId: "ChIJzxcfI6qAa4cR1jaKJ_j0jhE",
-      },
-      phone: "+1 (555) 890-1234",
-      email: "daniel.martinez@gmail.com",
-    },
-  },
-  {
-    id: "9",
-    date: "2025-08-10",
-    details: {
-      name: "Ava Robinson",
-      gender: "Female",
-      age: 29,
-      time: "12:00 PM - 1:00 PM",
-      avatarUrl: "https://randomuser.me/api/portraits/women/32.jpg",
-      location: {
-        address: "234 Willow Way, Portland, OR 97201",
-        coordinates: "45.5155,-122.6789",
-        placeId: "ChIJN3XR5h4KlVQRp5q32gl_Qj4",
-      },
-      phone: "+1 (555) 901-2345",
-      email: "ava.robinson@gmail.com",
-    },
-  },
-  {
-    id: "10",
-    date: "2025-08-10",
-    details: {
-      name: "Ethan Clark",
-      gender: "Male",
-      age: 40,
-      time: "4:00 PM - 5:00 PM",
-      avatarUrl: "https://randomuser.me/api/portraits/men/81.jpg",
-      location: {
-        address: "543 Spruce Drive, Las Vegas, NV 89101",
-        coordinates: "36.1699,-115.1398",
-        placeId: "ChIJ69QoNDjZyIARTIMmDF0Z4kM",
-      },
-      phone: "+1 (555) 012-3456",
-      email: "ethan.clark@gmail.com",
-    },
-  },
-];
 
 // Sanitize phone number to remove non-digit characters except '+'
 const sanitizePhoneNumber = (phoneNumber: string): string => {
@@ -336,11 +154,111 @@ const Home = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const { odometerUploaded, setOdometerUploaded } = useJourneyStore();
   const selectedDateString = selectedDate.toISOString().split("T")[0];
-  const filteredBookings = bookings.filter(
-    (b) => b.date === selectedDateString
-  );
+  // const filteredBookings = bookings.filter(
+  //   (b) => b.date === selectedDateString
+  // );
   const today = new Date().toISOString().split("T")[0];
-  const todaysBookings = bookings.filter((booking) => booking.date === today);
+  // const todaysBookings = bookings.filter((booking) => booking.date === today);
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [cachedRange, setCachedRange] = useState<{
+    start: string;
+    end: string;
+  } | null>(null);
+
+  const fetchBookingsRange = useCallback(async (start: string, end: string) => {
+    setIsLoading(true);
+    try {
+      const response = await getCarrierSlots({
+        startDate: start,
+        endDate: end,
+        page: 1,
+        limit: 170, // slightly higher for range
+        slotView: "list",
+        sortBy: "createdAt",
+        sortOrder: "desc",
+      });
+
+      const mappedBookings = response.data.map((slot: any) => ({
+        id: slot._id,
+        date: dayjs(slot.startDate).format("YYYY-MM-DD"),
+        details: {
+          name: slot.clientName || "Unknown Client",
+          gender: slot.clientGender || "Unknown",
+          age: slot.clientAge || "N/A",
+          time: `${slot.startTime} - ${slot.endTime}`,
+          avatarUrl:
+            slot.clientProfileImage || "https://via.placeholder.com/132x151",
+          location: {
+            address: slot.location?.address || "Location not available",
+            coordinates: slot.location?.coordinates || "",
+            placeId: slot.location?.placeId || "",
+          },
+          phone: slot.phone || "Phone not available",
+          email: slot.email || "Email not available",
+        },
+      }));
+
+      setBookings(mappedBookings);
+      setCachedRange({ start, end });
+    } catch (error) {
+      console.error("Failed to fetch carrier slots:", error);
+      Alert.alert("Error", "Failed to load bookings. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Fetch bookings for the selected date
+  useEffect(() => {
+    const startOfWeek = dayjs()
+      .startOf("week")
+      .add(1, "day")
+      .format("YYYY-MM-DD"); // Monday
+    const endOfWeek = dayjs().endOf("week").add(1, "day").format("YYYY-MM-DD"); // Sunday
+    fetchBookingsRange(startOfWeek, endOfWeek);
+  }, [fetchBookingsRange]);
+
+  // const handleDateChange = (date: Date) => {
+  //   setSelectedDate(date);
+  //   const selected = dayjs(date).format("YYYY-MM-DD");
+
+  //   if (
+  //     cachedRange &&
+  //     dayjs(selected).isAfter(cachedRange.start) &&
+  //     dayjs(selected).isBefore(cachedRange.end)
+  //   ) {
+  //     // date is inside cached range → no API call
+  //     return;
+  //   }
+
+  const getWeekRange = (selected: Date) => {
+    const d = dayjs(selected);
+    const dayOfWeek = d.day(); // Sun=0
+
+    const start =
+      dayOfWeek === 0
+        ? d.subtract(6, "day") // Sunday → go back to Monday
+        : d.subtract(dayOfWeek - 1, "day");
+
+    const end = start.add(6, "day");
+
+    return {
+      startDate: start.format("YYYY-MM-DD"),
+      endDate: end.format("YYYY-MM-DD"),
+    };
+  };
+
+  const handleDateChange = (date: Date) => {
+    setSelectedDate(date);
+
+    const { startDate, endDate } = getWeekRange(date);
+    fetchBookingsRange(startDate, endDate);
+  };
+
+  const filteredBookings = bookings.filter(
+    (booking) => booking.date === dayjs(selectedDate).format("YYYY-MM-DD")
+  );
 
   useEffect(() => {
     const loadName = async () => {
@@ -501,6 +419,9 @@ const Home = () => {
                   marginTop: vs(5),
                 }}
                 onPress={() => {
+                  const todaysBookings = bookings.filter(
+                    (booking) => booking.date === today
+                  );
                   if (todaysBookings.length > 0) {
                     const firstBooking = todaysBookings[0];
                     router.push({
@@ -590,23 +511,22 @@ const Home = () => {
             bookings={bookings}
             showMonthYear={true}
             selectedDate={selectedDate}
-            onDateChange={(date: Date) => setSelectedDate(date)}
+            onDateChange={handleDateChange}
           />
 
-          {filteredBookings.length > 0 ? (
-            filteredBookings.map((booking, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.bookingCard}
-                onPress={() => redirectToBookingDetails(booking)}
-              >
+          {isLoading ? (
+            <View style={styles.noBookingsContainer}>
+              <Text style={styles.noBookingsText}>Loading bookings...</Text>
+            </View>
+          ) : filteredBookings.length > 0 ? (
+            filteredBookings.map((booking) => (
+              <TouchableOpacity key={booking.id} style={styles.bookingCard}>
                 <View style={styles.avatarContainer}>
                   <Image
                     source={{ uri: booking.details.avatarUrl }}
                     style={styles.avatarImage}
                   />
                 </View>
-
                 <View style={styles.bookingDetails}>
                   <Text style={styles.name}>{booking.details.name}</Text>
                   <Text style={styles.meta}>

@@ -58,4 +58,32 @@ API.interceptors.request.use(async (config) => {
   return config;
 });
 
+
+export async function getCarrierSlots(params: {
+  startDate: string;
+  endDate: string;
+  page?: number;
+  limit?: number;
+  slotView?: string;
+  sortBy?: string;
+  sortOrder?: string;
+}) {
+  try {
+    const response = await API.post("/slot/v1/get_carrier_slot", {
+      page: 1,
+      limit: 20,
+      slotView: "list",
+      sortBy: "createdAt",
+      sortOrder: "desc",
+      ...params, // this will override defaults with whatever you pass in
+    });
+
+    return response.data; // { msg, count, data, currentPage, totalPages }
+  } catch (error) {
+    console.error("Error fetching carrier slots:", error);
+    throw error;
+  }
+}
+
+
 export default API;
