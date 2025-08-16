@@ -14,14 +14,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { ms, mvs, s, vs } from "react-native-size-matters";
+import { ms, s, vs } from "react-native-size-matters";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 import { resetPassword } from "@/api/auth";
 import LoadingScreen from "@/components/LoadingScreen";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 const ResetPassword = () => {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -221,10 +223,10 @@ const ResetPassword = () => {
         </View>
 
         {/* Save Button */}
-        <Animated.View
+        <View
           style={[
             styles.buttonWrapper,
-            { transform: [{ translateY: buttonOffset }] },
+            { paddingBottom: insets.bottom + vs(12) }, // 👈 safe area respected
           ]}
         >
           {loading ? (
@@ -241,7 +243,7 @@ const ResetPassword = () => {
               <Text style={styles.saveButtonText}>Save</Text>
             </TouchableOpacity>
           )}
-        </Animated.View>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -261,7 +263,6 @@ const styles = StyleSheet.create({
   },
   buttonWrapper: {
     paddingHorizontal: s(24),
-    marginBottom: mvs(55),
   },
   headerContainer: {
     flexDirection: "row",

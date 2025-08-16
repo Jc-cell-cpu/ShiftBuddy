@@ -15,7 +15,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 import { verifyOtp } from "@/api/auth";
@@ -28,6 +31,7 @@ const scale = (size: number) =>
   PixelRatio.roundToNearestPixel((width / 375) * size);
 
 const OtpVerification = () => {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [otp, setOtp] = useState<string[]>(["", "", "", ""]);
   const [timer, setTimer] = useState(27);
@@ -192,7 +196,12 @@ const OtpVerification = () => {
             </Text>
           </View>
 
-          <View style={styles.buttonContainer}>
+          <View
+            style={[
+              styles.buttonContainer,
+              { paddingBottom: insets.bottom + vs(10) }, // 👈 safe area padding
+            ]}
+          >
             {loading ? (
               <LoadingScreen />
             ) : (
@@ -200,7 +209,7 @@ const OtpVerification = () => {
                 style={[
                   styles.continueButton,
                   otp.join("").length !== 4 && styles.continueButtonDisabled,
-                  keyboardVisible && styles.continueButtonWithKeyboard,
+                  keyboardVisible && { marginBottom: vs(10) },
                 ]}
                 onPress={handleContinue}
                 disabled={otp.join("").length !== 4}
@@ -323,7 +332,6 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flex: 1,
     justifyContent: "flex-end",
-    marginBottom: vs(20),
   },
   continueButton: {
     backgroundColor: "#6F3F89",
