@@ -512,6 +512,7 @@ const Home = () => {
             showMonthYear={true}
             selectedDate={selectedDate}
             onDateChange={handleDateChange}
+            disablePastNavigation
           />
 
           {isLoading ? (

@@ -1,17 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { ms, s, vs } from "@/utils/scale";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useEffect, useState } from "react";
-import {
-  Animated,
-  I18nManager,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
-import { PanGestureHandler, State } from "react-native-gesture-handler";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 interface Booking {
@@ -19,7 +11,7 @@ interface Booking {
   details: {
     name: string;
     gender: string;
-    age: number;
+    age: number | string;
     time: string;
   };
 }
@@ -32,6 +24,7 @@ interface CalendarComponentProps {
   onDateChange?: (date: Date) => void;
   selectedDate?: Date;
   selectedRange?: { startDate: Date | null; endDate: Date | null };
+  disablePastNavigation?: boolean; // only for home screen
 }
 
 const CalendarComponent: React.FC<CalendarComponentProps> = ({
@@ -42,145 +35,108 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
   onDateChange,
   selectedDate,
   selectedRange,
+  disablePastNavigation = false,
 }) => {
-  const currentDate = new Date();
-  const currentDateString = currentDate.toISOString().split("T")[0];
+  // Today
+  const today = useMemo(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }, []);
+  const todayStr = today.toISOString().split("T")[0];
 
-  const [visibleDate, setVisibleDate] = useState(currentDate);
+  const [visibleDate, setVisibleDate] = useState<Date>(selectedDate || today);
   const [weekOffset, setWeekOffset] = useState(0);
-  const translateX = new Animated.Value(0);
 
+  // Reset only when expand/collapse changes
   useEffect(() => {
     if (!isExpanded) {
-      setVisibleDate(currentDate);
+      setVisibleDate(selectedDate || today);
       setWeekOffset(0);
     }
   }, [isExpanded]);
 
-  const markedDates = bookings.reduce((acc, booking) => {
-    acc[booking.date] = {
-      marked: true,
-      dotColor: "#F5D2BD",
-    };
-    return acc;
-  }, {} as { [key: string]: any });
+  // Marked bookings
+  const markedDates = useMemo(() => {
+    const marks: { [key: string]: any } = {};
+    bookings.forEach((b) => {
+      marks[b.date] = { marked: true, dotColor: "#F5D2BD" };
+    });
 
-  if (selectedRange?.startDate) {
-    const startStr = selectedRange.startDate.toISOString().split("T")[0];
+    if (selectedRange?.startDate) {
+      const start = new Date(
+        selectedRange.startDate.getFullYear(),
+        selectedRange.startDate.getMonth(),
+        selectedRange.startDate.getDate()
+      );
+      const end = selectedRange.endDate
+        ? new Date(
+            selectedRange.endDate.getFullYear(),
+            selectedRange.endDate.getMonth(),
+            selectedRange.endDate.getDate()
+          )
+        : start;
 
-    if (!selectedRange.endDate) {
-      markedDates[startStr] = {
-        selected: true,
-        selectedColor: "#69417E",
-        selectedTextColor: "#FFF",
-        startingDay: true,
-        endingDay: true,
-      };
-    } else {
-      const endStr = selectedRange.endDate.toISOString().split("T")[0];
-      let current = new Date(selectedRange.startDate);
-      while (current <= selectedRange.endDate) {
-        const dateStr = current.toISOString().split("T")[0];
-        markedDates[dateStr] = {
+      const startStr = start.toISOString().split("T")[0];
+      const endStr = end.toISOString().split("T")[0];
+
+      const cur = new Date(start);
+      while (cur <= end) {
+        const ds = cur.toISOString().split("T")[0];
+        marks[ds] = {
           selected: true,
           selectedColor: "#69417E",
           selectedTextColor: "#FFF",
-          ...(dateStr === startStr && { startingDay: true }),
-          ...(dateStr === endStr && { endingDay: true }),
+          ...(ds === startStr && { startingDay: true }),
+          ...(ds === endStr && { endingDay: true }),
         };
-        current.setDate(current.getDate() + 1);
+        cur.setDate(cur.getDate() + 1);
       }
     }
-  }
 
-  // ✅ Fixed week calculation so Sunday doesn't jump to next Monday
+    return marks;
+  }, [bookings, selectedRange]);
+
+  // Week calculation
   const getWeekDates = (baseDate: Date, offset = 0) => {
     const startOfWeek = new Date(baseDate);
-    const dayOfWeek = startOfWeek.getDay(); // Sun=0, Mon=1, ...
-    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Sunday → back to previous Monday
-    startOfWeek.setDate(startOfWeek.getDate() + daysToMonday + offset * 7);
+    const dow = startOfWeek.getDay(); // Sun=0, Mon=1...
+    const deltaToMonday = dow === 0 ? -6 : 1 - dow;
+    startOfWeek.setDate(startOfWeek.getDate() + deltaToMonday + offset * 7);
 
-    const week = [];
+    const week: Date[] = [];
     for (let i = 0; i < 7; i++) {
-      const day = new Date(startOfWeek);
-      day.setDate(startOfWeek.getDate() + i);
-      week.push(day);
+      const d = new Date(
+        startOfWeek.getFullYear(),
+        startOfWeek.getMonth(),
+        startOfWeek.getDate() + i
+      );
+      week.push(d);
     }
     return week;
   };
 
-  const currentWeekDates = getWeekDates(currentDate, weekOffset);
+  const currentWeekDates = getWeekDates(today, weekOffset);
   const formattedMonthYear = currentWeekDates[0].toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
   });
-  const weekDates = currentWeekDates;
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-  const onSwipe = (direction: "left" | "right") => {
-    const change = direction === "left" ? 1 : -1;
-    Animated.timing(translateX, {
-      toValue: direction === "left" ? -300 : 300,
-      duration: 150,
-      useNativeDriver: true,
-    }).start(() => {
-      setWeekOffset((prev) => prev + change);
-      translateX.setValue(0);
-    });
-  };
-
-  const onGestureEvent = Animated.event(
-    [{ nativeEvent: { translationX: translateX } }],
-    { useNativeDriver: true }
-  );
-
-  const onHandlerStateChange = ({ nativeEvent }: any) => {
-    if (nativeEvent.state === State.END) {
-      const threshold = 60;
-      if (nativeEvent.translationX < -threshold) {
-        onSwipe(I18nManager.isRTL ? "right" : "left");
-      } else if (nativeEvent.translationX > threshold) {
-        onSwipe(I18nManager.isRTL ? "left" : "right");
-      }
-    }
-  };
 
   const renderCalendarContent = () => (
     <>
-      {showMonthYear && !isExpanded && (
-        <View style={styles.monthHeader}>
-          <Text style={styles.monthText}>{formattedMonthYear}</Text>
-        </View>
-      )}
-
       {isExpanded ? (
         <Calendar
+          minDate={disablePastNavigation ? todayStr : undefined}
           onDayPress={(day) => {
-            const selected = new Date(day.dateString);
-            if (onDateChange) {
-              onDateChange(selected);
-            }
+            const d = new Date(day.dateString);
+            const dStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            if (disablePastNavigation && dStart < today) return;
+            setVisibleDate(d);
+            onDateChange?.(d);
           }}
-          current={currentDateString}
+          current={(selectedDate || today).toISOString().split("T")[0]}
           firstDay={1}
           markedDates={markedDates}
-          theme={{
-            backgroundColor: "transparent",
-            calendarBackground: "transparent",
-            textSectionTitleColor: "#6B7280",
-            dayTextColor: "#000",
-            todayTextColor: "#69417E",
-            selectedDayBackgroundColor: "#F1E6FF",
-            selectedDayTextColor: "#69417E",
-            monthTextColor: "#000",
-            textDayFontFamily: "InterMedium",
-            textMonthFontFamily: "InterSemiBold",
-            textDayHeaderFontFamily: "InterRegular",
-            textDayFontSize: ms(14),
-            textMonthFontSize: ms(16),
-            textDayHeaderFontSize: ms(12),
-          }}
-          style={styles.fullCalendar}
           renderArrow={(direction) => (
             <Ionicons
               name={direction === "left" ? "chevron-back" : "chevron-forward"}
@@ -188,26 +144,85 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
               color="#69417E"
             />
           )}
-          onPressArrowLeft={(subtractMonth) => subtractMonth()}
-          onPressArrowRight={(addMonth) => addMonth()}
-          onMonthChange={(date) => {
-            setVisibleDate(new Date(date.year, date.month - 1));
+          disableArrowLeft={false}
+          onPressArrowLeft={(subtractMonth) => {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            if (
+              visibleDate.getFullYear() > currentYear ||
+              (visibleDate.getFullYear() === currentYear &&
+                visibleDate.getMonth() > currentMonth)
+            ) {
+              subtractMonth();
+              setVisibleDate(
+                new Date(
+                  visibleDate.getFullYear(),
+                  visibleDate.getMonth() - 1,
+                  1
+                )
+              );
+            }
+          }}
+          onPressArrowRight={(addMonth) => {
+            addMonth();
+            setVisibleDate(
+              new Date(visibleDate.getFullYear(), visibleDate.getMonth() + 1, 1)
+            );
+          }}
+          onMonthChange={(m) => {
+            setVisibleDate(new Date(m.year, m.month - 1, 1));
           }}
         />
       ) : (
-        <PanGestureHandler
-          onGestureEvent={onGestureEvent}
-          onHandlerStateChange={onHandlerStateChange}
-        >
-          <Animated.View
-            style={[styles.weekContainer, { transform: [{ translateX }] }]}
-          >
-            {weekDates.map((date, index) => {
-              const dateString = date.toISOString().split("T")[0];
-              const isSelectedDate =
-                date.toDateString() === visibleDate.toDateString();
+        <View>
+          {/* Week header with arrows */}
+          <View style={styles.weekHeader}>
+            <TouchableOpacity
+              disabled={weekOffset === 0}
+              onPress={() => {
+                if (weekOffset > 0) setWeekOffset((prev) => prev - 1);
+              }}
+              style={[
+                styles.arrowButton,
+                weekOffset === 0 && styles.arrowDisabled,
+              ]}
+            >
+              <Ionicons name="chevron-back" size={20} color="#69417E" />
+            </TouchableOpacity>
+
+            <Text style={styles.monthText}>{formattedMonthYear}</Text>
+
+            <TouchableOpacity
+              onPress={() => setWeekOffset((prev) => prev + 1)}
+              style={styles.arrowButton}
+            >
+              <Ionicons name="chevron-forward" size={20} color="#69417E" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Week days */}
+          <View style={styles.weekContainer}>
+            {currentWeekDates.map((date, index) => {
+              const dateStart = new Date(
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate()
+              );
+
+              const isSelected =
+                (selectedDate
+                  ? new Date(
+                      selectedDate.getFullYear(),
+                      selectedDate.getMonth(),
+                      selectedDate.getDate()
+                    )
+                  : today
+                ).getTime() === dateStart.getTime();
+
               const hasBooking = bookings.some(
-                (booking) => booking.date === dateString
+                (b) => b.date === date.toISOString().split("T")[0]
               );
 
               return (
@@ -215,20 +230,21 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
                   key={index}
                   onPress={() => {
                     setVisibleDate(date);
-                    onDateChange?.(new Date(date)); // ✅ Send exact clicked date
+                    onDateChange?.(new Date(date));
                   }}
                   style={styles.weekDateContainer}
+                  activeOpacity={0.8}
                 >
                   <View
                     style={[
                       styles.dateDayWrapper,
-                      isSelectedDate && styles.currentDateDayWrapper,
+                      isSelected && styles.currentDateDayWrapper,
                     ]}
                   >
                     <Text
                       style={[
                         styles.weekDayText,
-                        isSelectedDate && styles.currentWeekText,
+                        isSelected && styles.currentWeekText,
                       ]}
                     >
                       {daysOfWeek[index].slice(0, 1)}
@@ -236,7 +252,7 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
                     <Text
                       style={[
                         styles.weekDateText,
-                        isSelectedDate && styles.currentWeekText,
+                        isSelected && styles.currentWeekText,
                       ]}
                     >
                       {date.getDate()}
@@ -246,8 +262,8 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
                 </TouchableOpacity>
               );
             })}
-          </Animated.View>
-        </PanGestureHandler>
+          </View>
+        </View>
       )}
     </>
   );
@@ -273,7 +289,6 @@ export default CalendarComponent;
 const styles = StyleSheet.create({
   calendarWrapper: {
     width: "100%",
-    marginHorizontal: s(1),
     marginBottom: vs(16),
     borderRadius: ms(16),
     overflow: "hidden",
@@ -288,10 +303,17 @@ const styles = StyleSheet.create({
     borderRadius: ms(16),
     width: "100%",
   },
-  fullCalendar: {
-    borderRadius: ms(8),
-    width: "100%",
-    alignSelf: "center",
+  weekHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: vs(8),
+  },
+  arrowButton: {
+    padding: s(6),
+  },
+  arrowDisabled: {
+    opacity: 0.3,
   },
   weekContainer: {
     flexDirection: "row",
@@ -330,15 +352,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(105, 65, 126, 1)",
     borderRadius: ms(3),
     marginTop: vs(1),
-    shadowColor: "rgba(105, 65, 126, 1)",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-    elevation: 2,
-  },
-  monthHeader: {
-    alignItems: "center",
-    paddingBottom: vs(6),
   },
   monthText: {
     fontFamily: "InterSemiBold",
