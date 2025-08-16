@@ -258,6 +258,7 @@ import {
 } from "react-native";
 
 import { registerTabBarVisibility } from "@/utils/tabBarVisibility";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Home from "./home/homePage";
 import CalendarScreen from "./rawPages/CalendarScreen";
 import ProfileScreen from "./rawPages/Profile";
@@ -270,6 +271,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
   descriptors,
   navigation,
 }) => {
+  const insets = useSafeAreaInsets();
   const [visible, setVisible] = useState(true);
   const translateY = useRef(new Animated.Value(0)).current;
   const [tabBarHeight, setTabBarHeight] = useState(0);
@@ -285,7 +287,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
   // Animate tab bar when visible state changes
   useEffect(() => {
     Animated.timing(translateY, {
-      toValue: visible ? 0 : tabBarHeight || 100, // fallback 100 if not measured yet
+      toValue: visible ? 0 : (tabBarHeight || 100) + insets.bottom, // fallback 100 if not measured yet
       duration: 250,
       useNativeDriver: true,
     }).start();
@@ -296,7 +298,13 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
 
   return (
     <Animated.View
-      style={[styles.tabBarContainer, { transform: [{ translateY }] }]}
+      style={[
+        styles.tabBarContainer,
+        {
+          transform: [{ translateY }],
+          bottom: insets.bottom + 12, // 👈 respect safe area
+        },
+      ]}
       onLayout={(e) => {
         const { height } = e.nativeEvent.layout;
         setTabBarHeight(height + vs(10)); // small buffer for safety

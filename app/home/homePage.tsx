@@ -299,12 +299,7 @@ const Home = () => {
     router.push({
       pathname: "/rawPages/bookingdetails",
       params: {
-        name: booking.details.name,
-        gender: booking.details.gender,
-        age: booking.details.age,
-        time: booking.details.time,
-        date: booking.date,
-        avatarUrl: booking.details.avatarUrl,
+        id: booking.id, // <-- pass slotId
       },
     });
 
@@ -521,7 +516,11 @@ const Home = () => {
             </View>
           ) : filteredBookings.length > 0 ? (
             filteredBookings.map((booking) => (
-              <TouchableOpacity key={booking.id} style={styles.bookingCard}>
+              <TouchableOpacity
+                key={booking.id}
+                style={styles.bookingCard}
+                onPress={() => redirectToBookingDetails(booking)} // <-- attach redirect
+              >
                 <View style={styles.avatarContainer}>
                   <Image
                     source={{ uri: booking.details.avatarUrl }}
@@ -573,7 +572,10 @@ const Home = () => {
                     >
                       <Ionicons name="mail-outline" size={18} color="#69417E" />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionButton}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => redirectToBookingDetails(booking)} // also allow from here
+                    >
                       <Ionicons name="open-outline" size={18} color="#69417E" />
                     </TouchableOpacity>
                   </View>

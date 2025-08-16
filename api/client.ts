@@ -58,6 +58,16 @@ API.interceptors.request.use(async (config) => {
   return config;
 });
 
+// Fetch slot details by ID
+export async function getSlotDetails(id: string) {
+  try {
+    const response = await API.get(`/slot/v1/get_slot_details/${id}`);
+    return response.data; // { msg, data }
+  } catch (error) {
+    console.error("Error fetching slot details:", error);
+    throw error;
+  }
+}
 
 export async function getCarrierSlots(params: {
   startDate: string;
@@ -83,6 +93,7 @@ export async function getCarrierSlots(params: {
     console.error("Error fetching carrier slots:", error);
     throw error;
   }
+  
 }
 
 
