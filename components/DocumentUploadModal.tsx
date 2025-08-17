@@ -8,7 +8,6 @@ import { ms, s, vs } from "@/utils/scale";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "@react-native-community/blur";
 import * as DocumentPicker from "expo-document-picker";
-import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
@@ -25,7 +24,6 @@ import {
 interface DocumentUploadModalProps {
   visible: boolean;
   onClose: () => void;
-  // onUpload: (file: DocumentPicker.DocumentPickerResult) => Promise<void>;
   title?: string;
   allowedTypes?: string[];
   buttonLabel?: string;
@@ -45,6 +43,7 @@ interface DocumentUploadModalProps {
   slotId?: string;
   trackId?: string;
   onSubmit?: () => Promise<void>;
+  onSubmissionComplete?: () => void;
 }
 
 type UploadStatus = "uploading" | "success" | "failed" | "verified";
@@ -93,7 +92,6 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   const [uploadStartModalType, setUploadStartModalType] = useState<
     string | null
   >(null);
-  const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -115,16 +113,14 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
         }).start(async () => {
           setShowSuccess(false);
           onClose();
-          // Ensure journey state is updated before navigation
           if (uploadedDocUrl && onSubmit) {
             await onSubmit();
           }
-          router.replace("/home/homePage");
         });
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [showSuccess, uploadedDocUrl, onSubmit, onClose, router]);
+  }, [showSuccess, uploadedDocUrl, onSubmit, onClose]);
 
   const handleDocumentPick = async () => {
     try {
@@ -579,7 +575,10 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
               style={styles.closeButton}
               onPress={() => {
                 setShowSuccess(false);
-                router.push("/home/homePage");
+                onClose();
+                if (onSubmissionComplete) {
+                  onSubmissionComplete();
+                }
               }}
             >
               <Ionicons name="close" size={s(15)} color="#080808" />

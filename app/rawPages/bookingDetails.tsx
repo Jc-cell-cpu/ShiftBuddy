@@ -82,8 +82,6 @@ const BookingDetails: React.FC = () => {
   const [documentViewerVisible, setDocumentViewerVisible] = useState(false);
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
   const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
-  const [journeyCompleteModalVisible, setJourneyCompleteModalVisible] =
-    useState(false);
 
   const [selectedDocumentIndex, setSelectedDocumentIndex] = useState(0);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -756,14 +754,16 @@ const BookingDetails: React.FC = () => {
               setFeedbackSubmitted(true);
             }
 
-            // Close modal + show success
+            // Close modal
             setUploadModalVisible(false);
             setUploadedDocUrl(null);
-            setJourneyCompleteModalVisible(true);
           } catch (err) {
             console.error("❌ Failed to add slot track:", err);
             Alert.alert("Error", "Could not update slot tracking.");
           }
+        }}
+        onSubmissionComplete={() => {
+          router.replace("/home/homePage");
         }}
       />
 
@@ -773,26 +773,6 @@ const BookingDetails: React.FC = () => {
         onClose={() => setFeedbackModalVisible(false)}
         onSubmit={async () => setFeedbackSubmitted(true)}
       />
-
-      {/* Journey Complete Modal */}
-      {journeyCompleteModalVisible && (
-        <Modal visible transparent animationType="fade">
-          <View style={styles.modalOverlay}>
-            <View style={styles.journeyCompleteModal}>
-              <Ionicons name="checkmark-circle" size={s(64)} color="#4CAF50" />
-              <Text style={styles.journeyCompleteTitle}>Journey Complete!</Text>
-              <TouchableOpacity
-                style={styles.journeyCompleteButton}
-                onPress={() => router.replace("/home/homePage")}
-              >
-                <Text style={styles.journeyCompleteButtonText}>
-                  Return Home
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-      )}
 
       {/* Slide-to-confirm button */}
       <Animated.View
@@ -820,8 +800,6 @@ const BookingDetails: React.FC = () => {
               setUploadModalVisible(true);
             } else if (currentStep === 4) {
               setFeedbackModalVisible(true);
-            } else {
-              setJourneyCompleteModalVisible(true);
             }
           }}
         />
