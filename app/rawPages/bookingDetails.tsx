@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // bookingdetails.tsx (updated merge)
-import { getSlotDetails } from "@/api/client";
+import {
+  addSlotTrack,
+  getSlotDetails,
+  getSlotTrack,
+  getTrackMaster,
+} from "@/api/client";
 import BiometricAuth from "@/components/BiometricAuth";
 import DocumentUploadModal from "@/components/DocumentUploadModal";
 import FeedbackModal from "@/components/FeedbackModal";
@@ -67,7 +72,6 @@ const BookingDetails: React.FC = () => {
     setProgressNoteUploaded,
     setFeedbackSubmitted,
     setCurrentStep,
-    progressToNextStep,
   } = useJourneyStore();
 
   // States
@@ -86,11 +90,27 @@ const BookingDetails: React.FC = () => {
 
   const [documents, setDocuments] = useState<Document[]>([]);
   const [progressNoteText, setProgressNoteText] = useState("");
+  const [uploadedDocUrl, setUploadedDocUrl] = useState<string | null>(null);
   const [showOpenSection, setShowOpenSection] = useState(false);
 
   const tabScrollViewRef = useRef<ScrollView>(null);
   const lastScrollY = useRef(0);
   const buttonOpacity = useRef(new Animated.Value(1)).current;
+
+  const [trackMaster, setTrackMaster] = useState(null);
+
+  const fetchTrackMaster = async () => {
+    try {
+      const res = await getTrackMaster(); // <- your API call
+      setTrackMaster(res.data);
+    } catch (err) {
+      console.error("❌ fetchTrackMaster failed:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchTrackMaster(); // no args
+  }, []);
 
   const hideSlider = () => {
     Animated.timing(buttonOpacity, {
@@ -144,6 +164,128 @@ const BookingDetails: React.FC = () => {
     };
     if (id) fetchSlotDetails();
   }, [id]);
+
+  useEffect(() => {
+    const fetchSlotDetailsAndTracking = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+
+        // Fetch details
+        const res = await getSlotDetails(id as string);
+        setSlotDetails(res.data);
+
+        // Fetch tracking for this slot
+        const trackRes = await getSlotTrack(id as string);
+        console.log("📌 Slot track:", trackRes.data);
+
+        const completedSteps = trackRes.data.filter(
+          (t: any) => t.status === "completed"
+        ).length;
+        setCurrentStep(completedSteps);
+
+        // Sync Zustand flags
+        if (completedSteps >= 1) setOdometerUploaded(true);
+        if (completedSteps >= 2) {
+          setDestinationReached(true);
+          setImageUploaded(true);
+        }
+        if (completedSteps >= 3) {
+          setConsentFormUploaded(true);
+          setTreatmentStarted(true);
+        }
+        if (completedSteps >= 4) setProgressNoteUploaded(true);
+        if (completedSteps >= 5) setFeedbackSubmitted(true);
+      } catch (err) {
+        console.error("❌ Failed to fetch slot details/track:", err);
+        Alert.alert("Error", "Unable to fetch booking details.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSlotDetailsAndTracking();
+  }, [id]);
+
+  // Fetch slot tracking progress
+  useEffect(() => {
+    const fetchTracking = async () => {
+      if (!id) return;
+      try {
+        const res = await getSlotTrack(id as string);
+        console.log("📌 Initial slot track:", res.data);
+
+        // Count completed steps
+        const completedSteps = res.data.filter(
+          (t: any) => t.status === "completed"
+        ).length;
+        setCurrentStep(completedSteps);
+
+        // Sync Zustand flags
+        if (completedSteps >= 1) setOdometerUploaded(true);
+        if (completedSteps >= 2) {
+          setDestinationReached(true);
+          setImageUploaded(true);
+        }
+        if (completedSteps >= 3) {
+          setConsentFormUploaded(true);
+          setTreatmentStarted(true);
+        }
+        if (completedSteps >= 4) setProgressNoteUploaded(true);
+        if (completedSteps >= 5) setFeedbackSubmitted(true);
+      } catch (err) {
+        console.error("❌ Failed to fetch slot tracking:", err);
+      }
+    };
+
+    fetchTracking();
+  }, [id]);
+
+  // inside BookingDetails component
+  const getModalConfig = () => {
+    if (!odometerUploaded) {
+      return {
+        modalType: "odometer" as const,
+        showKilometerField: true,
+        showProgressNoteField: false,
+        allowedTypes: ["image/*"],
+        buttonLabel: "Click to Upload",
+      };
+    } else if (odometerUploaded && !destinationReached) {
+      return {
+        modalType: "destination" as const,
+        showKilometerField: true,
+        showProgressNoteField: false,
+        allowedTypes: ["image/*"],
+        buttonLabel: "Click to Upload",
+      };
+    } else if (destinationReached && imageUploaded && currentStep === 2) {
+      return {
+        modalType: "consent" as const,
+        showKilometerField: false,
+        showProgressNoteField: false,
+        allowedTypes: ["*/*"],
+        buttonLabel: "Click to Upload",
+      };
+    } else if (consentFormUploaded && treatmentStarted && currentStep === 3) {
+      return {
+        modalType: "progress_note" as const,
+        showKilometerField: false,
+        showProgressNoteField: true,
+        allowedTypes: ["*/*"],
+        buttonLabel: "Optional: Attach Document",
+      };
+    }
+    return {
+      modalType: "other" as const,
+      showKilometerField: false,
+      showProgressNoteField: false,
+      allowedTypes: ["*/*"],
+      buttonLabel: "Click to Upload",
+    };
+  };
+
+  const modalConfig = getModalConfig();
 
   // Auto-scroll tabs
   useEffect(() => {
@@ -537,15 +679,92 @@ const BookingDetails: React.FC = () => {
       {/* Upload Modal */}
       <DocumentUploadModal
         visible={uploadModalVisible}
-        onClose={() => setUploadModalVisible(false)}
-        onUpload={handleDocumentUpload}
-        modalType="other"
-        showKilometerField={false}
-        showProgressNoteField={false}
+        onClose={() => {
+          setUploadModalVisible(false);
+          setUploadedDocUrl(null);
+        }}
+        modalType={modalConfig.modalType}
+        showKilometerField={modalConfig.showKilometerField}
+        showProgressNoteField={modalConfig.showProgressNoteField}
         progressNoteValue={progressNoteText}
         onProgressNoteChange={setProgressNoteText}
-        allowedTypes={["*/*"]}
-        buttonLabel="Upload"
+        allowedTypes={modalConfig.allowedTypes}
+        buttonLabel={uploadedDocUrl ? "Submit" : modalConfig.buttonLabel}
+        slotId={slotDetails._id}
+        trackId={(trackMaster as any)?.[currentStep]?._id} // ✅ correct trackId
+        kilometerValue={
+          currentStep === 0 || currentStep === 1 ? "123km" : undefined
+        }
+        onUpload={(url) => {
+          console.log("📂 Uploaded doc URL:", url);
+          setUploadedDocUrl(url); // ✅ switch button to "Submit"
+        }}
+        onSubmit={async () => {
+          if (!uploadedDocUrl) return;
+
+          try {
+            console.log("📌 Calling addSlotTrack with:", {
+              slotId: slotDetails._id,
+              trackId: (trackMaster as any)?.[currentStep]?._id,
+              docId: uploadedDocUrl,
+              note:
+                modalConfig.modalType === "odometer" ||
+                modalConfig.modalType === "destination"
+                  ? "123km"
+                  : progressNoteText,
+            });
+
+            // ✅ Call addSlotTrack
+            await addSlotTrack({
+              slotId: slotDetails._id,
+              trackId: (trackMaster as any)?.[currentStep]?._id,
+              docId: uploadedDocUrl,
+              note:
+                modalConfig.modalType === "odometer" ||
+                modalConfig.modalType === "destination"
+                  ? "123km"
+                  : progressNoteText,
+              rating: "",
+            });
+
+            console.log("✅ add_slot_track success");
+
+            // ✅ Refresh journey tracker
+            await useJourneyStore.getState().refreshSlotTrack(slotDetails._id);
+
+            // Fetch updated tracking data
+            const updatedTrackRes = await getSlotTrack(slotDetails._id);
+            console.log("📌 Updated slot track:", updatedTrackRes.data);
+
+            // Update slider state based on completed steps
+            const completedSteps = updatedTrackRes.data.filter(
+              (t: any) => t.status === "completed"
+            ).length;
+            setCurrentStep(completedSteps);
+
+            // Update flags
+            if (!odometerUploaded) setOdometerUploaded(true);
+            else if (!destinationReached) {
+              setDestinationReached(true);
+              setImageUploaded(true);
+            } else if (!consentFormUploaded) {
+              setConsentFormUploaded(true);
+              setTreatmentStarted(true);
+            } else if (!progressNoteUploaded) {
+              setProgressNoteUploaded(true);
+            } else if (!feedbackSubmitted) {
+              setFeedbackSubmitted(true);
+            }
+
+            // Close modal + show success
+            setUploadModalVisible(false);
+            setUploadedDocUrl(null);
+            setJourneyCompleteModalVisible(true);
+          } catch (err) {
+            console.error("❌ Failed to add slot track:", err);
+            Alert.alert("Error", "Could not update slot tracking.");
+          }
+        }}
       />
 
       {/* Feedback Modal */}
@@ -584,19 +803,27 @@ const BookingDetails: React.FC = () => {
       >
         <SlideToConfirmButton
           label={
-            !odometerUploaded
+            currentStep === 0
               ? "Start Journey"
-              : !destinationReached
+              : currentStep === 1
               ? "Reach Destination"
-              : !consentFormUploaded
+              : currentStep === 2
               ? "Start Treatment"
-              : !progressNoteUploaded
+              : currentStep === 3
               ? "Write Progress Note"
-              : !feedbackSubmitted
+              : currentStep === 4
               ? "Share Feedback"
               : "Journey Complete"
           }
-          onComplete={() => setUploadModalVisible(true)}
+          onComplete={() => {
+            if (currentStep < 4) {
+              setUploadModalVisible(true);
+            } else if (currentStep === 4) {
+              setFeedbackModalVisible(true);
+            } else {
+              setJourneyCompleteModalVisible(true);
+            }
+          }}
         />
       </Animated.View>
     </View>

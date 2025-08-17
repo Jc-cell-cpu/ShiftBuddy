@@ -1,16 +1,10 @@
-
-import { isTokenExpired } from "@/utils/jwtUtils"; // ✅ updated
+import { isTokenExpired } from "@/utils/jwtUtils";
+import { AddSlotTrackRequest, AddSlotTrackResponse } from "@/utils/slotTrack"; // Adjust path
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { refreshAccessToken } from "./refresh";
 
-
-// import Constants from "expo-constants";
-
 const API = axios.create({
-  // baseURL: "http://10.223.4.72:4000",
-  // baseURL: "http://192.168.1.2:4000",
-  // baseURL: "https://13.62.45.50",
   baseURL: "https://shift-buddy-carrier-service-main-updated.onrender.com",
   headers: {
     "x-client-type": "app",
@@ -19,19 +13,18 @@ const API = axios.create({
   withCredentials: true,
 });
 
-// Log all requests
+// Existing interceptors (unchanged)
 API.interceptors.request.use((config) => {
-    const fullUrl = `${config.baseURL || ""}${config.url || ""}`;
-  console.log("➡️ Request:", config.method?.toUpperCase(),  fullUrl);
+  const fullUrl = `${config.baseURL || ""}${config.url || ""}`;
+  console.log("➡️ Request:", config.method?.toUpperCase(), fullUrl);
   console.log("Headers:", config.headers);
   console.log("Data:", config.data);
   return config;
 });
 
-// Log all responses
 API.interceptors.response.use(
   (response) => {
-    console.log(  '✅ Response:', response.status, response.data);
+    console.log("✅ Response:", response.status, response.data);
     return response;
   },
   (error) => {
@@ -58,7 +51,29 @@ API.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Fetch slot details by ID
+// Existing functions (unchanged)
+export async function uploadDocument(fileUri: string, fileName: string, mimeType: string) {
+  try {
+    const formData = new FormData();
+    formData.append("file", {
+      uri: fileUri,
+      name: fileName,
+      type: mimeType,
+    } as any);
+
+    const response = await API.post("/doc/v1/upload_doc", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return response.data; // { msg, documentId }
+  } catch (error) {
+    console.error("Error uploading document:", error);
+    throw error;
+  }
+}
+
 export async function getSlotDetails(id: string) {
   try {
     const response = await API.get(`/slot/v1/get_slot_details/${id}`);
@@ -85,7 +100,7 @@ export async function getCarrierSlots(params: {
       slotView: "list",
       sortBy: "createdAt",
       sortOrder: "desc",
-      ...params, // this will override defaults with whatever you pass in
+      ...params,
     });
 
     return response.data; // { msg, count, data, currentPage, totalPages }
@@ -93,8 +108,36 @@ export async function getCarrierSlots(params: {
     console.error("Error fetching carrier slots:", error);
     throw error;
   }
-  
 }
 
+export async function getTrackMaster() {
+  try {
+    const response = await API.get("/master/v1/get_track_master");
+    return response.data; // { msg, data }
+  } catch (error) {
+    console.error("Error fetching track master:", error);
+    throw error;
+  }
+}
+
+export async function addSlotTrack(params: AddSlotTrackRequest): Promise<AddSlotTrackResponse> {
+  try {
+    const response = await API.post("/slot/v1/add_slot_track", params);
+    return response.data; // { msg, data }
+  } catch (error) {
+    console.error("Error adding slot track:", error);
+    throw error;
+  }
+}
+
+export async function getSlotTrack(slotId: string) {
+  try {
+    const response = await API.get(`/slot/v1/get_slot_track/${slotId}`);
+    return response.data; // { msg, data }
+  } catch (error) {
+    console.error("Error fetching slot track:", error);
+    throw error;
+  }
+}
 
 export default API;

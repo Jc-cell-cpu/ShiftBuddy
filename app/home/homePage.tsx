@@ -152,7 +152,6 @@ const Home = () => {
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
   const [firstName, setFirstName] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const { odometerUploaded, setOdometerUploaded } = useJourneyStore();
   const selectedDateString = selectedDate.toISOString().split("T")[0];
   // const filteredBookings = bookings.filter(
   //   (b) => b.date === selectedDateString
@@ -166,6 +165,17 @@ const Home = () => {
     end: string;
   } | null>(null);
 
+  const {
+    currentStep, // 👈 add this
+    setCurrentStep,
+    setOdometerUploaded,
+    setDestinationReached,
+    setImageUploaded,
+    setConsentFormUploaded,
+    setTreatmentStarted,
+    setProgressNoteUploaded,
+    setFeedbackSubmitted,
+  } = useJourneyStore();
   const fetchBookingsRange = useCallback(async (start: string, end: string) => {
     setIsLoading(true);
     try {
@@ -303,6 +313,28 @@ const Home = () => {
       },
     });
 
+  useFocusEffect(
+    React.useCallback(() => {
+      const refresh = async () => {
+        if (bookings.length === 0) return;
+
+        const today = new Date().toISOString().split("T")[0];
+        const todaysBookings = bookings.filter((b) => b.date === today);
+
+        if (todaysBookings.length === 0) {
+          console.log("📌 No bookings for today");
+          useJourneyStore.getState().resetJourney();
+          return;
+        }
+
+        // ✅ Call the centralized refresh
+        await useJourneyStore.getState().refreshSlotTrack(todaysBookings[0].id);
+      };
+
+      refresh();
+    }, [bookings])
+  );
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <StatusBar
@@ -345,7 +377,7 @@ const Home = () => {
           </View>
         </LinearGradient>
 
-        {odometerUploaded && (
+        {currentStep > 0 && (
           <View
             style={{
               backgroundColor: "#EDE7FA",
@@ -366,7 +398,9 @@ const Home = () => {
                 borderColor: "#504E4E",
                 borderWidth: 1,
               }}
-              onPress={() => setOdometerUploaded(false)}
+              onPress={() => {
+                useJourneyStore.getState().resetJourney();
+              }}
             >
               <Ionicons name="close" size={19} color="#504E4E" />
             </TouchableOpacity>
@@ -401,7 +435,7 @@ const Home = () => {
                   }}
                 >
                   Your trip has begun. Drive safe {"\n"}
-                  we’re tracking your mileage.
+                  were tracking your mileage.
                 </Text>
               </View>
               <TouchableOpacity
@@ -422,12 +456,7 @@ const Home = () => {
                     router.push({
                       pathname: "/rawPages/bookingdetails",
                       params: {
-                        name: firstBooking.details.name,
-                        gender: firstBooking.details.gender,
-                        age: firstBooking.details.age.toString(),
-                        time: firstBooking.details.time,
-                        date: firstBooking.date,
-                        avatarUrl: firstBooking.details.avatarUrl,
+                        id: firstBooking.id,
                       },
                     });
                   }
@@ -436,7 +465,7 @@ const Home = () => {
                 <Text
                   style={{ color: "#fff", fontWeight: "600", fontSize: ms(13) }}
                 >
-                  Start
+                  Continue
                 </Text>
               </TouchableOpacity>
             </View>

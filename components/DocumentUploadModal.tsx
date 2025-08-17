@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { uploadDocument } from "@/api/client";
 import Selfi from "@/assets/Selfi.svg";
 import Star from "@/assets/Starr.svg";
 import Upload from "@/assets/UploadIcon.svg";
@@ -24,7 +25,7 @@ import {
 interface DocumentUploadModalProps {
   visible: boolean;
   onClose: () => void;
-  onUpload: (file: DocumentPicker.DocumentPickerResult) => Promise<void>;
+  // onUpload: (file: DocumentPicker.DocumentPickerResult) => Promise<void>;
   title?: string;
   allowedTypes?: string[];
   buttonLabel?: string;
@@ -40,6 +41,10 @@ interface DocumentUploadModalProps {
   showProgressNoteField?: boolean;
   progressNoteValue?: string;
   onProgressNoteChange?: (text: string) => void;
+  onUpload?: (fileUrl: string) => void;
+  slotId?: string;
+  trackId?: string;
+  onSubmit?: () => Promise<void>;
 }
 
 type UploadStatus = "uploading" | "success" | "failed" | "verified";
@@ -70,6 +75,9 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   showProgressNoteField = false,
   progressNoteValue = "",
   onProgressNoteChange,
+  slotId,
+  trackId,
+  onSubmit,
 }) => {
   const [uploading, setUploading] = useState(false);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
@@ -78,6 +86,10 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   const [selectedFile, setSelectedFile] =
     useState<DocumentPicker.DocumentPickerResult | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<
+    "idle" | "uploading" | "success" | "failed"
+  >("idle");
+  const [uploadedDocUrl, setUploadedDocUrl] = useState<string | null>(null);
   const [uploadStartModalType, setUploadStartModalType] = useState<
     string | null
   >(null);
@@ -96,35 +108,23 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   useEffect(() => {
     if (showSuccess) {
       const timer = setTimeout(() => {
-        setShowSuccess(false);
-        onClose(); // This unmounts the modal
-        setTimeout(() => {
-          router.replace("/home/homePage"); // Redirect after modal closes
-        }, 50); // Give React Native a frame to clear UI
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [showSuccess]);
-
-  useEffect(() => {
-    if (showSuccess) {
-      const timer = setTimeout(() => {
         Animated.timing(fadeAnim, {
           toValue: 0,
           duration: 400,
           useNativeDriver: true,
-        }).start(() => {
-          setShowSuccess(false); // hide modal after fade
-          onClose(); // remove modal from tree
-          router.replace({
-            pathname: "/home/homePage",
-            params: { odometerUploaded: "true" },
-          }); // then navigate
+        }).start(async () => {
+          setShowSuccess(false);
+          onClose();
+          // Ensure journey state is updated before navigation
+          if (uploadedDocUrl && onSubmit) {
+            await onSubmit();
+          }
+          router.replace("/home/homePage");
         });
-      }, 2000); // keep modal visible before fading
+      }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [showSuccess]);
+  }, [showSuccess, uploadedDocUrl, onSubmit, onClose, router]);
 
   const handleDocumentPick = async () => {
     try {
@@ -172,8 +172,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   // const verifiedUpload = uploads.find((u) => u.status === "verified");
 
   const handleFinalUpload = async () => {
-    // For progress notes, file upload is optional
-    if (modalType !== "progress_note" && !selectedFile) {
+    if (!selectedFile?.assets?.[0]) {
       Alert.alert(
         "No File Selected",
         "Please select a file first before uploading."
@@ -181,95 +180,25 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
       return;
     }
 
-    // For progress notes, check if at least text is provided
-    if (
-      modalType === "progress_note" &&
-      !progressNoteValue?.trim() &&
-      !selectedFile
-    ) {
-      Alert.alert(
-        "Progress Note Required",
-        "Please write a progress note or attach a supporting document."
-      );
-      return;
-    }
-
-    // Capture the current modalType before starting upload to prevent race condition
-    setUploadStartModalType(modalType);
-    console.log("🚀 Starting upload for modalType:", modalType);
-
     try {
-      setUploading(true);
+      setUploadStatus("uploading");
 
-      // For progress notes with only text (no file), skip file upload simulation
-      if (
-        modalType === "progress_note" &&
-        !selectedFile &&
-        progressNoteValue?.trim()
-      ) {
-        // Just show progress for text submission without file upload
-        // Skip file upload simulation and go straight to success
+      const file = selectedFile.assets[0];
+      const result = await uploadDocument(
+        file.uri,
+        file.name,
+        file.mimeType || "application/octet-stream"
+      );
+
+      if (result?.documentId?.length) {
+        setUploadStatus("success");
+        setUploadedDocUrl(result.documentId[0]); // save S3 URL
       } else {
-        // Show upload progress animation for file uploads
-        const fileName = uploads[0]?.name || "document";
-
-        // Update upload status to show progress
-        setUploads((prev) =>
-          prev.map((u) =>
-            u.name === fileName ? { ...u, status: "uploading", progress: 0 } : u
-          )
-        );
-
-        // Simulate upload progress
-        for (let p = 10; p <= 100; p += 10) {
-          await new Promise((r) => setTimeout(r, 100));
-          setUploads((prev) =>
-            prev.map((u) => (u.name === fileName ? { ...u, progress: p } : u))
-          );
-        }
-
-        // Mark upload as successful first
-        setUploads((prev) =>
-          prev.map((u) =>
-            u.name === fileName ? { ...u, status: "success" } : u
-          )
-        );
+        setUploadStatus("failed");
       }
-
-      // Show success modal after a brief delay
-      setTimeout(() => {
-        setShowSuccess(true);
-      }, 300);
-
-      // Delay calling parent upload handler to prevent UI flash
-      // This ensures our success modal shows before parent updates modalType
-      setTimeout(async () => {
-        try {
-          if (selectedFile) {
-            await onUpload(selectedFile);
-            console.log("✅ Parent upload handler completed after UI update");
-          }
-        } catch (error) {
-          console.error("❌ Parent upload handler failed:", error);
-        }
-      }, 500); // Delay slightly longer than success modal show
     } catch (error) {
-      console.error("Upload failed:", error);
-
-      // Mark upload as failed
-      const fileName = uploads[0]?.name || "document";
-      setUploads((prev) =>
-        prev.map((u) =>
-          u.name === fileName ? { ...u, status: "failed", progress: 0 } : u
-        )
-      );
-
-      Alert.alert(
-        "Upload Failed",
-        "Failed to upload the document. Please try again."
-      );
-    } finally {
-      setUploading(false);
+      console.error("❌ Upload failed:", error);
+      setUploadStatus("failed");
     }
   };
 
@@ -410,6 +339,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
                     style={{ marginRight: s(8), marginTop: 2 }}
                   />
                   <View style={{ flex: 1 }}>
+                    {/* Filename + Action Row */}
                     <View
                       style={{
                         flexDirection: "row",
@@ -430,21 +360,30 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
                           : item.name}
                       </Text>
 
-                      {["success", "failed"].includes(item.status) &&
-                        item.status !== "verified" && (
-                          <TouchableOpacity
-                            onPress={() => deleteUpload(item.name)}
-                          >
-                            <Ionicons name="trash" size={18} color="#888" />
-                          </TouchableOpacity>
-                        )}
                       {item.status === "uploading" && (
                         <Text style={{ fontSize: ms(12), color: "#888" }}>
                           {item.progress}%
                         </Text>
                       )}
+
+                      {item.status === "success" && (
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={18}
+                          color="#4CAF50"
+                        />
+                      )}
+
+                      {item.status === "failed" && (
+                        <TouchableOpacity
+                          onPress={() => deleteUpload(item.name)}
+                        >
+                          <Ionicons name="trash" size={18} color="#888" />
+                        </TouchableOpacity>
+                      )}
                     </View>
 
+                    {/* File size or retry */}
                     {item.status === "failed" && (
                       <Text
                         style={{
@@ -457,7 +396,10 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
                       </Text>
                     )}
 
-                    {["uploading", "failed"].includes(item.status) ? (
+                    {/* Progress bar (uploading or success) */}
+                    {["uploading", "success", "failed"].includes(
+                      item.status
+                    ) && (
                       <View
                         style={{
                           height: 6,
@@ -470,24 +412,21 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
                         <View
                           style={{
                             height: 6,
-                            width: `${item.progress}%`,
+                            width: `${
+                              item.status === "success" ? 100 : item.progress
+                            }%`,
                             backgroundColor:
-                              item.status === "failed" ? "#F44336" : "#6A1B9A",
+                              item.status === "failed"
+                                ? "#F44336"
+                                : item.status === "success"
+                                ? "#4CAF50"
+                                : "#6A1B9A",
                           }}
                         />
                       </View>
-                    ) : (
-                      <Text
-                        style={{
-                          fontSize: ms(12),
-                          color: "#888",
-                          marginTop: vs(6),
-                        }}
-                      >
-                        {item.size}
-                      </Text>
                     )}
 
+                    {/* Retry / Click to view */}
                     {item.status === "failed" && (
                       <TouchableOpacity onPress={handleDocumentPick}>
                         <Text style={{ color: "#F44336", marginTop: vs(4) }}>
@@ -548,15 +487,30 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
               <TouchableOpacity
                 style={[
                   styles.uploadButton,
-                  //   !verifiedUpload && styles.disabledButton,
+                  (uploadStatus === "failed" ||
+                    uploadStatus === "uploading") && { opacity: 0.5 },
                 ]}
-                // disabled={!verifiedUpload}
-                onPress={handleFinalUpload}
+                onPress={
+                  uploadStatus === "success"
+                    ? () => {
+                        // Final submit after upload success
+                        if (uploadedDocUrl) {
+                          onUpload?.(uploadedDocUrl);
+                          setShowSuccess(true);
+                        }
+                      }
+                    : handleFinalUpload
+                }
+                disabled={
+                  uploadStatus === "uploading" || uploadStatus === "failed"
+                }
               >
                 <Text style={styles.uploadButtonText}>
-                  {modalContent.buttonText}
+                  {uploadStatus === "idle" || uploadStatus === "uploading"
+                    ? "Upload Photo"
+                    : "Submit"}
                 </Text>
-              </TouchableOpacity>
+              </TouchableOpacity>{" "}
             </View>
           </View>
         </BlurView>

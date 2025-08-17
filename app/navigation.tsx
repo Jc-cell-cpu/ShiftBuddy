@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // import Home from "@/app/home/homePage";
 // import { ms, s, vs } from "@/utils/scale";
 // import { Ionicons } from "@expo/vector-icons";

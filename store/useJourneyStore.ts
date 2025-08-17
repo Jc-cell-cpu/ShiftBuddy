@@ -1,7 +1,10 @@
-// useJourneyStore.ts
+import { getSlotTrack } from "@/api/client";
 import { create } from "zustand";
 
 interface JourneyState {
+  currentStep: number;
+
+  // Flags
   odometerUploaded: boolean;
   destinationReached: boolean;
   imageUploaded: boolean;
@@ -9,22 +12,26 @@ interface JourneyState {
   treatmentStarted: boolean;
   progressNoteUploaded: boolean;
   feedbackSubmitted: boolean;
-  currentStep: number;
-  journeyId: string | null;
-  setOdometerUploaded: (status: boolean) => void;
-  setDestinationReached: (status: boolean) => void;
-  setImageUploaded: (status: boolean) => void;
-  setConsentFormUploaded: (status: boolean) => void;
-  setTreatmentStarted: (status: boolean) => void;
-  setProgressNoteUploaded: (status: boolean) => void;
-  setFeedbackSubmitted: (status: boolean) => void;
+
+  // Actions
   setCurrentStep: (step: number) => void;
-  setJourneyId: (id: string | null) => void;
+  setOdometerUploaded: (value: boolean) => void;
+  setDestinationReached: (value: boolean) => void;
+  setImageUploaded: (value: boolean) => void;
+  setConsentFormUploaded: (value: boolean) => void;
+  setTreatmentStarted: (value: boolean) => void;
+  setProgressNoteUploaded: (value: boolean) => void;
+  setFeedbackSubmitted: (value: boolean) => void;
   progressToNextStep: () => void;
+
   resetJourney: () => void;
+  refreshSlotTrack: (slotId: string) => Promise<void>;
 }
 
 export const useJourneyStore = create<JourneyState>((set, get) => ({
+  currentStep: 0,
+
+  // Flags
   odometerUploaded: false,
   destinationReached: false,
   imageUploaded: false,
@@ -32,32 +39,54 @@ export const useJourneyStore = create<JourneyState>((set, get) => ({
   treatmentStarted: false,
   progressNoteUploaded: false,
   feedbackSubmitted: false,
-  currentStep: 0,
-  journeyId: null,
-  setOdometerUploaded: (status) => set({ odometerUploaded: status }),
-  setDestinationReached: (status) => set({ destinationReached: status }),
-  setImageUploaded: (status) => set({ imageUploaded: status }),
-  setConsentFormUploaded: (status) => set({ consentFormUploaded: status }),
-  setTreatmentStarted: (status) => set({ treatmentStarted: status }),
-  setProgressNoteUploaded: (status) => set({ progressNoteUploaded: status }),
-  setFeedbackSubmitted: (status) => set({ feedbackSubmitted: status }),
+
+  // Setters
   setCurrentStep: (step) => set({ currentStep: step }),
-  setJourneyId: (id) => set({ journeyId: id }),
-  progressToNextStep: () => {
-    const { currentStep } = get();
-    if (currentStep < 5) { // Max step is 5 (Share Feedback) - feedback is the final step
-      set({ currentStep: currentStep + 1 });
+  setOdometerUploaded: (value) => set({ odometerUploaded: value }),
+  setDestinationReached: (value) => set({ destinationReached: value }),
+  setImageUploaded: (value) => set({ imageUploaded: value }),
+  setConsentFormUploaded: (value) => set({ consentFormUploaded: value }),
+  setTreatmentStarted: (value) => set({ treatmentStarted: value }),
+  setProgressNoteUploaded: (value) => set({ progressNoteUploaded: value }),
+  setFeedbackSubmitted: (value) => set({ feedbackSubmitted: value }),
+  progressToNextStep: () => set((state) => ({ currentStep: state.currentStep + 1 })),
+
+  // Reset
+  resetJourney: () =>
+    set({
+      currentStep: 0,
+      odometerUploaded: false,
+      destinationReached: false,
+      imageUploaded: false,
+      consentFormUploaded: false,
+      treatmentStarted: false,
+      progressNoteUploaded: false,
+      feedbackSubmitted: false,
+    }),
+
+  // Unified refresh method
+  refreshSlotTrack: async (slotId: string) => {
+    try {
+      const res = await getSlotTrack(slotId);
+      const completedSteps = res.data.filter(
+        (t: any) => t.status === "completed"
+      ).length;
+
+      // Update step
+      set({ currentStep: completedSteps });
+
+      // Sync flags
+      set({
+        odometerUploaded: completedSteps >= 1,
+        destinationReached: completedSteps >= 2,
+        imageUploaded: completedSteps >= 2,
+        consentFormUploaded: completedSteps >= 3,
+        treatmentStarted: completedSteps >= 3,
+        progressNoteUploaded: completedSteps >= 4,
+        feedbackSubmitted: completedSteps >= 5,
+      });
+    } catch (err) {
+      console.error("❌ refreshSlotTrack failed:", err);
     }
   },
-  resetJourney: () => set({
-    odometerUploaded: false,
-    destinationReached: false,
-    imageUploaded: false,
-    consentFormUploaded: false,
-    treatmentStarted: false,
-    progressNoteUploaded: false,
-    feedbackSubmitted: false,
-    currentStep: 0,
-    journeyId: null,
-  }),
 }));
