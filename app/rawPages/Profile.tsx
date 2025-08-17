@@ -89,9 +89,11 @@ const ProfileScreen = () => {
         backgroundColor="transparent"
         barStyle="dark-content"
       />
+
       <ScrollView
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Header */}
         <View style={styles.headerRow}>
@@ -102,14 +104,6 @@ const ProfileScreen = () => {
             <Ionicons name="arrow-back" size={s(24)} />
           </TouchableOpacity>
           <Text style={styles.title}>Profile</Text>
-          {/* <TouchableOpacity
-            onPress={async () => {
-              await deleteTokens();
-              router.replace("/auth/login"); // or router.push if you want back stack
-            }}
-          >
-            <Text style={styles.logout}>Logout</Text>
-          </TouchableOpacity> */}
           <TouchableOpacity onPress={() => setLogoutVisible(true)}>
             <Text style={styles.logout}>Logout</Text>
           </TouchableOpacity>
@@ -122,9 +116,9 @@ const ProfileScreen = () => {
             style={styles.avatar}
           />
           <View style={{ flex: 1, marginLeft: s(12) }}>
-            <Text
-              style={styles.name}
-            >{`${mockProfile.name} | ${mockProfile.gender},${mockProfile.age}`}</Text>
+            <Text style={styles.name}>
+              {`${mockProfile.name} | ${mockProfile.gender},${mockProfile.age}`}
+            </Text>
             <Text style={styles.email}>{mockProfile.email}</Text>
             <Text
               style={styles.memberId}
@@ -239,7 +233,6 @@ const ProfileScreen = () => {
                 <Text style={styles.link}>Change Vehicle</Text>
               </TouchableOpacity>
             </View>
-            {/* <Ionicons name="car-sport-outline" size={ms(64)} color="#FFA500" /> */}
             <Car width={100} height={50} />
           </View>
         </View>
@@ -276,6 +269,18 @@ const ProfileScreen = () => {
           ))}
         </View>
       </ScrollView>
+
+      {/* Transparent backdrop when dropdown is open */}
+      {(showStatusDropdown || showEmpTypeDropdown) && (
+        <TouchableOpacity
+          style={styles.backdrop}
+          activeOpacity={1}
+          onPress={() => {
+            setShowStatusDropdown(false);
+            setShowEmpTypeDropdown(false);
+          }}
+        />
+      )}
 
       {logoutVisible && (
         <View style={styles.modalOverlay}>
@@ -322,12 +327,12 @@ const ProfileScreen = () => {
           </View>
         </View>
       )}
+
       <ChangeVehicleModal
         visible={showVehicleModal}
         onClose={() => setShowVehicleModal(false)}
         onSubmit={() => {
           setShowVehicleModal(false);
-          // handle actual change action here
         }}
       />
     </SafeAreaView>
@@ -340,7 +345,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    // gap: s(12),
     padding: s(16),
   },
   title: { fontSize: ms(18), fontWeight: "700", color: "#000" },
@@ -355,7 +359,6 @@ const styles = StyleSheet.create({
     marginHorizontal: s(16),
     marginBottom: vs(16),
   },
-
   backButton: {
     width: s(34),
     height: s(34),
@@ -393,7 +396,6 @@ const styles = StyleSheet.create({
     borderRadius: ms(16),
     padding: s(16),
   },
-
   overviewContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -402,13 +404,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
   },
-
   dropdownTrigger: {
     flexDirection: "row",
     alignItems: "center",
     gap: s(4),
   },
-
   dropdownIcon: {
     marginTop: vs(5),
     marginRight: s(6),
@@ -426,32 +426,25 @@ const styles = StyleSheet.create({
   },
   dropdownBox: {
     position: "absolute",
-    top: vs(48), // Adjust if needed to position below the value
+    top: vs(48),
     left: 0,
     right: 0,
     backgroundColor: "#fff",
     paddingVertical: vs(4),
     borderRadius: ms(8),
-    elevation: 5, // Android shadow
+    elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
     zIndex: 10,
   },
-
   sectionTitle: {
     fontFamily: "InterMedium",
     fontSize: ms(14),
     marginBottom: vs(8),
     marginLeft: s(16),
     color: "#333",
-  },
-  infoRow: { flexDirection: "row", justifyContent: "space-between" },
-  infoRowLabel: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 4,
   },
   infoLabel: {
     fontFamily: "InterVariable",
@@ -464,7 +457,6 @@ const styles = StyleSheet.create({
     color: "#69417E",
     marginTop: 4,
   },
-
   vehicleRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -494,15 +486,6 @@ const styles = StyleSheet.create({
     color: "#555",
     marginBottom: 5,
   },
-  shiftList: { paddingHorizontal: s(16), marginBottom: vs(16) },
-  shiftCard: {
-    backgroundColor: "#F4EDFB",
-    borderRadius: ms(16),
-    padding: s(12),
-    alignItems: "center",
-    marginRight: s(12),
-    width: 120,
-  },
   moreGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -523,7 +506,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: "center",
   },
-
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "transparent",
+    zIndex: 5,
+  },
   modalOverlay: {
     position: "absolute",
     top: 0,
